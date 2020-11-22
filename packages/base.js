@@ -6,16 +6,20 @@ const entities = 	[
 	},
 	{
 		type:'package',
-		//show:['events','expressions','actions'],
-		show:['name','description','entityTypes','events','actions'],
+		show:['name','description','entityTypes','propertyTypes','events','expressions','actions'],
 		properties:{
 			name:{type:'string',placeholder:'Package name'},
 			description:{type:'richtext'},
 			expressions:{
-				title:'definitions',
-				type:'expression definition*',
+				type:'expression definition group',
+				title:'expressions',
 				description:'List of expressions defined in this package',
-				expanded:true
+				displayInline:false,
+				expanded:true,
+				init:{
+					$type:'expression definition group',
+					name:'expressions'
+				}
 			},
 			entityTypes:{
 				type:'entity definition group',
@@ -26,6 +30,17 @@ const entities = 	[
 				init:{
 					$type:'entity definition group',
 					name:'entity types'
+				}
+			},
+			propertyTypes:{
+				type:'property definition group',
+				title:'property types',
+				description:'List of property types defined in this package',
+				displayInline:false,
+				expanded:true,
+				init:{
+					$type:'property definition group',
+					name:'property types'
 				}
 			},
 			events:{
@@ -56,22 +71,19 @@ const entities = 	[
 		placeholder:'Click to choose the type of entity you want to create'
 	},
 	{
-		type:'expression definition',
-		placeholder:'Click to choose the type of expression you want to create'
-	},
-	{
-		type:'entity type',
-		title:'Entity Type (used as typeof other types)',
-		isa:['entity definition'],
-		description:'Used to group other types with the `isa` property',
-		pattern:'<<type>>',
+		type:'calculated expression',
+		isa:['expression definition'],
+		title:'calculated expression',
+		pattern:'<<pattern>> (<<valueType>>)',
+		show:['name'],
 		properties:{
-			type:{type:'string',placeholder:'name of type'}
+			valueType:{placeholder:'value type',type:'entity type'},
+			name:{type:'name'}
 		}
 	},
 	{
 		type:'object entity definition',
-		isa:['entity definition'],
+		isa:['entity definition','property definition'],
 		title:'Object Entity (has properties)',
 		pattern: "<<type>>",
 		show:['pattern','type','title','description','isa','properties','show'],
@@ -393,6 +405,12 @@ const entities = 	[
 		}
 	},
 	{
+		type:'entity type',
+		options:function({$location}){
+			return $location.dictionary.getClassMembers('entity type');
+		}
+	},
+	{
 		type:'a property type',
 		options:function({$location}){
 			return $location.dictionary.getClassMembers('property type');
@@ -457,6 +475,69 @@ const entities = 	[
 				hideName:true,
 				childSpec:{
 					placeholder:'Define new entity type'
+				}
+			}
+		},
+		show:['members'],
+		additional:['model'],
+		pattern:'<<name>>'
+	},
+	{
+		name:'atom',
+		isa:['property definition'],
+		pattern:'<<name>>',
+		properties:{
+			name:{type:'name',placeholder:'Atom name'}
+		},
+		title:'Atom'
+	},
+	{
+		name:'property definition group',
+		title:'property folder',
+		isa:['definition group','property definition'],
+		properties:{
+			name:{
+				type:'text',
+				placeholder:'category name (plural)',
+				description:'The category name as plural of member type. E.g. color'
+			},
+			model:{
+				type:'definition model',
+				default:defaultDefinitionModel
+			},
+			members:{
+				type:'property definition*',
+				expanded:true,
+				hideName:true,
+				childSpec:{
+					placeholder:'Define new property type'
+				}
+			}
+		},
+		show:['members'],
+		additional:['model'],
+		pattern:'<<name>>'
+	},
+	{
+		name:'expression definition group',
+		title:'expression folder',
+		isa:['definition group','expression definition'],
+		properties:{
+			name:{
+				type:'text',
+				placeholder:'category name (plural)',
+				description:'The category name as plural of member type. E.g. element expressions'
+			},
+			model:{
+				type:'definition model',
+				default:defaultDefinitionModel
+			},
+			members:{
+				type:'expression definition*',
+				expanded:true,
+				hideName:true,
+				childSpec:{
+					placeholder:'Define new expression'
 				}
 			}
 		},
