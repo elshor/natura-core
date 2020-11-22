@@ -1,0 +1,15 @@
+{
+  "name": "natura",
+  "version": "0.0.1",
+  "description": "Core functionality needed to work with natura. This package contains the natura logic without UI. It should be used by the client and server",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "sideEffects": [
+    "./src/data.js"
+  ],
+  "author": "Elchanan Shor",
+  "dependencies": {
+    "deepmerge": "^4.2.2"
+  }
+}
