@@ -150,17 +150,19 @@ export default class Dictionary{
 
 		//ensure model isa is not empty
 		model.isa = model.isa || [];
-
+		let memberModel = model;
 		if(this._isDefinitionGroup(entity)){
 			entity.members = entity.members || [];
+			if(entity.model && typeof entity.model === 'object'){
+				entity.model.isa = entity.model.isa || [];
+				memberModel = deepmerge(model,entity.model);
+				//add group isa as a separate subtype of model isa
+				entity.model.isa.forEach(type=>{
+					this._processDefinition({type:type},memberModel)
+				});
+			}	
 			for(let i=0;i<entity.members.length;++i){
-				if(entity.model && typeof entity.model === 'object'){
-					entity.model.isa = entity.model.isa || [];
-				}
-				this._processDefinition(
-					entity.members[i],
-					deepmerge(model,entity.model||{})
-				);
+				this._processDefinition(entity.members[i],memberModel);
 			}
 		}else{
 			entity.isa = entity.isa || [];
