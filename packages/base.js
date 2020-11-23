@@ -77,7 +77,7 @@ const entities = 	[
 		pattern:'<<pattern>> (<<valueType>>)',
 		show:['name'],
 		properties:{
-			valueType:{placeholder:'value type',type:'entity type'},
+			valueType:{placeholder:'value type',type:'string'},
 			name:{type:'name'}
 		}
 	},
@@ -87,7 +87,7 @@ const entities = 	[
 		title:'Object Entity (has properties)',
 		pattern: "<<type>>",
 		show:['pattern','type','title','description','isa','properties','show'],
-		additional:['expanded','emits','emitOrder','traitType','actions'],
+		additional:['expanded','emits','emitOrder','traitType','instanceType','actions'],
 		properties:{
 			type:{type:'string', placeholder:'Entity type name'},
 			description:{type:'richtext'},
@@ -103,6 +103,17 @@ const entities = 	[
 					 }else{
 						 return 'trait'
 					 }
+				}
+			},
+			instanceType:{
+				type:'string',
+				default:(spec)=>{
+					if(spec && typeof spec === 'object' && (spec.name || spec.type)){
+						const name = spec.name || spec.type;
+						//TODO need to use linguistic library for this
+						const useAn = ['a','i','o','u','h'].includes(name[0]);
+						return (useAn?'an ':'a ') + name;
+					}
 				}
 			},
 			properties:{
@@ -328,7 +339,7 @@ const entities = 	[
 		show:['type','placeholder'],
 		additional:['description','value','expanded','hashSpec','emits','readonly'],
 		properties:{
-			type:{type:'a property type',placeholder:'property type'},
+			type:{type:'string',placeholder:'property type'},
 			placeholder:{type:'string'},
 			expanded:{type:'boolean'},
 			hashSpec:{type:'property spec',placeholder:'Define type for dictionary objects'},
