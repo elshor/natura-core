@@ -227,10 +227,7 @@ export default class Dictionary{
 
 		//add the type to the repos
 		unique(spec.isa).forEach(parent=>{
-			if(!Array.isArray(this.isaRepo[parent])){
-				this.isaRepo[parent] = [];
-			}
-			this.isaRepo[parent].push(type);
+			this._registerIsa(type,parent);
 		});
 		this.repo[type]=spec;
 
@@ -241,8 +238,17 @@ export default class Dictionary{
 			}
 			this.valueTypeRepo[spec.valueType].push(type);
 		}
+		//register instanceType
+		if(spec.instanceType){
+			this._registerIsa(spec.instanceType,'property type');
+		}
 	}
-
+	_registerIsa(type,parent){
+		if(!Array.isArray(this.isaRepo[parent])){
+			this.isaRepo[parent] = [];
+		}
+		this.isaRepo[parent].push(type);
+	}
 	async _loadPackage(pckg){
 		const pkgObject = entityType(pckg) === 'string'?await loadPackage(pckg) : pckg;
 		assume(entityType(pkgObject) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");
