@@ -152,5 +152,5 @@ const sourceScore = {
 };
 
 function isPrimitive(x){
-	return ['boolean','string','number'].includes(typeof value);
+	return ['boolean','string','number'].includes(typeof x);
 }
