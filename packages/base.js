@@ -180,11 +180,11 @@ const entities = 	[
 		}
 	},
 	{
-		pattern:'if <<condition to test>> then <<action to perform>>',
+		pattern:'if <<condition>> then <<action>>',
 		isa:['action'],
 		properties:{
-			'condition to test':{type:'condition',placeholder:'condition to test'},
-			'action to perform':{type:'action',placeholder:'action to perform'}
+			'condition':{type:'condition'},
+			'action':{type:'action',placeholder:'action to perform'}
 		}
 	},
 	{
