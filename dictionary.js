@@ -31,13 +31,18 @@ export default class Dictionary{
 			//a class is always itself - e.g. an action is an action
 			return true;
 		}
+		if(!type){
+			return false;
+		}
+		if(className === 'any'){
+			return true;
+		}
 		const spec = this.getTypeSpec(type);
 		const ret = spec !== undefined &&
 			spec.isa !== undefined &&
 			spec.isa.includes(className);
 		return ret;
 	}
-
 	resetVersion(){
 		this.version = ''+(Number(new Date()) - new Date('2020-01-01')+Math.random()).toString(36).replace('.','');
 	}
