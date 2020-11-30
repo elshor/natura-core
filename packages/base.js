@@ -197,13 +197,13 @@ const entities = 	[
 		}
 	},
 	{
-		pattern:'if <<condition to test>> then do the following',
+		name: 'action sequence to perform',
+		template:'do the following actions',
 		isa:['action'],
-		show:['actions'],
+		show:['sequence'],
 		expanded:true,
 		properties:{
-			'condition to test':{type:'assertion',placeholder:'condition to test'},
-			actions:{type:'action*',expanded:true,hideName:true}
+			sequence:{type:'action*',expanded:true,hideName:true}
 		}
 	},
 	{
