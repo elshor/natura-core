@@ -27,6 +27,9 @@ class Location{
 	get spec(){
 		return locationSpec(this);
 	}
+	get type(){
+		return specType(locationSpec(this));
+	}
 	get expectedSpec(){
 		return locationExpectedSpec(this);
 	}
