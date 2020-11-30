@@ -1,3 +1,4 @@
+import { specIsa } from "../spec";
 
 const entities = 	[
 	{
@@ -164,7 +165,14 @@ const entities = 	[
 		isa:['a property type'],
 		calc:function(context){
 			const location = context.$location;
-			const spec = location.parent.child(this.property).referenced.spec;
+			const propertyLocation = location.parent.child(this.property).referenced;
+			let spec;
+			const propertyType = propertyLocation.type;
+			if(specIsa(propertyLocation.spec,'expression')){
+				spec = location.dictionary.getTypeSpec(propertyLocation.spec.valueType);
+			}else{
+				spec = propertyLocation.spec;
+			}
 			return spec.traitType || 'trait';
 		},
 		properties:{
