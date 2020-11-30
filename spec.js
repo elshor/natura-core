@@ -7,6 +7,10 @@ export function specType(spec){
 	return spec? (spec.name || spec.type || specComputedPattern(spec)) : 'any';
 }
 
+export function specIsa(spec,className){
+	return (spec.isa || []).includes(className);
+}
+
 export function specComputedPattern(spec){
 	if(isExpression(spec.displayPattern)){
 		return calc(spec.displayPattern,spec);
