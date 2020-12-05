@@ -1,5 +1,6 @@
 {
   "name": "natura",
+  "type":"module",
   "version": "0.0.1",
   "description": "Core functionality needed to work with natura. This package contains the natura logic without UI. It should be used by the client and server",
   "scripts": {
