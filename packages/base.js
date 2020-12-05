@@ -181,10 +181,16 @@ const entities = 	[
 	},
 	{
 		pattern:'if <<condition>> then <<action>>',
+		name:'condition statement',
 		isa:['action'],
 		properties:{
 			'condition':{type:'condition'},
-			'action':{type:'action',placeholder:'action to perform'}
+			'action':{type:'action',placeholder:'action to perform'},
+			'alternateAction':{
+				type:'action',
+				placeholder:'action if condition is false',
+				title:'otherwise'
+			}
 		}
 	},
 	{
@@ -192,6 +198,7 @@ const entities = 	[
 		template:'do the following actions',
 		isa:['action'],
 		show:['sequence'],
+		expanded:true,
 		properties:{
 			sequence:{type:'action*',expanded:true,hideName:true}
 		}
@@ -227,7 +234,8 @@ const entities = 	[
 			event:{type:'event'},
 			action:{type:'action'}
 		},
-		show:['action']
+		show:['action'],
+		emitOrder:['event','action']
 	},
 	{
 		pattern:'a <<entity>> is <<trait>> when <<expression>>',
@@ -239,6 +247,16 @@ const entities = 	[
 			pattern:{value:({entity,trait})=>{
 				return `<<${entity}>> is ${trait}`
 			}}
+		}
+	},
+	{
+		name:'condition definition',
+		title:'condition expression',
+		isa:['expression definition'],
+		pattern:'<<pattern>>',
+		properties:{
+			pattern:{type:'pattern',placeholder:'the condition pattern'},
+			isa:{value:['condition']}
 		}
 	},
 	{
@@ -301,8 +319,9 @@ const entities = 	[
 		type:'emit ref entry',
 		isa:['emit entry'],
 		pattern:'emit a <<type>> referenced as <<ref>>',
+		show:['expression'],
 		properties:{
-			type:{type:'data type',placeholder:'data type'},
+			type:{type:'entity type',placeholder:'entity type'},
 			ref:{type:'pattern'}
 		}
 	},
@@ -326,17 +345,19 @@ const entities = 	[
 	{
 		type:'emit tag entry',
 		isa:['emit entry'],
+		show:['expression'],
 		pattern:'emit a <<tag>> of type <<type>>',
 		properties:{
 			tag:{type:'string'},
-			type:{type:'data type',placeholder:'data type'}
+			type:{type:'string',placeholder:'data type'}
 		}
 	},
 	{
 		type:'emit type entry',
 		isa:['emit entry'],
+		show:['expression'],
 		properties:{
-			type:{type:'data type',placeholder:'data type'}
+			type:{type:'string',placeholder:'entity type'}
 		},
 		pattern:'emit a <<type>>'
 	},
