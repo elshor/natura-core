@@ -43,6 +43,10 @@ export function getSuggestions(location,filter,spec){
 	//category types suggestions
 	if(dictionary.isClass(expectedType)){
 		dictionary.getClassMembers(expectedType).forEach(type=>{
+			if(expectedType===type){
+				//ignore the class itself
+				return;
+			}
 			const value = generateNewElement(type,null,dictionary);
 			ret.list.push({
 				value: value,
