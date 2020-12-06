@@ -80,5 +80,5 @@ export function specEmits(spec,location){
 }
 
 export function specProperties(spec){
-	return spec.properties;
+	return spec.properties || {};
 }

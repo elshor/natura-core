@@ -200,7 +200,7 @@ const entities = 	[
 		show:['sequence'],
 		expanded:true,
 		properties:{
-			sequence:{type:'action*',expanded:true,hideName:true}
+			sequence:{type:'action*',expanded:true,hideName:true,required:true}
 		}
 	},
 	{
@@ -210,7 +210,7 @@ const entities = 	[
 		show:['sequence'],
 		expanded:true,
 		properties:{
-			sequence:{type:'action*',expanded:true,hideName:true}
+			sequence:{type:'action*',expanded:true,hideName:true,required:true}
 		}
 	},
 	{

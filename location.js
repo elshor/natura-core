@@ -42,6 +42,25 @@ class Location{
 	get isReadOnly(){
 		return locationReadOnly(this);
 	}
+
+	/**
+	 * get the path to the first required property that is empty
+	 */
+	firstMissingProperty(){
+		if(this.isEmpty && this.spec.required){
+			return '';
+		}
+		const properties = specProperties(this.spec);
+		const keys = Object.keys(properties);
+		for(let i=0;i<keys.length;++i){
+			const childPath = this.child(keys[i]).firstMissingProperty();
+			if(childPath !== null){
+				return keys[i] + (childPath.length > 0 ? '/' + childPath : '');
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * the static context to pass to a spec function at a certain location. This function returns execution at edit time, not execution time. It is used to calculate spec proeprties
 	 */
