@@ -502,6 +502,7 @@ const entities = 	[
 		name:'entity definition group',
 		title:'entity folder',
 		isa:['definition group','entity definition'],
+		inlineClass:'folder',//class used to display inline value
 		properties:{
 			name:{
 				type:'text',
@@ -538,6 +539,7 @@ const entities = 	[
 		name:'property definition group',
 		title:'property folder',
 		isa:['definition group','property definition'],
+		inlineClass:'folder',//class used to display inline value
 		properties:{
 			name:{
 				type:'text',
@@ -565,6 +567,7 @@ const entities = 	[
 		name:'expression definition group',
 		title:'expression folder',
 		isa:['definition group','expression definition'],
+		inlineClass:'folder',//class used to display inline value
 		properties:{
 			name:{
 				type:'text',
@@ -592,6 +595,7 @@ const entities = 	[
 		name:'event definition group',
 		title:'event group',
 		isa:['definition group','event definition'],
+		inlineClass:'folder',//class used to display inline value
 		properties:{
 			name:{
 				type:'text',
@@ -619,6 +623,7 @@ const entities = 	[
 		name:'action definition group',
 		isa:['definition group','action definition'],
 		pattern:'<<name>>',
+		inlineClass:'folder',//class used to display inline value
 		title:'action group',
 		properties:{
 			name:{type:'text',placeholder:'action group name'},
