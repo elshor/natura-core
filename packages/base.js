@@ -137,13 +137,13 @@ const entities = 	[
 	},
 	{
 		type:'selection entity',
-		isa:['entity definition'],
+		isa:['property definition'],
 		description:'An entity that its value can be one of a predefined list of strings',
 		show:['description','options'],
 		pattern:'<<type>> - a selection',
 		properties:{
-			type:{type:'string',placeholder:'Name of the type'},
-			options:{type:'string*',expanded:true},
+			type:{type:'text',placeholder:'Name of the type'},
+			options:{type:'text*',expanded:true},
 			description:{type:'richtext',placeholder:'Type description here'}
 		}
 	},
@@ -216,6 +216,7 @@ const entities = 	[
 	{
 		type:'basic event definition',
 		isa:'event definition',
+		title:'event definition',
 		pattern:'<<pattern>>',
 		show:['pattern','description','properties','emits'],
 		additional:['show'],
@@ -366,7 +367,7 @@ const entities = 	[
 		description: 'Specification of an object property.',
 		pattern:'<<type>>',
 		show:['type','placeholder'],
-		additional:['description','value','expanded','hashSpec','emits','readonly'],
+		additional:['description','value','expanded','required','hashSpec','emits','readonly','title'],
 		properties:{
 			type:{type:'string',placeholder:'property type'},
 			placeholder:{type:'string'},
@@ -384,7 +385,9 @@ const entities = 	[
 			childSpec:{
 				type:'property spec',
 				description:'Define spec for properties array items'
-			}
+			},
+			title:{type:'text',title:'title'},
+			required:{type:'boolean'}
 		}
 	},
 	{
