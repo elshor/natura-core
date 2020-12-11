@@ -13,6 +13,7 @@ export function parsePattern(text=''){
 	parsed.forEach(element=>{
 		const parsed = element.match(/^<<(.+)>>$/);
 		if(parsed){
+			//this is a field
 			const field = {type:parsed[1]};
 			if(numerators[field.type] === undefined){
 				numerators[field.type] = 0;
