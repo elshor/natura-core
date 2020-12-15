@@ -82,3 +82,11 @@ export function specEmits(spec,location){
 export function specProperties(spec){
 	return spec.properties || {};
 }
+
+/**
+ * Return true if this spec is a selection of options and not a primitive value
+ * @param {Spec} spec 
+ */
+export function specIsSelection(spec){
+	return Array.isArray(spec.options);
+}
