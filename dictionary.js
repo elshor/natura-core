@@ -81,7 +81,7 @@ export default class Dictionary{
 		if(!type){
 			return {};
 		}
-		return this.repo[type] || {};
+		return this.repo[type.toString()] || {};
 	}
 	/**
 	 * returns the singular form of a plural type. E.g. getSingular('element*') should return 'element'

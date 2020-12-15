@@ -6,6 +6,7 @@ import {entityType,entityValue} from './entity'
 import i18n from 'src/i18n';
 import {contextSpec, dumpContextOrder} from './context'
 import {patternText} from './pattern'
+import Type from './type'
 
 export function createLocation(data,dictionary=new Dictionary(),path=''){
 	return new Location(data,dictionary,path,i18n());
@@ -192,7 +193,7 @@ function locationSpec(location){
 	}
 	if(entityType(value) ==='object' && value !== null && value.$type){
 		//use explicit type
-		actualSpec = location.dictionary.getTypeSpec(value.$type);
+		actualSpec = location.dictionary.getTypeSpec(Type(value.$type,location));
 	}else if(specType(expectedSpec) === 'any' && value !== undefined){
 		//there is no expected spec - try to deduce it from actual value
 		const type = entityType(value);
@@ -281,12 +282,12 @@ function locationExpectedSpec(location){
 		childSpec.type = childSpec.type || itemType(specType(parentSpec));
 		return mergeSpec(
 			childSpec,
-			location.dictionary.getTypeSpec(itemType(specType(parentSpec)))
+			location.dictionary.getTypeSpec(Type(itemType(specType(parentSpec)),this))
 		);
 	}else if(parentSpec.hashSpec){
 		return mergeSpec(
 			parentSpec.hashSpec,
-			location.dictionary.getTypeSpec(specType(parentSpec.hashSpec))
+			location.dictionary.getTypeSpec(Type(parentSpec.hashSpec.type,location))
 		);
 	}else{
 		const pathSegments = JsonPointer.decode(location.path);
@@ -294,7 +295,7 @@ function locationExpectedSpec(location){
 		const parentProperties = specProperties(parentSpec,location.dictionary);
 		if(parentProperties && parentProperties[propertyName]){
 			const propertySpec = parentProperties[propertyName] || {};
-			const typeSpec = location.dictionary.getTypeSpec(specType(propertySpec));
+			const typeSpec = location.dictionary.getTypeSpec(Type(propertySpec.type,location));
 			return mergeSpec(typeSpec,propertySpec);
 		}else{
 			return {type:'any'};

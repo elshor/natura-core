@@ -6,6 +6,15 @@ const entities = 	[
 		isa:['property type']
 	},
 	{
+		type:'copy type',
+		description:'A type derived from the value of a property value. This can be used to derive the type of default value based on the type defined in the property spec',
+		properties:{
+			property:{
+				description:'property to copy the value of type from. This is used to define a type that is copied from a property value'
+			}
+		}
+	},
+	{
 		type:'package',
 		show:['name','description','entityTypes','propertyTypes','events','expressions','actions'],
 		properties:{
@@ -185,7 +194,7 @@ const entities = 	[
 		isa:['action'],
 		properties:{
 			'condition':{type:'condition'},
-			'action':{type:'action',placeholder:'action to perform'},
+			'action':{type:'action',placeholder:'action to perform', description:"Specify here the action to perform when the condition is true."},
 			'alternateAction':{
 				type:'action',
 				placeholder:'action if condition is false',
@@ -367,17 +376,20 @@ const entities = 	[
 		description: 'Specification of an object property.',
 		pattern:'<<type>>',
 		show:['type','placeholder'],
-		additional:['description','value','expanded','required','hashSpec','emits','readonly','title'],
+		additional:['description','default','value','expanded','required','hashSpec','emits','readonly','title'],
 		properties:{
 			type:{type:'string',placeholder:'property type'},
 			placeholder:{type:'string'},
 			expanded:{type:'boolean'},
 			hashSpec:{type:'property spec',placeholder:'Define type for dictionary objects'},
 			value:{
-				type:'any',
 				description:"When the value property is specified, the value of the entity's property is always `value`. When generating a new instance of the entity, a get function is defined for the property using value. If value is a function then the getter is defined as the functino. Otherwise, it always returns value."
 			},
-			default:{description:'default value of the property in case no value was explicitly set. Default can be an expression that is recalculated dynamically when the property value is checked for'},
+			default:{
+				description:'default value of the property in case no value was explicitly set. Default can be an expression that is recalculated dynamically when the property value is checked for',
+				placeholder:'Default value of the property',
+				type: {$type:'copy type',property:'type'}
+			},
 			init:{description:'value to initialize the property with. The init value is only set at initialization of the object'},
 			description:{type:'richtext',placeholder:'Description fo the property'},
 			emits:{type:'emit entry*'},
