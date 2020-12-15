@@ -43,7 +43,13 @@ class Location{
 	get isReadOnly(){
 		return locationReadOnly(this);
 	}
-
+	/**
+	 * Return the default value at location based on spec's default value
+	 */
+	get default(){
+		const expectedSpec = this.expectedSpec;
+		return calc(expectedSpec.default,this.context);
+	}
 	/**
 	 * get the path to the first required property that is empty
 	 */
