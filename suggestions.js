@@ -50,6 +50,7 @@ export function getSuggestions(location,filter,spec){
 			const value = generateNewElement(type,null,dictionary);
 			ret.list.push({
 				value: value,
+				description: dictionary.getTypeSpec(type).description,
 				source:'class',
 				text: suggestionText(value,itsExpectedSpec,dictionary)
 			});
@@ -81,6 +82,7 @@ export function getSuggestions(location,filter,spec){
 			const value = generateNewElement(type,null,dictionary);
 			ret.list.push({
 				value: value,
+				description: dictionary.getTypeSpec(type).description,
 				source:'expression',
 				text:suggestionText(value,itsExpectedSpec,dictionary)
 			});
