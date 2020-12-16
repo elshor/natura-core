@@ -107,8 +107,8 @@ export function suggestionText(value, spec,dictionary){
 	assume(spec);
 	assume(dictionary);
 	if(value !== null && typeof value === 'object' && value.$type !== undefined){
-		//if there is an explicit type then merge it
-		spec = mergeSpec(spec,dictionary.getTypeSpec(value.$type));
+		//if there is an explicit type then replace it
+		spec = dictionary.getTypeSpec(value.$type);
 	}
 	if(spec.template){
 		return calcTemplate(spec.template,value);
