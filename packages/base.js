@@ -97,7 +97,7 @@ const entities = 	[
 		title:'Object Entity (has properties)',
 		pattern: "<<type>>",
 		show:['pattern','type','title','description','isa','properties','show'],
-		additional:['expanded','emits','emitOrder','traitType','instanceType','actions'],
+		additional:['expanded','emits','emitOrder','traitType','instanceType','actions','inlineDetails'],
 		properties:{
 			type:{type:'string', placeholder:'Entity type name'},
 			description:{type:'richtext'},
@@ -114,6 +114,9 @@ const entities = 	[
 						 return 'trait'
 					 }
 				}
+			},
+			inlineDetails:{
+				options:['collapsed','expanded','none']
 			},
 			instanceType:{
 				type:'string',
@@ -204,17 +207,8 @@ const entities = 	[
 	},
 	{
 		name: 'action sequence to perform',
-		template:'do the following actions',
-		isa:['action'],
-		show:['sequence'],
-		expanded:true,
-		properties:{
-			sequence:{type:'action*',expanded:true,hideName:true,required:true}
-		}
-	},
-	{
-		name: 'action sequence to perform',
-		template:'do the following actions',
+		displayPattern:'do the following actions',
+		inlineDetails:'expanded',
 		isa:['action'],
 		show:['sequence'],
 		expanded:true,
