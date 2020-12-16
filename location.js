@@ -54,11 +54,18 @@ class Location{
 	 * get the path to the first required property that is empty
 	 */
 	firstMissingProperty(){
-		if(this.isEmpty && this.spec.required){
-			return '';
+		if(this.isEmpty){
+			if(this.spec.required){
+				//the value is required but missing - return this path
+				return '';
+			}else{
+				//if the value is empty and not required then finish search
+				return null;
+			}
 		}
-		const properties = specProperties(this.spec);
-		const keys = Object.keys(properties);
+		const spec = this.spec;
+		const properties = specProperties(spec);
+		const keys = spec.show || Object.keys(properties);
 		for(let i=0;i<keys.length;++i){
 			const childPath = this.child(keys[i]).firstMissingProperty();
 			if(childPath !== null){
