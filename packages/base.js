@@ -192,9 +192,10 @@ const entities = 	[
 		}
 	},
 	{
-		pattern:'if <<condition>> then <<action>>',
+		pattern:'if <<condition>> then <<action>> otherwise <<alternateAction>>',
 		name:'condition statement',
 		isa:['action'],
+		show:['action','alternateAction'],
 		properties:{
 			'condition':{type:'condition'},
 			'action':{type:'action',placeholder:'action to perform', description:"Specify here the action to perform when the condition is true."},
