@@ -236,8 +236,16 @@ const entities = 	[
 		type:'event handler',
 		pattern:'when <<event>> then <<action>>',
 		properties:{
-			event:{type:'event'},
-			action:{type:'action'}
+			event:{
+				type:'event',
+				placeholder:'Triggering event',
+				description: 'Select the event to trigger the action'
+			},
+			action:{
+				type:'action',
+				placeholder:'action to perform',
+				description:'Select <b>action</b> to perform when the event is triggered (when even occures)'
+			}
 		},
 		show:['action'],
 		emitOrder:['event','action']
