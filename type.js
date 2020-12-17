@@ -33,3 +33,6 @@ class BaseType{
 	}
 }
 
+export function isCollectionType(type){
+	return type? type.match(/\*$/) !== null : false;
+}
