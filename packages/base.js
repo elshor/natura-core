@@ -643,6 +643,19 @@ const entities = 	[
 		show:['members'],
 		additional:['model']
 	},
+	{
+		name:'join text',
+		title:'join text',
+		isa:'expression',
+		valueType:'string',
+		pattern:'join <<elements>>',
+		properties:{
+			elements:'text*',
+			childSpec:{
+				placeholder:'text to join'
+			}
+		}
+	}
 ]
 
 export default {
