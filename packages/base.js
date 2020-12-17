@@ -244,7 +244,7 @@ const entities = 	[
 			action:{
 				type:'action',
 				placeholder:'action to perform',
-				description:'Select <b>action</b> to perform when the event is triggered (when even occures)'
+				description:'Select <b>action</b> to perform when the event is triggered (when event occurs)'
 			}
 		},
 		show:['action'],
