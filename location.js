@@ -153,6 +153,21 @@ class Location{
 	dumpContextOrder(){
 		return dumpContextOrder(this);
 	}
+
+	/**
+	 * set the value at the location
+	 * @param {*} value value to set
+	 */
+	set(value){
+		console.log('location.set',value);
+		const property = this.property;
+		const parent = this.parent;
+		if(!parent){
+			throw new TypeError(`location top value cannot be set`);
+		}
+		parent.value[property] = value;
+		console.log('... after set',parent.value);
+	}
 }
 
 function previousSibling(location){
@@ -443,8 +458,11 @@ function locationEntity(location){
 	})
 }
 
+/**
+ * convert the location value to raw JSON - calculating default and value properties
+ * @param {Location} location
+ */
 function locationRawValue(location){
-	//convert the location value to raw javascript - calculating default and value properties
 	const value = locationValue(location);
 	if(typeof value !== 'object'){
 		return value;
