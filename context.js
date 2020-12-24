@@ -1,19 +1,29 @@
+/**
+ * Context represents the execution context. It is used to determine which entities are available at each location as suggestions.
+ * <p>An execution context is an array of context entries. Each entry has the following fields:
+ * <li>label - the text used in the suggestion list to identify the entity
+ * <li>type - the type of entity
+ * <li>ref - The reference name used to reference the entity.
+ * @module context
+ */
 import {specEmits,specType} from './spec'
 import {calcPattern} from './pattern'
 
 /**
  * Calculate the expected execution context at a certain location. The spec will ontain al entities available at the input location. An execution function defined at the location can use all these entities.
  * @param {Location} location location of the context
+ * @param {ExecutionContext} outerContext the outer context of the data. This can be used to represent the environment info and external data that can be referenced from within the location context
  */
-export function contextSpec(location){
+export function contextSpec(location, outerContext=[]){
 	const ret = [];
+
 	let current = previousContextLocation(location);//skip current
 	while(current){
 		emitAtLocation(current,ret);
 		current = previousContextLocation(current);
 	}
 
-	return ret;
+	return ret.concat(outerContext);
 }
 
 function emitAtLocation(location,list,defaultEmitSelf=false){
