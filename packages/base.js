@@ -18,7 +18,7 @@ const entities = 	[
 		type:'package',
 		show:['name','description','entityTypes','propertyTypes','events','expressions','actions'],
 		properties:{
-			name:{type:'string',placeholder:'Package name'},
+			name:{type:'text',placeholder:'Package name'},
 			description:{type:'richtext'},
 			expressions:{
 				type:'expression definition group',
@@ -99,14 +99,14 @@ const entities = 	[
 		show:['pattern','type','title','description','isa','properties','show'],
 		additional:['expanded','emits','emitOrder','traitType','instanceType','actions','inlineDetails'],
 		properties:{
-			type:{type:'string', placeholder:'Entity type name'},
+			type:{type:'name', placeholder:'Entity type name'},
 			description:{type:'richtext'},
-			pattern:{type:'string',placeholder:'entity type name',description:'The name of the entity - can be a pattern'},
-			emitOrder:{type:'string*'},
-			isa:{type:'string*',template:'{{this}}',title:'is a'},
+			pattern:{type:'name',placeholder:'entity type name',description:'The name of the entity - can be a pattern'},
+			emitOrder:{type:'name*'},
+			isa:{type:'name*',template:'{{this}}',title:'is a'},
 			hashSpec:{type:'property spec'},
 			traitType:{
-				type:'string',
+				type:'name',
 				default:(spec)=>{
 					if(spec && typeof spec === 'object' && (spec.name || spec.type)){
 						return (spec.name || spec.type) + ' trait';
@@ -134,7 +134,7 @@ const entities = 	[
 				expanded:true,
 				type: 'hash'
 			},
-			show:{type:'string*',template:'{{this}}'},
+			show:{type:'name*',template:'{{this}}'},
 			mustShow:{
 				type:'boolean',
 				description:
@@ -143,7 +143,7 @@ const entities = 	[
 			},
 			emits:{type:'emit entry*'},
 			expanded:{type:'boolean'},
-			title:{type:'string',placeholder:'name of the entity',description:'This will be used instead of the pattern when displaying suggestions'},
+			title:{type:'text',placeholder:'name of the entity',description:'This will be used instead of the pattern when displaying suggestions'},
 			actions:{type:'entity action*',expanded:true}
 		}
 	},
@@ -348,7 +348,7 @@ const entities = 	[
 		pattern:'emit property <<property>>',
 		isa:['emit entry'],
 		properties:{
-			property:{type:'string',placeholder:'property to emit'}
+			property:{type:'name',placeholder:'property to emit'}
 		}
 	},
 	{
@@ -361,8 +361,8 @@ const entities = 	[
 		show:['expression'],
 		pattern:'emit a <<tag>> of type <<type>>',
 		properties:{
-			tag:{type:'string'},
-			type:{type:'string',placeholder:'data type'}
+			tag:{type:'name'},
+			type:{type:'name',placeholder:'data type'}
 		}
 	},
 	{
@@ -379,7 +379,7 @@ const entities = 	[
 		description: 'Specification of an object property.',
 		pattern:'<<type>>',
 		show:['type','placeholder'],
-		additional:['description','default','value','expanded','required','hashSpec','emits','readonly','title'],
+		additional:['description','default','value','expanded','required','hashSpec','emits','readonly','title','actions'],
 		properties:{
 			type:{type:'string',placeholder:'property type'},
 			placeholder:{type:'string'},
@@ -395,6 +395,7 @@ const entities = 	[
 			},
 			init:{description:'value to initialize the property with. The init value is only set at initialization of the object'},
 			description:{type:'richtext',placeholder:'Description fo the property'},
+			actions:{type:'entity action*',expanded:true},
 			emits:{type:'emit entry*'},
 			readonly:{type:'boolean'},
 			childSpec:{
