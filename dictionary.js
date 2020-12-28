@@ -191,7 +191,7 @@ export default class Dictionary{
 				entity.model.isa.forEach(type=>{
 					this._processDefinition({type:type},memberModel)
 				});
-			}	
+			}
 			for(let i=0;i<entity.members.length;++i){
 				this._processDefinition(entity.members[i],memberModel);
 			}
@@ -205,6 +205,11 @@ export default class Dictionary{
 	}
 
 	_processPackage(pkg){
+		const pkgSpec = this.getTypeSpec(pkg.$type);
+		if(typeof pkgSpec.register === 'function'){
+			//register function defined for the package - process it
+			pkgSpec.register(this,pkg.$type,pkg);
+		}
 		for(let p in pkg){
 			if(this._isDefinitionGroup(pkg[p])){
 				this._processDefinition(pkg[p]);
@@ -216,9 +221,14 @@ export default class Dictionary{
 	 * Register a type in the dictionary
 	 * @param {String} type the type to register. This will be used to retreive the type
 	 * @param {Object} spec the spec body
-	 * @param {String} isa an array of class names the type is part of (isa relationship)
 	 */
 	_registerType(type,spec){
+		const specType = spec.$type;
+		const specTypeSpec = this.getTypeSpec(specType);
+		if(typeof specTypeSpec.register === 'function'){
+			//the spec defines its own register function - use it
+			return specTypeSpec.register(this,type,spec);
+		}
 		//normalize structure of type spec
 		//isa
 		spec.isa = spec.isa || [];
