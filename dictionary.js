@@ -19,6 +19,8 @@ export default class Dictionary{
 		this.isaRepo = {};
 		this.valueTypeRepo = {};
 		this.collectionRepo = [];
+		this.instances = {};
+		this.instancePaths = {};
 		this._registerType('entity definition group',{isa:['definition group']});
 	}
 
@@ -145,6 +147,30 @@ export default class Dictionary{
 			return false;
 		}
 		return this.isa(entity.$type,'definition group');
+	}
+	_registerInstance(identifier, type, path, value,scope="*"){
+		if(!this.instances[type]){
+			this.instances[type] = [];
+		}
+		this.instances[type].push({
+			path,
+			type,
+			label:identifier,
+			ref:identifier,
+			value,
+			scope
+		});
+		this.instancePaths[path] = value;
+	}
+
+	getInstancesByType(type,scope='*'){
+		return (this.instances[type]||[]).filter(entry=>{
+			return scope==='*'?true:entry.scope===scope?true:false;
+		});
+	}
+
+	getInstanceByPath(path){
+		return this.instancePaths[path];
 	}
 
 	_processDefinition(entity,model={}){

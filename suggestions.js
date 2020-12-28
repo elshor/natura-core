@@ -57,7 +57,24 @@ export function getSuggestions(location,filter,spec){
 		});
 	}
 
-	//context entities
+	//dictionary instances
+	const entries = dictionary.getInstancesByType(expectedType);
+	//TODO check scope
+	entries.forEach(entry=>{
+		ret.list.push({
+			value:{
+				$type:'reference',
+				label:entry.label,
+				valueType:entry.type,
+				path:entry.path
+			},
+			source:'env',
+			text:entry.label,
+			path:entry.path
+		})
+	})
+
+	//context instances
 	const context = location.contextSpec;
 	context.forEach(entry=>{
 		if(entry.type === expectedType){
@@ -153,8 +170,9 @@ function comp(a,b){
 const sourceScore = {
 	option:0.9,
 	context:0.8,
-	class:0.7,
-	expression:0.6
+	class:0.6,
+	expression:0.5,
+	env:0.7
 };
 
 function isPrimitive(x){
