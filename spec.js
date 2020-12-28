@@ -85,8 +85,8 @@ export function specProperties(spec){
 
 /**
  * Return true if this spec is a selection of options and not a primitive value
- * @param {Spec} spec 
+ * @param {Spec} spec
  */
 export function specIsSelection(spec){
-	return Array.isArray(spec.options);
+	return spec.options !== undefined && spec.options !== null;
 }
