@@ -361,7 +361,7 @@ function asNumber(n){
  */
 function canUseExpressions(location){
 	const parentSpec = location.parent.spec;
-	const possibleParentTypes = ['expression','action','assertion','data type','event'];
+	const possibleParentTypes = ['expression','action','assertion','data type','event','calculated type'];
 	if((parentSpec.isa||[]).find(item=>possibleParentTypes.includes(item))){
 		return true;
 	}else{
