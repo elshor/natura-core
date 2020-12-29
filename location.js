@@ -304,7 +304,7 @@ function locationExpectedSpec(location){
 		return {type:'any'};
 	}
 	const parentSpec = locationSpec(parent) || {type:'any'};
-	if(isCollectionType(specType(parentSpec))){
+	if(Type(specType(parentSpec),location).isCollection){
 		//its parent is an array
 		const childSpec = parentSpec.childSpec || {};
 		childSpec.type = childSpec.type || itemType(specType(parentSpec));

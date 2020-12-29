@@ -29,10 +29,9 @@ class BaseType{
 		this.type = type;
 	}
 	toString(){
-		return this.type.toString();
+	get isCollection(){
+		const str = this.toString();
+		return str? str.match(/\*$/) !== null : false;
 	}
 }
 
-export function isCollectionType(type){
-	return type? type.match(/\*$/) !== null : false;
-}
