@@ -2,11 +2,11 @@ import { specIsa } from "../spec";
 
 const entities = 	[
 	{
-		type:'any',
+		name:'any',
 		isa:['property type']
 	},
 	{
-		type:'copy type',
+		name:'copy type',
 		description:'A type derived from the value of a property value. This can be used to derive the type of default value based on the type defined in the property spec',
 		properties:{
 			property:{
@@ -15,7 +15,7 @@ const entities = 	[
 		}
 	},
 	{
-		type:'package',
+		name:'package',
 		show:['name','description','entityTypes','propertyTypes','events','expressions','actions'],
 		properties:{
 			name:{type:'text',placeholder:'Package name'},
@@ -77,11 +77,11 @@ const entities = 	[
 		}
 	},
 	{
-		type:'entity definition',
+		name:'entity definition',
 		placeholder:'Click to choose the type of entity you want to create'
 	},
 	{
-		type:'calculated expression',
+		name:'calculated expression',
 		isa:['expression definition'],
 		title:'calculated expression',
 		pattern:'<<pattern>> (<<valueType>>)',
@@ -92,7 +92,7 @@ const entities = 	[
 		}
 	},
 	{
-		type:'object entity definition',
+		name:'object entity definition',
 		isa:['entity definition','property definition'],
 		title:'Object Entity (has properties)',
 		pattern: "<<type>>",
@@ -148,7 +148,7 @@ const entities = 	[
 		}
 	},
 	{
-		type:'selection entity',
+		name:'selection entity',
 		isa:['property definition'],
 		description:'An entity that its value can be one of a predefined list of strings',
 		show:['description','options'],
@@ -160,19 +160,19 @@ const entities = 	[
 		}
 	},
 	{
-		type:'id',
+		name:'id',
 		isa:['string','property type']
 	},
 	{
-		type:'number',
+		name:'number',
 		isa:[,'property type','data type']
 	},
 	{
-		type:'trait assertion',
+		name:'trait assertion',
 		isa:['expression']
 	},
 	{
-		type:'property trait',
+		name:'property trait',
 		pattern:'trait of <<property>>',
 		isa:['a property type'],
 		calc:function(context){
@@ -218,7 +218,7 @@ const entities = 	[
 		}
 	},
 	{
-		type:'basic event definition',
+		name:'basic event definition',
 		isa:'event definition',
 		title:'event definition',
 		pattern:'<<pattern>>',
@@ -233,7 +233,7 @@ const entities = 	[
 		},
 	},
 	{
-		type:'event handler',
+		name:'event handler',
 		pattern:'when <<event>> then <<action>>',
 		properties:{
 			event:{
@@ -251,6 +251,7 @@ const entities = 	[
 		emitOrder:['event','action']
 	},
 	{
+		name:'trait definition',
 		pattern:'a <<entity>> is <<trait>> when <<expression>>',
 		isa:["expression definition"],
 		show:['entity','trait','expression'],
@@ -317,19 +318,19 @@ const entities = 	[
 		}
 	},
 	{
-		type:'text',
+		name:'text',
 		isa:['string','property type','data type'],
 		placeholder:'Enter the text'
 	},
 	{
-		type:'emit entry',
+		name:'emit entry',
 	},
 	{
-		type:'pattern',
+		name:'pattern',
 		isa:['string','property type'],
 	},
 	{
-		type:'emit ref entry',
+		name:'emit ref entry',
 		isa:['emit entry'],
 		pattern:'emit a <<type>> referenced as <<ref>>',
 		show:['expression'],
@@ -339,12 +340,12 @@ const entities = 	[
 		}
 	},
 	{
-		type:'emit children',
+		name:'emit children',
 		pattern:'emit children',
 		isa:['emit entry']
 	},
 	{
-		type:'emit property',
+		name:'emit property',
 		pattern:'emit property <<property>>',
 		isa:['emit entry'],
 		properties:{
@@ -352,11 +353,11 @@ const entities = 	[
 		}
 	},
 	{
-		type:'reference',
+		name:'reference',
 		template: '{{label}}'
 	},
 	{
-		type:'emit tag entry',
+		name:'emit tag entry',
 		isa:['emit entry'],
 		show:['expression'],
 		pattern:'emit a <<tag>> of type <<type>>',
@@ -366,7 +367,7 @@ const entities = 	[
 		}
 	},
 	{
-		type:'emit type entry',
+		name:'emit type entry',
 		isa:['emit entry'],
 		show:['expression'],
 		properties:{
@@ -375,7 +376,7 @@ const entities = 	[
 		pattern:'emit a <<type>>'
 	},
 	{
-		type:'property spec',
+		name:'property spec',
 		description: 'Specification of an object property.',
 		pattern:'<<type>>',
 		show:['type','placeholder'],
@@ -407,7 +408,7 @@ const entities = 	[
 		}
 	},
 	{
-		type:'script',
+		name:'script',
 		description:'default script. set the package to the package defining the script type you would like to use',
 		show:['name','description','packages'],
 		properties:{
@@ -417,27 +418,27 @@ const entities = 	[
 		}
 	},
 	{
-		type:'richtext',
+		name:'richtext',
 		isa:['property type'],
 		viewer: 'richtext-editor',
 	},
 	{
-		type:'boolean',
+		name:'boolean',
 		isa:['property type'],
 		viewer:'boolean-viewer'
 	},
 	{
-		type:'name',
+		name:'name',
 		isa:['string','property type'],
 		placeholder:'Enter the name'
 	},
 	{
-		type:'url',
+		name:'url',
 		isa:['string','property type'],
 		placeholder:'Enter URL'
 	},
 	{
-		type:'basic action definition',
+		name:'basic action definition',
 		isa:'action definition',
 		title:'define an action',
 		pattern:'<<pattern>>',
@@ -455,22 +456,22 @@ const entities = 	[
 		}
 	},
 	{
-		type:'expression'
+		name:'expression'
 	},
 	{
-		type:'data type',
+		name:'data type',
 		options:function({$location}){
 			return $location.dictionary.getClassMembers('data type');
 		}
 	},
 	{
-		type:'entity type',
+		name:'entity type',
 		options:function({$location}){
 			return $location.dictionary.getClassMembers('entity type');
 		}
 	},
 	{
-		type:'a property type',
+		name:'a property type',
 		options:function({$location}){
 			return $location.dictionary.getClassMembers('property type');
 		}
