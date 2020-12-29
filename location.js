@@ -108,9 +108,6 @@ class Location{
 		return specType(this.spec) === 'reference'
 	}
 
-	get canUseExpressions(){
-		return canUseExpressions(this);
-	}
 	/**
 	 * Check if location value is empty i.e. equals undefined or null
 	 */
@@ -353,21 +350,6 @@ function asNumber(n){
 		return Number.parseFloat(n);
 	}else{
 		return null;
-	}
-}
-
-/**
- * Check if at this location, user can insert an expression instead of a static value. This depends on the parent spec. It it is one of the possible parent types (like expression or action) then return true.
- * @param {Location} location
- * @returns {Boolean}
- */
-function canUseExpressions(location){
-	const parentSpec = location.parent.spec;
-	const possibleParentTypes = ['expression','action','assertion','data type','event','calculated type'];
-	if((parentSpec.isa||[]).find(item=>possibleParentTypes.includes(item))){
-		return true;
-	}else{
-		return false;
 	}
 }
 

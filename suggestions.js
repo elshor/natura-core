@@ -1,4 +1,4 @@
-import { specType, valueSpec, specComputedPattern, mergeSpec} from "./spec";
+import { specType, valueSpec, specComputedPattern} from "./spec";
 import { assume } from "./error";
 import { generateNewElement } from "src/components/utils";
 import {calcTemplate} from './template'
@@ -93,19 +93,17 @@ export function getSuggestions(location,filter,spec){
 	});
 
 	//dictionary expressions
-	if(location.canUseExpressions){
-		const types = dictionary.getExpressionsByValueType(expectedType);
-		types.forEach(type=>{
-			const value = generateNewElement(type,null,dictionary);
-			ret.list.push({
-				value: value,
-				description: dictionary.getTypeSpec(type).description,
-				source:'expression',
-				text:suggestionText(value,itsExpectedSpec,dictionary)
-			});
+	const types = dictionary.getExpressionsByValueType(expectedType);
+	types.forEach(type=>{
+		const value = generateNewElement(type,null,dictionary);
+		ret.list.push({
+			value: value,
+			description: dictionary.getTypeSpec(type).description,
+			source:'expression',
+			text:suggestionText(value,itsExpectedSpec,dictionary)
 		});
-	}
-
+		});
+	
 	ret.list = ret.list.filter(item=>
 		item.text.toLowerCase().includes(filter.toLowerCase())
 	);
