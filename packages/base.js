@@ -33,8 +33,8 @@ const entities = 	[
 			},
 			entityTypes:{
 				type:'entity definition group',
-				title:'entity types',
-				description:'List of entity types defined in this package',
+				title:'application types',
+				description:'List of application types that may be used in the application.',
 				displayInline:false,
 				expanded:true,
 				init:{
