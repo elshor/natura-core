@@ -1,11 +1,15 @@
 import {IllegalType} from './error.js'
+import calc from "./calc";
 
 export default function Type(type,location){
 	if(typeof type === 'string'){
 		return new BaseType(type);
 	}
+	if(typeof type === 'function'){
+		return new BaseType(calc(type,location.context));
+	}
 	if(type === undefined || type === null){
-		return undefined;
+		return new BaseType(undefined);
 	}
 	if(type instanceof BaseType){
 		return type;
@@ -29,6 +33,8 @@ class BaseType{
 		this.type = type;
 	}
 	toString(){
+		return this.type? this.type.toString() : 'any';
+	}
 	get isCollection(){
 		const str = this.toString();
 		return str? str.match(/\*$/) !== null : false;

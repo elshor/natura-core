@@ -331,10 +331,6 @@ function locationExpectedSpec(location){
 	}
 }
 
-function isCollectionType(type){
-	return type? type.match(/\*$/) !== null : false;
-}
-
 function itemType(type){
 	return type.match(/^(.+)\*$/)[1];
 }
