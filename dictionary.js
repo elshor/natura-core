@@ -121,9 +121,6 @@ export default class Dictionary{
 			return [];
 		}
 	}
-	isClass(type){
-		return this.isaRepo[type] !== undefined;
-	}
 
 	getTypes(){
 		if(this.repo){
