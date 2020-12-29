@@ -690,6 +690,9 @@ function defaultDefinitionModel(context){
 		return {$type:'definition model'};
 	}
 	const location = context.$location;
+	if(typeof location.parent.value !== 'object'){
+		return {$type:'definition model'};
+	}
 	const name = location.parent.value.name;
 	if(typeof name !== 'string'){
 		return {$type:'definition model'} ;
