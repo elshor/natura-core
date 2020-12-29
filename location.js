@@ -9,7 +9,13 @@ import {patternText} from './pattern'
 import Type from './type'
 
 export function createLocation(data,dictionary=new Dictionary(),path=''){
-	return new Location(data,dictionary,path,i18n());
+	if(path.startsWith('$dictionary/')){
+		//the location references an instance from the dictionary
+		const value = dictionary.getInstanceByPath(path);
+		return new Location(value,dictionary,'',i18n());
+	}else{
+		return new Location(data,dictionary,path,i18n());
+	}
 }
 
 class Location{
