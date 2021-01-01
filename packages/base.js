@@ -93,15 +93,25 @@ const entities = 	[
 	},
 	{
 		name:'object entity definition',
-		isa:['entity definition','property definition'],
+		isa:['property definition'],
 		title:'Object Entity (has properties)',
-		pattern: "<<type>>",
-		show:['pattern','type','title','description','isa','properties','show'],
-		additional:['expanded','emits','emitOrder','traitType','instanceType','actions','inlineDetails'],
+		pattern: "<<name>>",
+		show:['pattern','name','title','description','isa','properties','show'],
+		additional:['expanded','context','emitOrder','scope','traitType','instanceType','actions','inlineDetails'],
 		properties:{
-			type:{type:'name', placeholder:'Entity type name'},
+			name:{
+				type:'name', 
+				placeholder:'type name',
+				default:(spec)=>{
+					if(spec && typeof spec === 'object'){
+						return spec.pattern;
+					 }else{
+						 return undefined
+					 }
+				}
+			},
 			description:{type:'richtext'},
-			pattern:{type:'name',placeholder:'entity type name',description:'The name of the entity - can be a pattern'},
+			pattern:{type:'name',placeholder:'property pattern',description:'the pattern used to show the property'},
 			emitOrder:{type:'name*'},
 			isa:{type:'name*',template:'{{this}}',title:'is a'},
 			hashSpec:{type:'property spec'},
@@ -141,7 +151,8 @@ const entities = 	[
 					'Determine if the "show" properties should be displayed' +
 					' after initializing the entity with the inline pattern.'
 			},
-			emits:{type:'emit entry*'},
+			context:{type:'context entry*'},
+			scope:{type:'scope entry*'},
 			expanded:{type:'boolean'},
 			title:{type:'text',placeholder:'name of the entity',description:'This will be used instead of the pattern when displaying suggestions'},
 			actions:{type:'entity action*',expanded:true}
@@ -222,13 +233,13 @@ const entities = 	[
 		isa:'event definition',
 		title:'event definition',
 		pattern:'<<pattern>>',
-		show:['pattern','description','properties','emits'],
+		show:['pattern','description','properties','context'],
 		additional:['show'],
 		properties:{
 			pattern:{type:'pattern',placeholder:'Type in the event pattern',description:'The event pattern is how the pattern is refered to. E.g. user clicks on <<element>>'},
 			description:{type:'richtext'},
 			properties:{hashSpec:{type:'property spec'},expanded:true},
-			emits:{expanded:false,type:'emit entry*'},
+			context:{expanded:false,type:'context entry*'},
 			show:{type:'string*'}
 		},
 	},
@@ -323,31 +334,41 @@ const entities = 	[
 		placeholder:'Enter the text'
 	},
 	{
-		name:'emit entry',
+		name:'context entry',
 	},
 	{
 		name:'pattern',
 		isa:['string','property type'],
 	},
 	{
-		name:'emit ref entry',
-		isa:['emit entry'],
-		pattern:'emit a <<type>> referenced as <<ref>>',
+		name:'basic emit',
+		isa:['context entry'],
+		pattern:'emit a <<type>> referenced as <<name>>',
 		show:['expression'],
 		properties:{
-			type:{type:'entity type',placeholder:'entity type'},
-			ref:{type:'pattern'}
+			type:{type:'text',placeholder:'entity type'},
+			name:{type:'pattern'}
 		}
 	},
 	{
-		name:'emit children',
-		pattern:'emit children',
-		isa:['emit entry']
+		name:'scope entry',
+		placeholder:'add to scope of this entity'
+	},
+	{
+		name:'use scope',
+		pattern:'use scope of <<property>>',
+		isa:['scope entry'],
+		properties:{
+			property:{
+				type:'name',
+				placeholder:'name of property'
+			}
+		}
 	},
 	{
 		name:'emit property',
 		pattern:'emit property <<property>>',
-		isa:['emit entry'],
+		isa:['context entry'],
 		properties:{
 			property:{type:'name',placeholder:'property to emit'}
 		}
@@ -357,30 +378,11 @@ const entities = 	[
 		template: '{{label}}'
 	},
 	{
-		name:'emit tag entry',
-		isa:['emit entry'],
-		show:['expression'],
-		pattern:'emit a <<tag>> of type <<type>>',
-		properties:{
-			tag:{type:'name'},
-			type:{type:'name',placeholder:'data type'}
-		}
-	},
-	{
-		name:'emit type entry',
-		isa:['emit entry'],
-		show:['expression'],
-		properties:{
-			type:{type:'string',placeholder:'entity type'}
-		},
-		pattern:'emit a <<type>>'
-	},
-	{
 		name:'property spec',
 		description: 'Specification of an object property.',
 		pattern:'<<type>>',
 		show:['type','placeholder'],
-		additional:['description','default','value','expanded','required','hashSpec','emits','readonly','title','actions'],
+		additional:['description','default','value','expanded','required','hashSpec','readonly','title','actions'],
 		properties:{
 			type:{type:'string',placeholder:'property type'},
 			placeholder:{type:'string'},
@@ -397,7 +399,6 @@ const entities = 	[
 			init:{description:'value to initialize the property with. The init value is only set at initialization of the object'},
 			description:{type:'richtext',placeholder:'Description fo the property'},
 			actions:{type:'entity action*',expanded:true},
-			emits:{type:'emit entry*'},
 			readonly:{type:'boolean'},
 			childSpec:{
 				type:'property spec',
@@ -442,17 +443,17 @@ const entities = 	[
 		isa:'action definition',
 		title:'define an action',
 		pattern:'<<pattern>>',
-		show:['pattern','description','properties','do','emits'],
-		additional:['show','emitOrder'],
+		show:['pattern','description','properties','do'],
+		additional:['show','emitOrder','context'],
 		placeholder:'Click to choose the type of action to define',
 		properties:{
 			description:{type:'richtext'},
 			pattern:{type:'pattern',placeholder:'pattern to use for this action'},
 			properties:{hashSpec:{type:'property spec'}},
-			emits:{expanded:true,type:'emit entry*'},
 			emitOrder:{type:'string*'},
 			do:{type:'action'},
-			show:{type:'string*'}
+			show:{type:'string*'},
+			context:{expanded:true,type:'context entry*'},
 		}
 	},
 	{
