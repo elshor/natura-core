@@ -1,121 +1,106 @@
-/**
- * Context represents the execution context. It is used to determine which entities are available at each location as suggestions.
- * <p>An execution context is an array of context entries. Each entry has the following fields:
- * <li>label - the text used in the suggestion list to identify the entity
- * <li>type - the type of entity
- * <li>ref - The reference name used to reference the entity.
- * @module context
- */
-import {specEmits,specType} from './spec'
-import {calcPattern} from './pattern'
+import {computeSpecProperty} from './spec'
 
 /**
- * Calculate the expected execution context at a certain location. The spec will ontain al entities available at the input location. An execution function defined at the location can use all these entities.
- * @param {Location} location location of the context
- * @param {ExecutionContext} outerContext the outer context of the data. This can be used to represent the environment info and external data that can be referenced from within the location context
+ * a context iterator is passed to context search functions. It is called for each context entry that matches the search
+ * @callback contextIterator
+ * @param {String} type the type of entity found
+ * @param {String} name the name of the entity found
+ * @param {String} path the path identifying the entity
+ * @param {*} value value of the entity if relevant
+ * @returns {booldean} return false if the search should stop
  */
-export function contextSpec(location, outerContext=[]){
-	const ret = [];
-
+/**
+ * Search for entities within the location context
+ * @param {Location} location 
+ * @param {contextIterator} iterator 
+ * @param {String} type 
+ * @param {String} name 
+ */
+export function contextSearch(location,iterator,type,name){
 	let current = previousContextLocation(location);//skip current
-	while(current){
-		emitAtLocation(current,ret);
+	let cont = true;
+	while(current && cont !== false){
+		cont = visit(current,iterator,type,name);
 		current = previousContextLocation(current);
 	}
-
-	return ret.concat(outerContext);
 }
 
-function emitAtLocation(location,list,defaultEmitSelf=false){
+function visit(location,iterator,type,name){
 	const referenced = location.referenced;
+	if(referenced.isEmpty){
+		return true;//continue search
+	}
 	const currentSpec = referenced.spec;
-	const emits = specEmits(currentSpec,referenced);
-	if(emits.length === 0 && defaultEmitSelf && !referenced.isEmpty){
-		//emits not defined - emit entity at location
-		const entry = {
-			ref:referenced.patternText,
-			type: specType(referenced.spec),
-			path:referenced.path
-		};
-		addEmitEntity(entry,list,referenced.lang);
-	}else{
-		emits.forEach(entry=>{
-			if(!entry){
-				return;
-			}
-			if(entry.$type === 'emit children' && Array.isArray(referenced.value)){
-				referenced.value.forEach((item,index)=>{
-					emitAtLocation(referenced.child(index),list,true);
-				})
-			}else if(entry.$type === 'emit property'){
-				//need to emit a property. If it is an array then emit its items. Otherwise emit the property itself
-				referenced.childList(entry.property).forEach(item=>{
-					emitAtLocation(item,list,true)
-				});
-			}else{
-				addEmitEntity({
-					path: referenced.path,
-					type:entry.type,
-					tag:entry.tag || entry.type,
-					label:entry.label,
-					ref:calcPattern(referenced,entry.ref)
-				},list,referenced.lang);
-			}
-		});
+	
+	//iterate context
+	const entries = computeSpecProperty(currentSpec,referenced,'context',[]);
+	for(let i=0;i<entries.length;++i){
+		const b = visitEntry(referenced, entries[i],iterator,type,name);
+		if(b === false){
+			return false;//end search
+		}
+	}
+
+	//search scope
+	if(scopeSearch(location,iterator,type,name) === false){
+		return false;
+	}
+	
+	//continue search
+	return true;//continue
+}
+
+function visitEntry(referenced,entry,iterator,type,name){
+	if(!entry || typeof entry !== 'object'){
+		return true;
+	}
+	switch(entry.$type){
+		case 'basic emit':
+			return basicEmit(referenced,entry,iterator,type,name);
+		case 'use scope':
+			return useScope(referenced,entry,iterator,type,name);
+		default:
+			return true;
 	}
 }
 
-function emitEntryLabel(entry,lang){
-	if(entry.label){
-		return entry.label;
-	}else if(entry.ref){
-		return entry.ref;
-	}else if(entry.tag){
-		return lang.theType(entry.tag);
-	}else{
-		return lang.theType(entry.type);
+function basicEmit(referenced,entry,iterator,type,name){
+	if(!entry){
+		return true;
+	}
+	if(type && !referenced.dictionary.isa(entry.type,type||'any')){
+		return true;//continue search
+	}
+	if(name && name !== entry.name){
+		return true;
+	}
+	return iterator(entry.type,entry.name,referenced.path,entry.value) !== false;
+}
+
+function scopeSearch(location,iterator,type,name){
+	const referenced = location.referenced;
+	if(referenced.isEmpty){
+		return true;//continue search
+	}
+	const currentSpec = referenced.spec;
+	if(typeof currentSpec.scopeSearch === 'function'){
+		return currentSpec.scopeSearch(location,iterator,type,name) !== false;
+	}
+	const entries = computeSpecProperty(currentSpec,referenced,'scope',[]);
+	for(let i=0;i<entries.length;++i){
+		const b = visitEntry(referenced, entries[i],iterator,type,name);
+		if(b === false){
+			return false;//end search
+		}else{
+			return true;
+		}
 	}
 }
 
-
-function addEmitEntity(entry,list,lang){
-	entry.label = emitEntryLabel(entry,lang);
-	entry.tag = entry.tag || entry.type;
-	const index = list.findIndex(
-		it=>it.label === entry.label && it.type === entry.type);
-	if(index >= 0){
-		//and entry with this label already exists - replace it
-		list[index] = entry;
-	}else{
-		//add a new entry
-		list.push(entry);
-	}
+function useScope(referenced,entry,iterator,type,name){
+	const property = referenced.child(entry.property).referenced;
+	return scopeSearch(property,iterator,type,name) !== false;
 }
-
-function contextOrder(location){
-	const ret = [location];
-	let current = previousContextLocation(location);
-	while(current){
-		ret.push(current);
-		current = previousContextLocation(current);
-	}
-	return ret;
-}
-
-export function dumpContextOrder(location){
-	if(!location){
-		console.error('Cannot dump context of null location')
-		return;
-	}
-	let ret = 'context order for'+location.path;
-	const locations = contextOrder(location);
-	console.info('context order for',location.path);
-	for(let i=0;i<locations.length;++i){
-		ret += ('\n   '+locations[i].path);
-	}
-	console.info(ret);
-}
-
 /**
  * Find the location to be visited before current location when evaluating context. The order in which context is evaluated determines
  * @param {Location} location current location

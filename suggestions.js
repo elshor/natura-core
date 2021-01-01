@@ -3,6 +3,7 @@ import { assume } from "./error";
 import { generateNewElement } from "src/components/utils";
 import {calcTemplate} from './template'
 import { calcValue } from "./calc";
+import reference from "./reference";
 
 ///////////////////////////////////////////////////////////
 //Definitions
@@ -62,35 +63,21 @@ export function getSuggestions(location,filter,spec){
 	//TODO check scope
 	entries.forEach(entry=>{
 		ret.list.push({
-			value:{
-				$type:'reference',
-				label:entry.label,
-				valueType:entry.type,
-				path:entry.path
-			},
-			source:'env',
-			text:entry.label,
+			value: reference(entry.name,entry.type,entry.path),
+			text:entry.name,
 			path:entry.path
 		})
 	})
 
 	//context instances
-	const context = location.contextSpec;
-	context.forEach(entry=>{
-		if(entry.type === expectedType){
-			ret.list.push({
-				value: {
-					$type:'reference',
-					label:entry.label,
-					valueType: entry.type,
-					path:entry.path,
-				},
-				source:'context',
-				text:entry.label,
-				path:entry.path
-			});
-		}
-	});
+	location.contextSearch((type,name,path,value)=>{
+		ret.list.push({
+			value: value || reference(name,type,path),
+			source:'context',
+			text:name,
+			path:path
+		})
+	},expectedType);
 
 	//dictionary expressions
 	const types = dictionary.getExpressionsByValueType(expectedType);

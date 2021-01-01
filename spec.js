@@ -1,6 +1,5 @@
 import { assume } from './error';
 import calc,{ isExpression } from './calc';
-
 const DefaultPlaceholder = 'Enter value here';
 
 export function specType(spec){
@@ -64,20 +63,14 @@ export function mergeSpec(localSpec, typeSpec){
 	return Object.assign({},localSpec,typeSpec);
 }
 
-/**
- * Returns an array of entities the object defined by the spec may emit during action execution. Each element has the following properties: type, tag, ref
- * @param {Object} spec the spec
- */
-export function specEmits(spec,location){
-	let emits = spec.emits;
-	if(isExpression(emits)){
-		emits = calc(emits,{$spec:spec,$location:location});
+export function computeSpecProperty(spec,location, name,defaultValue){
+	let value = spec[name];
+	if(isExpression(value)){
+		value = calc(value,{$spec:spec,$location:location});
 	}
-	if(emits === undefined){
-		emits = [];
-	}
-	return emits;
+	return value === undefined? defaultValue : value;
 }
+
 
 export function specProperties(spec){
 	return spec.properties || {};

@@ -4,17 +4,21 @@ import {assume} from './error'
 import calc, { isExpression } from './calc';
 import {entityType,entityValue} from './entity'
 import i18n from 'src/i18n';
-import {contextSpec, dumpContextOrder} from './context'
+import {contextSearch} from './context'
 import {patternText} from './pattern'
 import Type from './type'
 
 export function createLocation(data,dictionary=new Dictionary(),path=''){
-	if(path.startsWith('$dictionary/')){
+	const parsed = path.match(/^dictionary\:\/\/([^\/]+)(\/.*)?$/);
+	if(parsed){
 		//the location references an instance from the dictionary
-		const value = dictionary.getInstanceByPath(path);
-		return new Location(value,dictionary,'',i18n());
-	}else{
+		const value = dictionary.getInstanceByID(parsed[1]);
+		return new Location(value,dictionary,parsed[2]||'',i18n());
+	}else if(path === '' || path.startsWith('/')){
 		return new Location(data,dictionary,path,i18n());
+	}else{
+		//invalid path - returns an empty object
+		return new Location({},dictionary,'',i18n());
 	}
 }
 
@@ -35,7 +39,27 @@ class Location{
 		return locationSpec(this);
 	}
 	get type(){
-		return specType(locationSpec(this));
+		if(this.isReference){
+			//type is stored in the reference object
+			return this.value.type;
+		}else if(this.value && typeof this.value ==='object' && this.value.$type){
+			//value is set with an object that has explicit type
+			return this.value.$type;
+		}
+		const parent = this.parent;
+		if(!parent){
+			//no parent - return any
+			return 'any'
+		}else if(Type(parent.type,location).isCollection){
+			//this is a list type
+			return Type(parent.type,location).singular;
+		}else if(parent.spec.hashSpec){
+			//this is a hashSpec
+			return parent.spec.hashSpec.type;
+		}else{
+			//no type information - return any
+			return 'any'
+		}
 	}
 	get expectedSpec(){
 		return locationExpectedSpec(this);
@@ -87,19 +111,15 @@ class Location{
 	get context(){
 		return locationContext(this);
 	}
-	/**
-	 * the expected execution context at a certain location. This takes into consideration the emit path and all emits of previous nodes on the emit path. It reflects the context at execution time
-	 *
-	 **/
-	get contextSpec(){
-		return contextSpec(this);
-	}
+	
 	get entity(){
 		return locationEntity(this);
 	}
+	
 	get property(){
 		return locationProperty(this);
 	}
+	
 	get patternText(){
 		return patternText(this);
 	}
@@ -150,27 +170,29 @@ class Location{
 	sibling(prop){
 		return locationSibling(this,prop);
 	}
-	/**
-	 * dump to terminal the list of locations as they are evaluated to calcualte the context starting from this location.
-	 */
-	dumpContextOrder(){
-		return dumpContextOrder(this);
-	}
-
+	
 	/**
 	 * set the value at the location
 	 * @param {*} value value to set
 	 */
 	set(value){
-		console.log('location.set',value);
 		const property = this.property;
 		const parent = this.parent;
 		if(!parent){
 			throw new TypeError(`location top value cannot be set`);
 		}
 		parent.value[property] = value;
-		console.log('... after set',parent.value);
 	}
+	/**
+	 * Search for entities within the location context
+	 * @param {Location} location 
+	 * @param {contextIterator} iterator 
+	 * @param {String} type 
+	 * @param {String} name 
+	 */
+	contextSearch(iterator,type,name){
+			return contextSearch(this,iterator,type,name);
+		}
 }
 
 function previousSibling(location){
@@ -482,5 +504,4 @@ function locationRawValue(location){
 function locationProperty(location){
 	const pathSegments = JsonPointer.decode(location.path);
 	return pathSegments.pop();
-
 }

@@ -20,7 +20,7 @@ export default class Dictionary{
 		this.valueTypeRepo = {};
 		this.collectionRepo = [];
 		this.instances = {};
-		this.instancePaths = {};
+		this.instancesByType = {};
 		this._registerType('entity definition group',{isa:['definition group']});
 	}
 
@@ -122,6 +122,10 @@ export default class Dictionary{
 		}
 	}
 
+	isClass(type){
+		return this.isaRepo[type] !== undefined;
+	}
+
 	getTypes(){
 		if(this.repo){
 			return Object.keys(this.repo);
@@ -145,29 +149,32 @@ export default class Dictionary{
 		}
 		return this.isa(entity.$type,'definition group');
 	}
-	_registerInstance(identifier, type, path, value,scope="*"){
-		if(!this.instances[type]){
-			this.instances[type] = [];
+		/**
+	 * Register an instance in the dictionary for later retrieval
+	 * @param {String} name name of instance
+	 * @param {String} type type of instance
+	 * @param {String} id id of instance
+	 * @param {*} value value of instance if exists
+	 */
+	_registerInstance(name, type, id, value){
+		if(!this.instancesByType[type]){
+			this.instancesByType[type] = [];
 		}
-		this.instances[type].push({
-			path,
+		this.instancesByType[type].push({
+			name,
 			type,
-			label:identifier,
-			ref:identifier,
-			value,
-			scope
+			path:'dictionary://'+id,
+			value
 		});
-		this.instancePaths[path] = value;
+		this.instances[id] = value;
 	}
 
 	getInstancesByType(type,scope='*'){
-		return (this.instances[type]||[]).filter(entry=>{
-			return scope==='*'?true:entry.scope===scope?true:false;
-		});
+		return (this.instancesByType[type]||[])
 	}
 
-	getInstanceByPath(path){
-		return this.instancePaths[path];
+	getInstanceByID(ID){
+		return this.instances[ID];
 	}
 
 	_processDefinition(entity,model={}){
