@@ -35,9 +35,19 @@ class BaseType{
 	toString(){
 		return this.type? this.type.toString() : 'any';
 	}
+	
 	get isCollection(){
 		const str = this.toString();
 		return str? str.match(/\*$/) !== null : false;
 	}
+
+	get singular(){
+		if(this.isCollection){
+			return this.toString().substr(0,this.toString().length-1);
+		}else{
+			return this.toString();
+		}
+	}
+
 }
 
