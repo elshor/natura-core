@@ -1,4 +1,5 @@
 import { specIsa } from "../spec";
+import basicTypes from "./basic-types"
 
 const entities = 	[
 	{
@@ -100,7 +101,7 @@ const entities = 	[
 		additional:['expanded','context','emitOrder','scope','traitType','instanceType','actions','inlineDetails'],
 		properties:{
 			name:{
-				type:'name', 
+				type:'name',
 				placeholder:'type name',
 				default:(spec)=>{
 					if(spec && typeof spec === 'object'){
@@ -175,32 +176,8 @@ const entities = 	[
 		isa:['string','property type']
 	},
 	{
-		name:'number',
-		isa:[,'property type','data type']
-	},
-	{
 		name:'trait assertion',
 		isa:['expression']
-	},
-	{
-		name:'property trait',
-		pattern:'trait of <<property>>',
-		isa:['a property type'],
-		calc:function(context){
-			const location = context.$location;
-			const propertyLocation = location.parent.child(this.property).referenced;
-			let spec;
-			const propertyType = propertyLocation.type;
-			if(specIsa(propertyLocation.spec,'expression')){
-				spec = location.dictionary.getTypeSpec(propertyLocation.spec.valueType);
-			}else{
-				spec = propertyLocation.spec;
-			}
-			return spec.traitType || 'trait';
-		},
-		properties:{
-			property:{type:'string',placeholder:'property associated with trait'}
-		}
 	},
 	{
 		pattern:'if <<condition>> then <<action>> otherwise <<alternateAction>>',
@@ -226,6 +203,23 @@ const entities = 	[
 		expanded:true,
 		properties:{
 			sequence:{type:'action*',expanded:true,hideName:true,required:true}
+		}
+	},
+	{
+		name: 'condition',
+		pattern:'<<subject>> <<trait>>',
+		properties:{
+			subject:{
+				type:'any instance',
+				placeholder:'subject to test'
+			},
+			trait:{
+				placeholder:'subject trait',
+				type:function({$location}){
+					//console.log('subject',$location.parent.child('subject').value);
+					return 'none';//db temp
+				}
+			}
 		}
 	},
 	{
@@ -260,29 +254,6 @@ const entities = 	[
 		},
 		show:['action'],
 		emitOrder:['event','action']
-	},
-	{
-		name:'trait definition',
-		pattern:'a <<entity>> is <<trait>> when <<expression>>',
-		isa:["expression definition"],
-		show:['entity','trait','expression'],
-		properties:{
-			entity:{type:'type',placeholder:'choose entity type'},
-			isa:{value:['trait assertion','assertion']},
-			pattern:{value:({entity,trait})=>{
-				return `<<${entity}>> is ${trait}`
-			}}
-		}
-	},
-	{
-		name:'condition definition',
-		title:'condition expression',
-		isa:['expression definition'],
-		pattern:'<<pattern>>',
-		properties:{
-			pattern:{type:'pattern',placeholder:'the condition pattern'},
-			isa:{value:['condition']}
-		}
 	},
 	{
 		name: 'the <<definition term>> is <<expression>> (<<valueType>>)',
@@ -424,11 +395,6 @@ const entities = 	[
 		viewer: 'richtext-editor',
 	},
 	{
-		name:'boolean',
-		isa:['property type'],
-		viewer:'boolean-viewer'
-	},
-	{
 		name:'name',
 		isa:['string','property type'],
 		placeholder:'Enter the name'
@@ -469,12 +435,6 @@ const entities = 	[
 		name:'entity type',
 		options:function({$location}){
 			return $location.dictionary.getClassMembers('entity type');
-		}
-	},
-	{
-		name:'a property type',
-		options:function({$location}){
-			return $location.dictionary.getClassMembers('property type');
 		}
 	},
 	{
@@ -685,6 +645,8 @@ function calcValueType({$location}){
 	const valueType = valueTypeLocation.value;
 	return valueType || 'any'
 }
+
+entities.push(...basicTypes);
 
 function defaultDefinitionModel(context){
 	if(!context){
