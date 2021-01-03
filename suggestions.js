@@ -63,14 +63,14 @@ export function getSuggestions(location,filter,spec){
 	//TODO check scope
 	entries.forEach(entry=>{
 		ret.list.push({
-			value: reference(entry.name,entry.type,entry.path),
-			text:entry.name,
+			value: entry,
+			text:entry.label,
 			path:entry.path
 		})
 	})
 
 	//context instances
-	location.contextSearch((type,name,path,value)=>{
+	location.contextSearch((expectedType,name,path,value)=>{
 		ret.list.push({
 			value: value || reference(name,type,path),
 			source:'context',

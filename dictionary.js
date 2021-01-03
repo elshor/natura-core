@@ -4,6 +4,7 @@ import { specType } from "./spec";
 import { parsePattern } from "./pattern";
 import {entity,entityType,entityIsArray} from './entity'
 import deepmerge from "deepmerge";
+import Reference from './reference'
 
 export default class Dictionary{
 	constructor(packages=['base']){
@@ -175,22 +176,44 @@ export default class Dictionary{
 	 * @param {*} value value of instance if exists
 	 */
 	_registerInstance(name, type, id, value){
+		const instanceType = this.instanceType(type);
 		if(!this.instancesByType[type]){
 			this.instancesByType[type] = [];
 		}
+		assume(name && instanceType && id && value !== undefined,'registerInstance must have all parameters non-empty');
 		this.instancesByType[type].push({
 			name,
-			type,
-			path:'dictionary://'+id,
-			value
+			instanceType,
+			path:'dictionary://'+id
 		});
 		this.instances[id] = value;
 	}
 
-	getInstancesByType(type,scope='*'){
-		return (this.instancesByType[type]||[])
+	getInstancesByType(instanceType){
+		const type = this.typeOfInstance(instanceType);
+		return Object.keys(this.instancesByType)
+			.filter(key=>this.isa(key,type))
+			.map(key=>this.instancesByType[key])
+			.flat()
+			.map(entry=>Reference(entry.name,entry.instanceType,entry.path));
 	}
 
+	/**
+	 * Given a type, find its instance type. E.g. for type 'string' the return value will be 'a string'
+	 * @param {Type} type 
+	 * @returns {String} the instance type
+	 */
+	instanceType(type){
+		const spec = this.getTypeSpec(type);
+		if(!spec){
+			return 'any instance';
+		}
+		return spec.instanceType || 'any instance';
+	}
+
+	typeOfInstance(instanceType){
+		return this.instanceTypes[instanceType];
+	}
 	getInstanceByID(ID){
 		return this.instances[ID];
 	}
