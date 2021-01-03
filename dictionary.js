@@ -14,14 +14,24 @@ export default class Dictionary{
 	}
 
 	reset(){
+		//clear old data
 		this.initiated = true;
 		this.repo = {};
+		this.instanceTypes = {};
 		this.isaRepo = {};
 		this.valueTypeRepo = {};
 		this.collectionRepo = [];
 		this.instances = {};
 		this.instancesByType = {};
+		
+		//initialization registerations
 		this._registerType('entity definition group',{isa:['definition group']});
+		this._registerIsa('definition group','entity definition group')
+		this._registerIsa('definition group','property definition group')
+		this._registerIsa('definition group','event definition group')
+		this._registerIsa('definition group','expression definition group')
+		this._registerIsa('definition group','action definition group')
+		this._registerInstanceType('any instance','any');
 	}
 
 	isInitiated(){
@@ -39,11 +49,19 @@ export default class Dictionary{
 		if(className === 'any'){
 			return true;
 		}
-		const spec = this.getTypeSpec(type);
-		const ret = spec !== undefined &&
-			spec.isa !== undefined &&
-			spec.isa.includes(className);
-		return ret;
+		if(this.isaRepo[type]){
+			return this.isaRepo[type].includes(className)
+		}
+		if(this.isInstance(type) && this.isInstance(className)){
+			const instanceOf = this.instanceTypes[type];
+			const classType = this.instanceTypes[className]
+			return this.isa(instanceOf,classType);
+		}
+
+		return false;
+	}
+	isInstance(type){
+		return this.instanceTypes[type] !== undefined;
 	}
 	resetVersion(){
 		this.version = ''+(Number(new Date()) - new Date('2020-01-01')+Math.random()).toString(36).replace('.','');
@@ -285,7 +303,7 @@ export default class Dictionary{
 		}
 		//register instanceType
 		if(spec.instanceType){
-			this._registerIsa(spec.instanceType,'property type');
+			this._registerInstanceType(spec.instanceType,type);
 		}
 	}
 	_registerIsa(type,parent){
@@ -293,6 +311,9 @@ export default class Dictionary{
 			this.isaRepo[parent] = [];
 		}
 		this.isaRepo[parent].push(type);
+	}
+	_registerInstanceType(instanceType,type){
+		this.instanceTypes[instanceType] = type;
 	}
 	async _loadPackage(pckg){
 		const pkgObject = entityType(pckg) === 'string'?await loadPackage(pckg) : pckg;
