@@ -1,7 +1,7 @@
 import {JsonPointer} from 'json-ptr'
 import { specType, mergeSpec, specProperties } from './spec';
 import {assume} from './error'
-import calc, { isExpression } from './calc';
+import calc, { isExpression, calcValue } from './calc';
 import {entityType,entityValue} from './entity'
 import i18n from 'src/i18n';
 import {contextSearch} from './context'
@@ -23,11 +23,16 @@ export function createLocation(data,dictionary=new Dictionary(),path=''){
 }
 
 class Location{
-	constructor(data,dictionary,path,lang){
+	constructor(data,dictionary,path,lang,src){
 		this.data = data;
 		this.dictionary = dictionary;
 		this.path = path;
 		this.lang = lang;
+		this._children = {};
+		if(this.path.length > 500){
+			debugger;
+			console.log('path is too long',this);
+		}
 	}
 	get value(){
 		return locationValue(this);
@@ -62,17 +67,49 @@ class Location{
 		}
 	}
 	get expectedSpec(){
-		return locationExpectedSpec(this);
+		if(this._expectedSpec){
+			return this._expectedSpec;
+		}
+		this._expectedSpec = locationExpectedSpec(this);
+		return this._expectedSpec;
+	}
+	get expectedType(){
+		return calcValue(this.expectedSpec.type,this.context);
 	}
 	get parent(){
-		return locationParent(this);
+		const segments = JsonPointer.decode(this.path);
+		if(segments.length > 0){
+			segments.pop();
+			const newPath = JsonPointer.create(segments).toString();
+			return new Location(this.data,this.dictionary,newPath,this.lang);
+		}else{
+			return null;
+		}
 	}
+
 	get previous(){
-		return previousSibling(this);
+		const pathSegments = JsonPointer.decode(this.path);
+		const last = pathSegments.pop();
+		if(isNumber(last) && asNumber(last) > 0){
+			return this.parent.child(Number(asNumber(last)-1).toString());
+		}else{
+			return null;
+		}
 	}
+
 	get isReadOnly(){
-		return locationReadOnly(this);
+		const spec = this.spec;
+		if(!spec){
+			return false;
+		}else if(spec.value){
+			return true;
+		}else if(spec.readonly){
+			return true;
+		}else{
+			return false;
+		}
 	}
+
 	/**
 	 * Return the default value at location based on spec's default value
 	 */
@@ -117,7 +154,7 @@ class Location{
 	}
 	
 	get property(){
-		return locationProperty(this);
+		return JsonPointer.decode(this.path).pop();
 	}
 	
 	get patternText(){
@@ -152,7 +189,12 @@ class Location{
 	 * @returns {Location}
 	 */
 	child(prop){
-		return locationChild(this,prop);
+		if(this._children[prop]){
+			return this._children[prop];
+		}
+		const child = new LocationChild(this,prop);
+		this._children[prop] = child;
+		return child;
 	}
 	/**
 	 * Returns an array of locations of prop. If prop is an array then returns an array of locations of all its items. If value of property is not an array then returns an array with only that location
@@ -168,7 +210,7 @@ class Location{
 		}
 	}
 	sibling(prop){
-		return locationSibling(this,prop);
+		return this.parent.child(prop);
 	}
 	
 	/**
@@ -195,41 +237,7 @@ class Location{
 		}
 }
 
-function previousSibling(location){
-	const pathSegments = JsonPointer.decode(location.path);
-	const last = pathSegments.pop();
-	if(isNumber(last) && asNumber(last) > 0){
-		pathSegments.push(Number(asNumber(last)-1).toString());
-		const path = JsonPointer.create(pathSegments).toString();
-		const ret = Object.assign(new Location(),location);
-		ret.path = path;
-		return ret;
-	}else{
-		return null;
-	}
-}
 
-function locationParent(location){
-	const segments = JsonPointer.decode(location.path);
-	if(segments.length > 0){
-		segments.pop();
-		const newPath = JsonPointer.create(segments).toString();
-		const ret = Object.assign(new Location(),location);
-		ret.path = newPath;
-		return ret;
-	}else{
-		return null;
-	}
-}
-
-function locationChild(location,property){
-	const segments = JsonPointer.decode(location.path);
-	segments.push(property);
-	const newPath = JsonPointer.create(segments).toString();
-	const ret = Object.assign(new Location(),location);
-	ret.path = newPath;
-	return ret;
-}
 /**
  * Find the spec associated with a specific location. The spec is calculated as follows:
  * If the location has a $type property, then merge it with expected spec, otherwise  return expectedSpec
@@ -237,7 +245,7 @@ function locationChild(location,property){
  */
 function locationSpec(location){
 	assume(location);
-	const expectedSpec = locationExpectedSpec(location);
+	const expectedSpec = location.expectedSpec;
 	let actualSpec = {};
 	let value = undefined;
 	try{
@@ -266,22 +274,22 @@ function locationSpec(location){
  * @param {Location} location
  */
 function locationValue(location){
-	const spec = locationSpec(location);
+	const spec = location.spec;
 	let ret = undefined;
 	if(spec.value !== undefined){
 		//spec defines how the property value is calculated - use it
 		if(isExpression(spec.value)){
-			ret = calc(spec.value, locationContext(location));;
+			ret = calc(spec.value, location.context);;
 		}else{
 			ret = spec.value;
 		}
 	}else{
-		const property = locationProperty(location);
+		const property = location.property;
 		if(property === undefined){
 			ret = location.data;
 		}else{
-			const parentLocation = locationParent(location);
-			const parentValue = locationValue(parentLocation);
+			const parentLocation = location.parent;
+			const parentValue = parentLocation.value;
 			if(!parentValue){
 				ret=undefined
 			}else{
@@ -291,7 +299,7 @@ function locationValue(location){
 		//check for default value
 		if(ret === undefined && spec.default !== undefined){
 			if(isExpression(spec.default)){
-				ret = calc(spec.default, locationContext(location));;
+				ret = calc(spec.default, location.context);;
 			}else{
 				ret = spec.default;
 			}
@@ -302,28 +310,12 @@ function locationValue(location){
 	return ret;
 }
 
-function locationSibling(location,property){
-	return locationChild(locationParent(location),property);
-}
-
-function locationReadOnly(location){
-	const spec = locationSpec(location);
-	if(!spec){
-		return false;
-	}else if(spec.value){
-		return true;
-	}else if(spec.readonly){
-		return true;
-	}else{
-		return false;
-	}
-}
 /**
  * returns the location spec as defined in its parent spec.
  * @param {Location} location
  */
 function locationExpectedSpec(location){
-	const parent = locationParent(location);
+	const parent = location.parent;
 	if(!parent){
 		//top level - we have no information regarding the spec
 		return {type:'any'};
@@ -377,13 +369,8 @@ function asNumber(n){
 
 function locationContext(location){
 	return Object.assign(
-		{},
-		{
-			$location:location,
-			$dictionary:location.dictionary,
-		},
-		locationValue(locationParent(location)) || {}
-	)
+		{},{$location:location,location}
+	);
 }
 
 function locationEntity(location){
@@ -391,13 +378,13 @@ function locationEntity(location){
 		get: function(location,prop){
 			if(typeof prop === 'symbol'){
 				//props can only be strings so pass it on to raw object
-				return locationValue(location)[prop];
+				return location.value[prop];
 			}
 			if(prop === '$spec'){
-				return locationSpec(location);
+				return location.spec;
 			}
 			if(prop === '$value'){
-				return locationValue(location);
+				return location.value;
 			}
 			if(prop === '$raw'){
 				return locationRawValue(location);
@@ -406,20 +393,20 @@ function locationEntity(location){
 				return true;
 			}
 			if(prop === '$parent'){
-				return locationEntity(locationParent(location));
+				return location.parent.entity;
 			}
-			const value = locationValue(locationChild(location,prop));
+			const value = location.child(prop).value;
 			if(typeof value === 'object' && value !== null){
 				//value is an object. Return its entity proxy
-				return locationEntity(locationChild(location,prop));
+				return location.child(prop).entity;
 			}else{
 				return value;
 			}
 		},
 		set(location,prop,value){
-			const thisObject = locationValue(location);
+			const thisObject = location.value;
 			if(typeof thisObject === 'object' && thisObject !== null){
-				const spec = locationSpec(locationChild(location,prop));
+				const spec = location.child(prop).spec;
 				if(spec.value === undefined && spec.readonly !== true){
 					//value not defined in spec and property is not readonly
 					thisObject[prop] = value;
@@ -434,8 +421,8 @@ function locationEntity(location){
 		},
 		ownKeys(location){
 			//get thisObject keys. If spec has additional properties then add it to the list
-			const thisObject = locationValue(location);
-			const spec = locationSpec(location);
+			const thisObject = location.value;
+			const spec = location.spec;
 			const ret = Reflect.ownKeys(thisObject);
 			const properties = specProperties(spec,location.dictionary);
 			if(typeof properties === 'object'){
@@ -448,14 +435,14 @@ function locationEntity(location){
 			return ret;
 		},
 		has(location,key){
-			const thisObject = locationValue(location);
+			const thisObject = location.value;
 			return Reflect.has(thisObject,key);
 		},
 		defineProperty(){
 			throw new Error('Not Implemented');
 		},
 		getOwnPropertyDescriptor(location,key){
-			const thisObject = locationValue(location);
+			const thisObject = location.value;
 			return Reflect.getOwnPropertyDescriptor(thisObject,key);
 		},
 		deleteProperty(){
@@ -469,7 +456,7 @@ function locationEntity(location){
  * @param {Location} location
  */
 function locationRawValue(location){
-	const value = locationValue(location);
+	const value = location.value;
 	if(typeof value !== 'object'){
 		return value;
 	}else if(value === null){
@@ -477,14 +464,14 @@ function locationRawValue(location){
 	}else if(Array.isArray(value)){
 		//value is an array
 		return value.map(
-			(item,index)=>locationRawValue(locationChild(location,index)));
+			(item,index)=>locationRawValue(location.child(index)));
 	}else{
 		//get object own keys
 		const props = Object.keys(value);
 
 		//add properties that are defined in the spec but are not in keys
 		const properties = specProperties(
-			locationSpec(location),
+			location.spec,
 			location.dictionary
 		) || [];
 		Object.keys(properties).forEach(prop=>{
@@ -496,12 +483,21 @@ function locationRawValue(location){
 		//generate ret object
 		const ret = {};
 		props.forEach(
-			prop=>ret[prop] = locationRawValue(locationChild(location,prop)));
+			prop=>ret[prop] = locationRawValue(location.child(prop)));
 		return ret;
 	}
 }
 
-function locationProperty(location){
-	const pathSegments = JsonPointer.decode(location.path);
-	return pathSegments.pop();
+class LocationChild extends Location{
+	constructor(parent,property){
+		super(parent.data,parent.dictionary,parent.path+'/'+property,parent.lang,'child');
+		this._parent = parent;
+		this._property = property;
+	}
+	get parent(){
+		return this._parent;
+	}
+	get property(){
+		return this._property;
+	}
 }
