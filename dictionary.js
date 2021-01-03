@@ -33,6 +33,7 @@ export default class Dictionary{
 		this._registerIsa('definition group','expression definition group')
 		this._registerIsa('definition group','action definition group')
 		this._registerInstanceType('any instance','any');
+		this._registerInstanceType('application instance','application type');
 	}
 
 	isInitiated(){
@@ -50,8 +51,8 @@ export default class Dictionary{
 		if(className === 'any'){
 			return true;
 		}
-		if(this.isaRepo[type]){
-			return this.isaRepo[type].includes(className)
+		if(this.isaRepo[className]){
+			return this.isaRepo[className].includes(type)
 		}
 		if(this.isInstance(type) && this.isInstance(className)){
 			const instanceOf = this.instanceTypes[type];
