@@ -1,8 +1,9 @@
 export function assume(condition,message,description){
 	if(!condition){
-		console.error('Assumption Failed',message,description);
+		const message = 'Assumption Failed: ' + description;
+		console.error(message);
+		throw new Error(message);
 	}
-
 }
 
 
