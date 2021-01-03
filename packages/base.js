@@ -210,7 +210,7 @@ const entities = 	[
 		pattern:'<<subject>> <<trait>>',
 		properties:{
 			subject:{
-				type:'any instance',
+				type:'application instance',
 				placeholder:'subject to test'
 			},
 			trait:{

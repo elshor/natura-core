@@ -1,16 +1,19 @@
 export default [
 	{
 		name:'string',
+		isa:'application type',
 		instanceType:'a string',
 		placeholder:'text'
 	},
 	{
 		name:'number',
+		isa:'application type',
 		instanceType:'a number',
 		placeholder:'number'
 	},
 	{
 		name:'boolean',
+		isa:'application type',
 		instanceType:'a boolean',
 		placeholder:'true/false',
 		viewer:'boolean-viewer'
