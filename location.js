@@ -20,10 +20,6 @@ class Location{
 		this.path = path;
 		this.lang = lang;
 		this._children = {};
-		if(this.path.length > 500){
-			debugger;
-			console.log('path is too long',this);
-		}
 	}
 	get value(){
 		return locationValue(this);
@@ -269,25 +265,31 @@ function locationSpec(location){
  * @param {Location} location
  */
 function locationValue(location){
-	const spec = location.spec;
-	let ret = undefined;
 	const property = location.property;
 	if(property === undefined){
-		ret = location.data;
-	}else if(location.parent && location.parent.value){
-		ret = parentValue[property];
+		return location.data;
 	}
-	
+	const parent = location.parent;
+	if(!parent){
+		return undefined;
+	}
+	const parentValue = location.parent.value;
+	if(!parentValue){
+		return undefined;
+	}
+	const value = parentValue[property];
+	if(value !== undefined){
+		return value;
+	}
 	//check for default value
-	if(ret === undefined && spec.default !== undefined){
+	const spec = location.expectedSpec;
+	if(spec.default !== undefined){
 		if(isExpression(spec.default)){
-			ret = calc(spec.default, location.context);;
+			return calc(spec.default, location.context);;
 		}else{
-			ret = spec.default;
+			return spec.default;
 		}
 	}
-	
-	return ret;
 }
 
 /**
