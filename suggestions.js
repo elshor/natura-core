@@ -70,7 +70,7 @@ export function getSuggestions(location,filter,spec){
 	})
 
 	//context instances
-	location.contextSearch((expectedType,name,path,value)=>{
+	location.contextSearch((type,name,path,value)=>{
 		ret.list.push({
 			value: value || reference(name,type,path),
 			source:'context',
