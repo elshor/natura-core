@@ -9,22 +9,13 @@ import {patternText} from './pattern'
 import Type from './type'
 
 export function createLocation(data,dictionary=new Dictionary(),path=''){
-	const parsed = path.match(/^dictionary\:\/\/([^\/]+)(\/.*)?$/);
-	if(parsed){
-		//the location references an instance from the dictionary
-		const value = dictionary.getInstanceByID(parsed[1]);
-		return new Location(value,dictionary,parsed[2]||'',i18n());
-	}else if(path === '' || path.startsWith('/')){
-		return new Location(data,dictionary,path,i18n());
-	}else{
-		//invalid path - returns an empty object
-		return new Location({},dictionary,'',i18n());
-	}
+	return new Location(data,dictionary,uriHash(path),i18n(),uriResource(path));
 }
 
 class Location{
-	constructor(data,dictionary,path,lang,src){
+	constructor(data,dictionary,path,lang,uri){
 		this.data = data;
+		this.uri = uri
 		this.dictionary = dictionary;
 		this.path = path;
 		this.lang = lang;
@@ -178,7 +169,11 @@ class Location{
 	 */
 	get referenced(){
 		if(this.isReference){
-			return createLocation(this.data,this.dictionary,this.value.path);
+			return createLocation(
+				getResource(this.value.path,this) || this.data,
+				this.dictionary,
+				this.value.path
+			);
 		}else{
 			return this;
 		}
@@ -490,7 +485,7 @@ function locationRawValue(location){
 
 class LocationChild extends Location{
 	constructor(parent,property){
-		super(parent.data,parent.dictionary,parent.path+'/'+property,parent.lang,'child');
+		super(parent.data,parent.dictionary,parent.path+'/'+property,parent.lang,parent.uri);
 		this._parent = parent;
 		this._property = property;
 	}
@@ -499,5 +494,37 @@ class LocationChild extends Location{
 	}
 	get property(){
 		return this._property;
+	}
+}
+
+function uriHash(uri){
+	try{
+		const hash = new URL(uri).hash;
+		if(hash[0]==='#' && hash[1]!=='/'){
+			return '#/' + hash.substr(1);
+		}else{
+			return hash;
+		}
+	}catch{
+		return uri;
+	}
+}
+
+function uriResource(uri){
+	try{
+		const hash =  new URL(uri).hash || '';
+		return uri.substr(0,uri.length-hash.length)
+	}catch{
+		return null;
+	}
+}
+
+function getResource(uri,location){
+	const parsed = uri.match(/^dictionary\:\/\/([^\#]+)(.*)?$/);
+	if(parsed){
+		//the location references an instance from the dictionary
+		return location.dictionary.getInstanceByID(parsed[1]);
+	}else{
+		return null;
 	}
 }
