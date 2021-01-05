@@ -59,9 +59,34 @@ function visitEntry(referenced,entry,iterator,type,name){
 			return basicEmit(referenced,entry,iterator,type,name);
 		case 'use scope':
 			return useScope(referenced,entry,iterator,type,name);
+		case 'emit component':
+			return emitComponent(referenced,entry,iterator,type,name);
 		default:
 			return true;
 	}
+}
+
+function emitComponent(referenced,entry,it,type,name){
+	//TODO this is a hack. Need to find a way to define scopeSearch in package
+	const ref = referenced.child('ref').value;
+	if(ref && match(
+		referenced.dictionary,
+		it,
+		type,
+		name,
+		'a component',
+		ref + ' component',
+		referenced.path
+	) === false){
+		return false;
+	}
+	const children = referenced.child('children').children;
+	for(let i = 0;i<children.length;++i){
+		if(emitComponent(children[i],entry,it,type,name) === false){
+			return false;
+		}
+	}
+	return true;
 }
 
 function basicEmit(referenced,entry,iterator,type,name){
@@ -122,4 +147,14 @@ function previousContextLocation(location){
 		}
 	}
 	return location.previous || location.parent;
+}
+
+function match(dictionary, it, queryType,queryName,type,name,path){
+	const matchType = !queryType || dictionary.isa(type,queryType);
+	const matchName = !queryName || queryName === name;
+	if(matchType && matchName){
+		return it(type,name,path);
+	}else{
+		return true;
+	}
 }

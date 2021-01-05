@@ -285,6 +285,11 @@ const entities = 	[
 		}
 	},
 	{
+		name:'emit component',
+		isa:['scope entry'],
+		description:'emit all child components of this component'
+	},
+	{
 		name:'scope entry',
 		placeholder:'add to scope of this entity'
 	},
@@ -542,7 +547,7 @@ const entities = 	[
 			},
 			model:{
 				type:'definition model',
-				default:defaultDefinitionModel
+				default:{isa:['event']}
 			},
 			members:{
 				type:'event definition*',
