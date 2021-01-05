@@ -24,7 +24,7 @@ export default class Dictionary{
 		this.collectionRepo = [];
 		this.instances = {};
 		this.instancesByType = {};
-		
+
 		//initialization registerations
 		this._registerType('entity definition group',{isa:['definition group']});
 		this._registerIsa('definition group','entity definition group')
@@ -172,12 +172,13 @@ export default class Dictionary{
 		/**
 	 * Register an instance in the dictionary for later retrieval
 	 * @param {String} name name of instance
-	 * @param {String} type type of instance
-	 * @param {String} id id of instance
-	 * @param {*} value value of instance if exists
+	 * @param {String} type type of instance. This should not be an instance type but the type of the instance - `field` rather than `a field`
+	 * @param {String} id id of instance  as identified within the dictionary. This should uniquely identify the instance within the dictionary
+	 * @param {*} value value of instance
 	 */
 	_registerInstance(name, type, id, value){
 		const instanceType = this.instanceType(type);
+		assume(instanceType,'type',type,'does not have a registered instance');
 		if(!this.instancesByType[type]){
 			this.instancesByType[type] = [];
 		}
@@ -192,16 +193,23 @@ export default class Dictionary{
 
 	getInstancesByType(instanceType){
 		const type = this.typeOfInstance(instanceType);
+		if(!type){
+			//instanceType is not registered as an instance - return empty list
+			return [];
+		}
 		return Object.keys(this.instancesByType)
 			.filter(key=>this.isa(key,type))
 			.map(key=>this.instancesByType[key])
 			.flat()
-			.map(entry=>Reference(entry.name,entry.instanceType,entry.path));
+			.map(entry=>{
+				assume(entry.path.startsWith('dictionary://'),'references to dictionary instances must start with dictionary:// - got',entry.path);
+				return Reference(entry.name,entry.instanceType,entry.path);
+			});
 	}
 
 	/**
 	 * Given a type, find its instance type. E.g. for type 'string' the return value will be 'a string'
-	 * @param {Type} type 
+	 * @param {Type} type
 	 * @returns {String} the instance type
 	 */
 	instanceType(type){
