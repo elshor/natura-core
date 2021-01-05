@@ -1,8 +1,7 @@
-export function assume(condition,message,description){
+export function assume(condition,...message){
 	if(!condition){
-		const message = 'Assumption Failed: ' + description;
-		console.error(message);
-		throw new Error(message);
+		console.error('Assumption Failed:',...message);
+		throw new Error('Assumption Failed: ' + message.map(item=>item.toString()).join(' '));
 	}
 }
 
