@@ -263,50 +263,6 @@ const entities = 	[
 		emitOrder:['event','action']
 	},
 	{
-		name: 'the <<definition term>> is <<expression>> (<<valueType>>)',
-		pattern:'the <<pattern>> is <<expression>> (<<valueType>>)',
-		isa:["expression definition"],
-		show:['description','pattern','expression'],
-		additional:['forEachPhrase'],
-		properties:{
-			description:{type:'richtext'},
-			pattern:{
-				type:'pattern',
-				title:'definition term',
-				placeholder:'The term we are defininig',
-				style:'font-weight:bold'
-			},
-			expression:{
-				type:'expression',
-				placeholder:'The expression the term is defined as'
-			},
-			valueType:{
-				value: calcValueType
-			},
-			properties:{
-				value:{
-					valueType:{
-						value:function({$location}){
-							//valueType is derived from parent spec valueType
-							const parentLocation = $location.parent;
-							if(parentLocation){
-								return parentLocation.spec.valueType || 'any'
-							}else{
-								return 'any';
-							}
-						},
-						title:'value type'
-					}
-				}
-			},
-			forEachPhrase:{
-				type:'text',
-				title:'for each phrase',
-				description:'The pattern form as it would appear in a for-each action - E.g. for each friend of the user'
-			}
-		}
-	},
-	{
 		name:'text',
 		isa:['string','property type','data type'],
 		placeholder:'Enter the text'
@@ -360,15 +316,12 @@ const entities = 	[
 		description: 'Specification of an object property.',
 		pattern:'<<type>>',
 		show:['type','placeholder'],
-		additional:['description','default','value','expanded','required','hashSpec','readonly','title','actions'],
+		additional:['description','default','expanded','required','hashSpec','readonly','title','actions'],
 		properties:{
 			type:{type:'string',placeholder:'property type'},
 			placeholder:{type:'string'},
 			expanded:{type:'boolean'},
 			hashSpec:{type:'property spec',placeholder:'Define type for dictionary objects'},
-			value:{
-				description:"When the value property is specified, the value of the entity's property is always `value`. When generating a new instance of the entity, a get function is defined for the property using value. If value is a function then the getter is defined as the functino. Otherwise, it always returns value."
-			},
 			default:{
 				description:'default value of the property in case no value was explicitly set. Default can be an expression that is recalculated dynamically when the property value is checked for',
 				placeholder:'Default value of the property',

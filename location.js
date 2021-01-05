@@ -271,37 +271,22 @@ function locationSpec(location){
 function locationValue(location){
 	const spec = location.spec;
 	let ret = undefined;
-	if(spec.value !== undefined){
-		//spec defines how the property value is calculated - use it
-		if(isExpression(spec.value)){
-			ret = calc(spec.value, location.context);;
+	const property = location.property;
+	if(property === undefined){
+		ret = location.data;
+	}else if(location.parent && location.parent.value){
+		ret = parentValue[property];
+	}
+	
+	//check for default value
+	if(ret === undefined && spec.default !== undefined){
+		if(isExpression(spec.default)){
+			ret = calc(spec.default, location.context);;
 		}else{
-			ret = spec.value;
-		}
-	}else{
-		const property = location.property;
-		if(property === undefined){
-			ret = location.data;
-		}else{
-			const parentLocation = location.parent;
-			const parentValue = parentLocation.value;
-			if(!parentValue){
-				ret=undefined
-			}else{
-				ret = parentValue[property];
-			}
-		}
-		//check for default value
-		if(ret === undefined && spec.default !== undefined){
-			if(isExpression(spec.default)){
-				ret = calc(spec.default, location.context);;
-			}else{
-				ret = spec.default;
-			}
-		}else{
-			//return ret;
+			ret = spec.default;
 		}
 	}
+	
 	return ret;
 }
 
