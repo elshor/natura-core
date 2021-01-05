@@ -187,6 +187,14 @@ class Location{
 		this._children[prop] = child;
 		return child;
 	}
+
+	get children(){
+		const val = this.value;
+		if(val === null || typeof val !== 'object'){
+			return [];
+		}
+		return Object.keys(val).map(key=>this.child(key));
+	}
 	/**
 	 * Returns an array of locations of prop. If prop is an array then returns an array of locations of all its items. If value of property is not an array then returns an array with only that location
 	 * @param {String} prop
