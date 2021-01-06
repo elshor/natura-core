@@ -31,7 +31,7 @@ function visit(location,iterator,type,name){
 		return true;//continue search
 	}
 	const currentSpec = referenced.spec;
-	
+
 	//iterate context
 	const entries = computeSpecProperty(currentSpec,referenced,'context',[]);
 	for(let i=0;i<entries.length;++i){
@@ -42,10 +42,10 @@ function visit(location,iterator,type,name){
 	}
 
 	//search scope
-	if(scopeSearch(location,iterator,type,name) === false){
+	if(scopeSearch(referenced,iterator,type,name) === false){
 		return false;
 	}
-	
+
 	//continue search
 	return true;//continue
 }
@@ -116,10 +116,9 @@ function scopeSearch(location,iterator,type,name){
 		const b = visitEntry(referenced, entries[i],iterator,type,name);
 		if(b === false){
 			return false;//end search
-		}else{
-			return true;
 		}
 	}
+	return true;//continue search
 }
 
 function useScope(referenced,entry,iterator,type,name){
