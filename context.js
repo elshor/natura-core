@@ -157,3 +157,14 @@ function match(dictionary, it, queryType,queryName,type,name,path){
 		return true;
 	}
 }
+
+export function contextEntries(location,type,name){
+	const values = {};
+	contextSearch(location,(type,name,path,value)=>{
+		if(!values[path]){
+			values[path] = {name,type,path};
+		}
+		return true;
+	},type,name);
+	return Object.values(values);
+}

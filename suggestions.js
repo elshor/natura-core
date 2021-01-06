@@ -4,6 +4,7 @@ import { generateNewElement } from "src/components/utils";
 import {calcTemplate} from './template'
 import { calcValue } from "./calc";
 import reference from "./reference";
+import {contextEntries} from './context'
 
 ///////////////////////////////////////////////////////////
 //Definitions
@@ -70,14 +71,14 @@ export function getSuggestions(location,filter,spec){
 	})
 
 	//context instances
-	location.contextSearch((type,name,path,value)=>{
+	contextEntries(location,expectedType).forEach(entry=>{
 		ret.list.push({
-			value: value || reference(name,type,path),
+			value: entry.value || reference(entry.name,entry.type,entry.path),
 			source:'context',
-			text:name,
-			path:path
+			text:entry.name,
+			path:entry.path
 		})
-	},expectedType);
+	});
 
 	//dictionary expressions
 	const types = dictionary.getExpressionsByValueType(expectedType);
