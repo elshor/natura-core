@@ -251,10 +251,13 @@ const entities = 	[
 			event:{
 				type:'event',
 				placeholder:'Triggering event',
-				description: 'Select the event to trigger the action'
+				description: 'Select the event to trigger the action',
+
 			},
 			action:{
 				type:'action',
+				hideName:true,
+				displayInline:false,
 				placeholder:'action to perform',
 				description:'Select <b>action</b> to perform when the event is triggered (when event occurs)'
 			}
@@ -296,7 +299,7 @@ const entities = 	[
 	{
 		name:'use scope',
 		pattern:'use scope of <<property>>',
-		isa:['scope entry'],
+		isa:['scope entry','context entry'],
 		properties:{
 			property:{
 				type:'name',
