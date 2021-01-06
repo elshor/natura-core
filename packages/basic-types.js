@@ -78,4 +78,12 @@ export default [
 		isa:['trait.boolean'],
 		pattern:'is not <<a boolean>>'
 	},
+	{
+		name:'true',
+		valueType:'a boolean'
+	},
+	{
+		name:'false',
+		valueType:'a boolean'
+	}
 ]
