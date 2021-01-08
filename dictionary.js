@@ -171,40 +171,24 @@ export default class Dictionary{
 	}
 		/**
 	 * Register an instance in the dictionary for later retrieval
-	 * @param {String} name name of instance
-	 * @param {String} type type of instance. This should not be an instance type but the type of the instance - `field` rather than `a field`
-	 * @param {String} id id of instance  as identified within the dictionary. This should uniquely identify the instance within the dictionary
+	 * @param {String} name identification of instance
+	 * @param {String} type type to register
 	 * @param {*} value value of instance
 	 */
-	_registerInstance(name, type, id, value){
-		const instanceType = this.instanceType(type);
-		assume(instanceType,'type',type,'does not have a registered instance');
+	_registerInstance(name, type, value){
 		if(!this.instancesByType[type]){
 			this.instancesByType[type] = [];
 		}
-		assume(name && instanceType && id && value !== undefined,'registerInstance must have all parameters non-empty');
-		this.instancesByType[type].push({
-			name,
-			instanceType,
-			path:'dictionary://'+id
-		});
-		this.instances[id] = value;
+		this.instancesByType[type].push({name,type,value});
+		this.instances[name] = value;
 	}
 
-	getInstancesByType(instanceType){
-		const type = this.typeOfInstance(instanceType);
-		if(!type){
-			//instanceType is not registered as an instance - return empty list
-			return [];
-		}
+	getInstancesByType(type){
 		return Object.keys(this.instancesByType)
 			.filter(key=>this.isa(key,type))
 			.map(key=>this.instancesByType[key])
 			.flat()
-			.map(entry=>{
-				assume(entry.path.startsWith('dictionary://'),'references to dictionary instances must start with dictionary:// - got',entry.path);
-				return Reference(entry.name,entry.instanceType,entry.path);
-			});
+			.map(entry=>entry.value);
 	}
 
 	/**

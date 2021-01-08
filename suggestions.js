@@ -65,15 +65,14 @@ export function getSuggestions(location,filter,spec){
 	entries.forEach(entry=>{
 		ret.list.push({
 			value: entry,
-			text:entry.label,
-			path:entry.path
+			text:suggestionText(entry,itsExpectedSpec,dictionary)
 		})
 	})
 
 	//context instances
 	contextEntries(location,expectedType).forEach(entry=>{
 		ret.list.push({
-			value: entry.value || reference(entry.name,entry.type,entry.path),
+			value: entry.value,
 			source:'context',
 			text:entry.name,
 			path:entry.path
