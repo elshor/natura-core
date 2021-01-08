@@ -279,13 +279,19 @@ const entities = 	[
 	},
 	{
 		name:'basic emit',
-		isa:['context entry'],
-		pattern:'emit a <<type>> referenced as <<name>>',
+		isa:['context entry','scope entry'],
+		pattern:'emit a <<type>> referenced as <<name>> accessed as <<access>>',
 		show:['expression'],
 		properties:{
+			access:'text',
 			type:{type:'text',placeholder:'entity type'},
 			name:{type:'pattern'}
 		}
+	},
+	{
+		name:'emit property',
+		isa:['context entry'],
+		pattern:'emit <<property>> referenced as <<name>>'
 	},
 	{
 		name:'emit component',
@@ -298,20 +304,19 @@ const entities = 	[
 	},
 	{
 		name:'use scope',
-		pattern:'use scope of <<property>>',
+		pattern:'use scope of <<property>> accessed as <<access>>',
 		isa:['scope entry','context entry'],
 		properties:{
-			property:{
-				type:'name',
-				placeholder:'name of property'
-			}
+			access:{type:'text',placeholder:'access to entity from scope'},
+			property:{type:'name',placeholder:'name of property'}
 		}
 	},
 	{
 		name:'emit property',
-		pattern:'emit property <<property>>',
+		pattern:'emit property <<property>> accessed as <<access>>',
 		isa:['context entry'],
 		properties:{
+			access:{type:'text',placeholder:'access to entity from scope'},
 			property:{type:'name',placeholder:'property to emit'}
 		}
 	},

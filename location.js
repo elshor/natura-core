@@ -4,7 +4,6 @@ import {assume} from './error'
 import calc, { isExpression, calcValue } from './calc';
 import {entityType,entityValue} from './entity'
 import i18n from 'src/i18n';
-import {contextSearch} from './context'
 import {patternText} from './pattern'
 import Type from './type'
 
@@ -224,16 +223,6 @@ class Location{
 		}
 		parent.value[property] = value;
 	}
-	/**
-	 * Search for entities within the location context
-	 * @param {Location} location 
-	 * @param {contextIterator} iterator 
-	 * @param {String} type 
-	 * @param {String} name 
-	 */
-	contextSearch(iterator,type,name){
-			return contextSearch(this,iterator,type,name);
-		}
 }
 
 
