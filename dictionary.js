@@ -55,16 +55,27 @@ export default class Dictionary{
 			return this.isaRepo[className].includes(type)
 		}
 		if(this.isInstance(type) && this.isInstance(className)){
-			const instanceOf = this.instanceTypes[type];
-			const classType = this.instanceTypes[className]
+			const instanceOf = this.typeOfInstance(type);
+			const classType = this.typeOfInstance(className);
 			return this.isa(instanceOf,classType);
 		}
 
 		return false;
 	}
 	isInstance(type){
-		return this.instanceTypes[type] !== undefined;
+		if(typeof type !== 'string'){
+			return false;
+		}
+		if(this.instanceTypes[type]){
+			return true;
+		};
+		if(type.match(/^(a|an)\s/)){
+			//guessing this is an instance
+			return true;
+		}
+		return false;
 	}
+
 	resetVersion(){
 		this.version = ''+(Number(new Date()) - new Date('2020-01-01')+Math.random()).toString(36).replace('.','');
 	}
@@ -132,14 +143,12 @@ export default class Dictionary{
 	}
 
 	getExpressionsByValueType(type){
-		if(type === 'any'){
-			return union(Object.values(this.valueTypeRepo));
-		}
-		if(this.valueTypeRepo[type]){
-			return this.valueTypeRepo[type];
-		}else{
-			return [];
-		}
+		return unique(
+			Object.keys(this.valueTypeRepo)
+			.filter(key=>this.isa(key,type))
+			.map(key=>this.valueTypeRepo[key])
+			.flat()
+		);
 	}
 
 	isClass(type){
@@ -176,10 +185,12 @@ export default class Dictionary{
 	 * @param {*} value value of instance
 	 */
 	_registerInstance(name, type, value){
-		if(!this.instancesByType[type]){
-			this.instancesByType[type] = [];
+		if(type){
+			if(!this.instancesByType[type]){
+				this.instancesByType[type] = [];
+			}
+			this.instancesByType[type].push({name,type,value});
 		}
-		this.instancesByType[type].push({name,type,value});
 		this.instances[name] = value;
 	}
 
@@ -205,8 +216,22 @@ export default class Dictionary{
 	}
 
 	typeOfInstance(instanceType){
-		return this.instanceTypes[instanceType];
+		if(this.instanceTypes[instanceType]){
+			return this.instanceTypes[instanceType];
+		};
+		const parsed = instanceType.match(/^[a|an]\s(.+)$/);
+		if(parsed){
+			return parsed[1];
+		}else{
+			return null;
+		}
 	}
+	
+	getInstanceType(type){
+		//TODO handle an
+		return this.getTypeSpec(type).instanceType || 'a '+type;
+	}
+
 	getInstanceByID(ID){
 		return this.instances[ID];
 	}
