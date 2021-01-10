@@ -363,6 +363,26 @@ const entities = 	[
 		}
 	},
 	{
+		name:'subtype definition',
+		isa:['property definition'],
+		title:'subtype definition',
+		description:'Define the relationship between two types. The types may be new or can be predefined types that their relationship was not established yet',
+		pattern:'<<subtype>> is a type of <<supertype>>',
+		properties:{
+			subtype:{
+				type:'name'
+			},
+			supertype:{
+				type:'name'
+			}
+		},
+		register:function(dictionary,type,spec){
+			if(spec.subtype && spec.supertype){
+				dictionary._registerIsa(spec.subtype,spec.supertype);
+			}
+		}
+	},
+	{
 		name:'richtext',
 		isa:['property type'],
 		viewer: 'richtext-editor',
