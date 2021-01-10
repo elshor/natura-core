@@ -279,13 +279,9 @@ export default class Dictionary{
 
 		//pattern
 		if(spec.pattern){
-			let addShow = false;
 			parsePattern(spec.pattern).fields.forEach(field=>{
 				if(spec.properties[field.name] === undefined){
 					spec.properties[field.name] = {type:field.type};
-					if(addShow){
-						spec.show.push(field.name);
-					}
 				}
 			});
 		}
@@ -297,12 +293,6 @@ export default class Dictionary{
 			}
 		});
 		Object.values(spec.properties).forEach(prop=>assume(entityType(prop) === 'object','prop should be an object. it is '+JSON.stringify(prop)));
-
-		//if show property does not exist, then create it
-		if(!spec.show){
-			spec.show = [];
-			Object.keys(spec.properties).forEach(prop=>spec.show.push(prop));
-		}
 
 		//add the type to the repos
 		unique(spec.isa).forEach(parent=>{
