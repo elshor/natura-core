@@ -21,12 +21,12 @@ export default [
 	{
 		name:'string is',
 		isa: ['trait.string'],
-		pattern:'is <<a string>>'
+		pattern:'equals <<a string>>'
 	},
 	{
 		name:'string is not',
 		isa:['trait.string'],
-		pattern:'is not <<a string>>'
+		pattern:'does not equal <<a string>>'
 	},
 	{
 		name:'string starts with',
