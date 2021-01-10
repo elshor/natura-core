@@ -114,10 +114,6 @@ export function suggestionText(value, spec,dictionary){
 	}
 	if(spec.template){
 		return calcTemplate(spec.template,value);
-	}else if(spec.title){
-		return spec.title;
-	}else if(spec.label){
-		return spec.label;
 	}else if(isPrimitive(value)){
 		return value.toString();
 	}else if(specComputedPattern(spec)){
