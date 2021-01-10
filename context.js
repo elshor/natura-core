@@ -1,9 +1,11 @@
+import { assume } from './error';
 import Reference from './reference'
 
 /**
  * @name ContextEntry
  * @param {String} type 
- * @param {String} name 
+ * @param {String} name
+ * @param {String} path the path identifying the reference. This can be used to ensure a reference does not appear twice in the suggestions
  * @param {*} value
  * @param {String} description
  */
@@ -42,15 +44,14 @@ function visit(location,iterator,type,name,scope,visitIt){
 	//iterate context
 	const entries = currentSpec.context || [];
 	for(let i=0;i<entries.length;++i){
-		visitIt?visitIt('contextEntry',referenced,entries[i]):null;
-		const b = visitEntry(referenced, entries[i],iterator,type,name,scope);
+		const b = visitEntry(referenced, entries[i],iterator,type,name,scope,visitIt);
 		if(b === false){
 			return false;//end search
 		}
 	}
 
 	//search scope
-	if(scopeSearch(referenced.dictionary,referenced.type,iterator,type,name,scope) === false){
+	if(scopeSearch(referenced,referenced.type,iterator,type,name,scope,visitIt) === false){
 		return false;
 	}
 
@@ -58,33 +59,36 @@ function visit(location,iterator,type,name,scope,visitIt){
 	return true;//continue
 }
 
-function visitEntry(referenced,entry,iterator,type,name,scope=''){
+function visitEntry(referenced,entry,iterator,type,name,scope='',visitIt){
 	if(!entry || typeof entry !== 'object'){
 		return true;
 	}
+	visitIt?visitIt('context',referenced,entry):null;
 	switch(entry.$type){
 		case 'basic emit':
-			return basicEmit(referenced.dictionary,entry,iterator,type,name,scope);
+			return basicEmit(referenced,entry,iterator,type,name,scope);
 		case 'use scope':
-			return useScope(referenced,entry,iterator,type,name,scope);
-		case 'emit component':
-			return emitComponent(referenced,entry,iterator,type,name);
+			return useScope(referenced,entry,iterator,type,name,scope,visitIt);
 		case 'emit property':
 			return emitProperty(referenced,entry,iterator,type,name);
 		default:
-			return true;
-	}
+			assume(false,'expected known context entry. Got',entry.$type);
+		}
 }
-function visitScopeEntry(dictionary,entry,iterator,type,name,scope='',visitIt){
+function visitScopeEntry(referenced,entry,iterator,type,name,scope='',visitIt){
 	if(!entry || typeof entry !== 'object'){
 		return true;
 	}
-	visitIt?visitIt('scopeEntry',entry):null;
+	visitIt?visitIt('scope',referenced,entry):null;
 	switch(entry.$type){
 		case 'basic emit':
-			return basicEmit(dictionary,entry,iterator,type,name,scope);
-		default:
-			return true;
+			return basicEmit(referenced,entry,iterator,type,name,scope,visitIt);
+			case 'use scope':
+				return useScope(referenced,entry,iterator,type,name,scope,visitIt);
+			case 'emit component':
+				return emitComponent(referenced,entry,iterator,type,name);
+			default:
+				assume(false,'expected known scope entry. Got',entry.$type);
 	}
 }
 
@@ -111,9 +115,9 @@ function emitComponent(referenced,entry,it,type,name){
 	return true;
 }
 
-function basicEmit(dictionary,entry,iterator,type,name,scope){
+function basicEmit(referenced,entry,iterator,type,name,scope){
 	return match(
-		dictionary,
+		referenced.dictionary,
 		iterator,
 		type,
 		name,
@@ -129,7 +133,7 @@ function emitProperty(location,entry,iterator,type,name,scope){
 		return true;
 	}
 	return match(
-		location.dictionary,
+		property.dictionary,
 		iterator,
 		type,
 		name,
@@ -139,14 +143,14 @@ function emitProperty(location,entry,iterator,type,name,scope){
 	);
 }
 
-function scopeSearch(dictionary,scopeType,iterator,type,name,scope,visitIt){
-	const currentSpec = dictionary.getTypeSpec(scopeType);
+function scopeSearch(location,scopeType,iterator,type,name,scope,visitIt){
+	const currentSpec = location.dictionary.getTypeSpec(scopeType);
 	if(typeof currentSpec.scopeSearch === 'function'){
-		return currentSpec.scopeSearch(dictionary,iterator,type,name,scope) !== false;
+		return currentSpec.scopeSearch(location,iterator,type,name,scope) !== false;
 	}
 	const entries = currentSpec.scope || [];
 	for(let i=0;i<entries.length;++i){
-		const b = visitScopeEntry(dictionary, entries[i],iterator,type,name,scope,visitIt);
+		const b = visitScopeEntry(location, entries[i],iterator,type,name,scope,visitIt);
 		if(b === false){
 			return false;//end search
 		}
@@ -154,19 +158,20 @@ function scopeSearch(dictionary,scopeType,iterator,type,name,scope,visitIt){
 	return true;//continue search
 }
 
-function useScope(referenced,entry,iterator,type,name,scope){
+function useScope(referenced,entry,iterator,type,name,scope,visitIt){
 	const property = referenced.child(entry.property).referenced;
 	if(property.isEmpty){
 		return true;//continue search
 	}
 	scope = entry.access? scope+'#' + entry.access : scope;
 	return scopeSearch(
-		property.dictionary,
+		property,
 		property.type,
 		iterator,
 		type,
 		name,
-		scope
+		scope,
+		visitIt
 	) !== false;
 }
 /**
@@ -204,9 +209,12 @@ function match(dictionary, it, queryType,queryName, type,name,value){
 
 export function contextEntries(location,type,name){
 	const values = {};
-	contextSearch(location,(type,name,path,value)=>{
-		if(!values[path]){
-			values[path] = {name,type,path,value};
+	contextSearch(location,(entry)=>{
+		const id = (entry && typeof entry.value === 'object')?
+			entry.value.path||entry.name : 
+			entry.value;
+		if(!values[id]){
+			values[id] = entry;
 		}
 		return true;
 	},type,name);
