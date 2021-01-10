@@ -233,7 +233,7 @@ const entities = 	[
 		name:'basic event definition',
 		isa:'event definition',
 		title:'event definition',
-		pattern:'<<pattern>>',
+		pattern:'<<name>>',
 		show:['pattern','description','properties','context'],
 		additional:['show'],
 		properties:{
