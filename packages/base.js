@@ -209,13 +209,10 @@ const entities = 	[
 			trait:{
 				placeholder:'subject trait',
 				type:function({$location}){
-					if(!$location.parent.child('subject').value){
+					const valueType = $location.parent.child('subject').valueType;
+					if(!valueType){
 						return 'none';
 					}
-					if(typeof $location.parent.child('subject').value.valueType !== 'string'){
-						return 'none';
-					}
-					const valueType = $location.parent.child('subject').value.valueType;
 					const type = $location.dictionary.typeOfInstance(valueType) || valueType;
 					return 'trait.' + type;
 				}
