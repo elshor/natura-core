@@ -133,7 +133,7 @@ function emitProperty(location,entry,iterator,type,name,scope){
 		return true;
 	}
 	return match(
-		property.dictionary,
+		location.dictionary,
 		iterator,
 		type,
 		name,
