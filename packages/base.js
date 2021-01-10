@@ -289,6 +289,17 @@ const entities = 	[
 		}
 	},
 	{
+		name:'emit hash',
+		isa:['context entry','scope entry'],
+		description:'Emit a hash property. The values are emited using their property name as name. If the items are not instances, then emit their instances',
+		pattern:'emit hash <<property>> accessed as <<access>>',
+		properties:{
+			property:{type:'name',description:'the name of the hash property'},
+			proxyFor:{type:'name',description:'When the hash values are proxies for a property of theirs then need to also emit the proxy with the property name',title:'proxy for'},
+			access:{type:'text'}
+		}
+	},
+	{
 		name:'emit property',
 		isa:['context entry'],
 		pattern:'emit <<property>> referenced as <<name>>'

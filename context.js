@@ -75,7 +75,8 @@ function visitEntry(referenced,entry,iterator,type,name,scope='',visitIt){
 			assume(false,'expected known context entry. Got',entry.$type);
 		}
 }
-function visitScopeEntry(referenced,entry,iterator,type,name,scope='',visitIt){
+function visitScopeEntry(referenced,entry,iterator,type,name,scope='',visitIt=undefined){
+	scope = scope || '';
 	if(!entry || typeof entry !== 'object'){
 		return true;
 	}
@@ -83,12 +84,14 @@ function visitScopeEntry(referenced,entry,iterator,type,name,scope='',visitIt){
 	switch(entry.$type){
 		case 'basic emit':
 			return basicEmit(referenced,entry,iterator,type,name,scope,visitIt);
-			case 'use scope':
-				return useScope(referenced,entry,iterator,type,name,scope,visitIt);
-			case 'emit component':
-				return emitComponent(referenced,entry,iterator,type,name);
-			default:
-				assume(false,'expected known scope entry. Got',entry.$type);
+		case 'use scope':
+			return useScope(referenced,entry,iterator,type,name,scope,visitIt);
+		case 'emit component':
+			return emitComponent(referenced,entry,iterator,type,name);
+		case 'emit hash':
+			return emitHash(referenced,entry,iterator,type,name);
+		default:
+			assume(false,'expected known scope entry. Got',entry.$type);
 	}
 }
 
@@ -141,6 +144,47 @@ function emitProperty(location,entry,iterator,type,name,scope){
 		entry.name,
 		property
 	);
+}
+
+function emitHash(location,entry,iterator,type,name,scope=''){
+	const dictionary = location.dictionary;
+	const children = location.child(entry.property).children;
+	for(let i=0;i<children.length;++i){
+		const itemType = children[i].type;
+		const instanceType = dictionary.isInstance(itemType)? itemType : dictionary.getTypeSpec(itemType).instanceType || 'a ' + itemType;
+		if(match(
+			dictionary,
+			iterator,
+			type,
+			name,
+			instanceType,
+			children[i].property,
+			Reference(children[i].property,instanceType,scope+'#'+children[i].property)
+		) === false){
+			return false;
+		}
+		if(entry.proxyFor){
+			const proxy = children[i].child(entry.proxyFor);
+			const itemType = proxy.type;
+			const instanceType = proxy.isReference? proxy.value.valueType : dictionary.isInstance(itemType)? itemType : dictionary.getInstanceType(itemType);
+			if(match(
+				dictionary,
+				iterator,
+				type,
+				name,
+				instanceType,
+				children[i].property,
+				proxy.isReference? proxy.value : Reference(
+					children[i].property,
+					instanceType,
+					scope+'#'+children[i].property+'/proxy'
+				)
+			) === false){
+				return false;
+			}	
+		}
+	}
+	return true;
 }
 
 function scopeSearch(location,scopeType,iterator,type,name,scope,visitIt){
