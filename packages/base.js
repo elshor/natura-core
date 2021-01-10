@@ -329,7 +329,7 @@ const entities = 	[
 		description: 'Specification of an object property.',
 		pattern:'<<type>>',
 		show:['type','placeholder'],
-		additional:['description','default','expanded','required','hashSpec','readonly','title','actions'],
+		additional:['description','default','expanded','required','hashSpec','readonly','title','actions','namePlaceholder'],
 		properties:{
 			type:{type:'string',placeholder:'property type'},
 			placeholder:{type:'string'},
@@ -344,6 +344,7 @@ const entities = 	[
 			description:{type:'richtext',placeholder:'Description fo the property'},
 			actions:{type:'entity action*',expanded:true},
 			readonly:{type:'boolean'},
+			namePlaceholder:{type:'name',title:'name placeholder',placeholder:'name to use for hash property'},
 			childSpec:{
 				type:'property spec',
 				description:'Define spec for properties array items'
