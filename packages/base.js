@@ -131,14 +131,7 @@ const entities = 	[
 			},
 			instanceType:{
 				type:'string',
-				default:(spec)=>{
-					if(spec && typeof spec === 'object' && (spec.name || spec.type)){
-						const name = spec.name || spec.type;
-						//TODO need to use linguistic library for this
-						const useAn = ['a','i','o','u','h'].includes(name[0]);
-						return (useAn?'an ':'a ') + name;
-					}
-				}
+				default: defaultInstanceType
 			},
 			properties:{
 				hashSpec:{type:'property spec'},
@@ -281,7 +274,6 @@ const entities = 	[
 		name:'basic emit',
 		isa:['context entry','scope entry'],
 		pattern:'emit a <<type>> referenced as <<name>> accessed as <<access>>',
-		show:['expression'],
 		properties:{
 			access:'text',
 			type:{type:'text',placeholder:'entity type'},
@@ -513,8 +505,14 @@ const entities = 	[
 		name:'atom',
 		isa:['property definition'],
 		pattern:'<<name>>',
+		show:['instanceType'],
 		properties:{
-			name:{type:'name',placeholder:'Atom name'}
+			name:{type:'name',placeholder:'Atom name'},
+			instanceType:{
+				type:'name',
+				title:'instance type',
+				default:defaultInstanceType
+			}
 		},
 		title:'Atom'
 	},
@@ -666,4 +664,14 @@ function defaultDefinitionModel(context){
 		return {$type:'definition model'} ;
 	}
 	return {$type:'definition model',isa:[location.lang.singular(name)]};
+}
+
+function defaultInstanceType({location}){
+	const spec = location? location.parent.value : {};
+	if(spec && typeof spec === 'object' && (spec.name || spec.type)){
+		const name = spec.name || spec.type;
+		//TODO need to use linguistic library for this
+		const useAn = ['a','i','o','u','h'].includes(name[0]);
+		return (useAn?'an ':'a ') + name;
+	}
 }
