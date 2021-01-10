@@ -166,7 +166,16 @@ function emitHash(location,entry,iterator,type,name,scope=''){
 		if(entry.proxyFor){
 			const proxy = children[i].child(entry.proxyFor);
 			const itemType = proxy.type;
-			const instanceType = proxy.isReference? proxy.value.valueType : dictionary.isInstance(itemType)? itemType : dictionary.getInstanceType(itemType);
+			let instanceType;
+			if(dictionary.isInstance(itemType)){
+				instanceType = itemType;
+			}else if(proxy.isReference){
+				instanceType = proxy.value.valueType;
+			}else if(dictionary.isa(itemType,'expression')){
+				 instanceType = proxy.spec.valueType;
+			}else{
+				 instanceType = dictionary.getInstanceType(itemType);
+			}
 			if(match(
 				dictionary,
 				iterator,
