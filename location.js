@@ -29,6 +29,15 @@ class Location{
 	get spec(){
 		return locationSpec(this);
 	}
+	
+	get valueType(){
+		if(this.dictionary.isa(this.type,'expression')){
+			return this.spec.valueType;
+		}else{
+			return this.type;
+		}
+	}
+
 	get type(){
 		if(this.isReference){
 			//type is stored in the reference object
