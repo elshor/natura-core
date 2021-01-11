@@ -41,7 +41,7 @@ class Location{
 	get type(){
 		if(this.isReference){
 			//type is stored in the reference object
-			return this.value.type;
+			return this.value.valueType;
 		}else if(this.value && typeof this.value ==='object' && this.value.$type){
 			//value is set with an object that has explicit type
 			return this.value.$type;
