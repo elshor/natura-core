@@ -29,6 +29,16 @@ export default [
 		pattern:'does not equal <<a string>>'
 	},
 	{
+		name:'string is empty',
+		isa:['trait.string'],
+		pattern:'is empty'
+	},
+	{
+		name:'string is not empty',
+		isa:['trait.string'],
+		pattern:'is not empty'
+	},
+	{
 		name:'string starts with',
 		isa:['trait.string'],
 		pattern:'starts with <<a string>>'
@@ -85,5 +95,28 @@ export default [
 	{
 		name:'false',
 		valueType:'a boolean'
+	},
+///////////////////////////////////////////////////////////////////////////////
+//functions
+///////////////////////////////////////////////////////////////////////////////
+	{
+		name:'trimmed',
+		isa:['expression'],
+		valueType:'a string',
+		pattern:'<<a string>> trimmed'
+	},
+	{
+		name:'trimmed left',
+		isa:['expression'],
+		valueType:'a string',
+		pattern:'<<a string>> trimmed left'
+	},
+	{
+		name:'trimmed right',
+		isa:['expression'],
+		valueType:'a string',
+		pattern:'<<a string>> trimmed right'
 	}
 ]
+
+
