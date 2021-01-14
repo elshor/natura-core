@@ -1,12 +1,4 @@
-import {createLocation} from './location'
-import {assume,MissingParam } from './error'
-
-/**
- * An entity is a json object that has a corresponding spec. Its value is calculated using spec properties such as value and default. It also has metadata properties such as $spec, $parent. It is implemented as a proxy. Details defined in the location.js file
- */
-export function entity(data,dictionary,path){
-	return createLocation(data,dictionary,path).entity;
-}
+import {assume,MissingParam } from './error.js'
 
 export function entityType(data){
 	if(typeof data === 'object' && data !== null && data.$isProxy===true){

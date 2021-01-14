@@ -1,5 +1,5 @@
-import { assume } from './error';
-import calc,{ isExpression } from './calc';
+import { assume } from './error.js';
+import calc,{ isExpression } from './calc.js';
 const DefaultPlaceholder = 'Enter value here';
 
 export function specType(spec){

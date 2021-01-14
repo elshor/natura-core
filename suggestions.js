@@ -1,10 +1,9 @@
-import { specType, valueSpec, specComputedPattern} from "./spec";
-import { assume } from "./error";
-import { generateNewElement } from "src/components/utils";
-import {calcTemplate} from './template'
-import { calcValue } from "./calc";
-import reference from "./reference";
-import {contextEntries} from './context'
+import { specType, valueSpec, specComputedPattern} from "./spec.js";
+import { assume } from "./error.js";
+import { generateNewElement } from "src/components/utils.js";
+import {calcTemplate} from './template.js'
+import { calcValue } from "./calc.js";
+import {contextEntries} from './context.js'
 
 ///////////////////////////////////////////////////////////
 //Definitions

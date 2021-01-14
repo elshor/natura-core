@@ -1,5 +1,5 @@
-import { assume } from "./error";
-import {specComputedPattern} from './spec'
+import { assume } from "./error.js";
+import {specComputedPattern} from './spec.js'
 
 export function parsePattern(text=''){
 	assume(typeof text === 'string','pattern is a' + typeof text + ' - ' + text);

@@ -11,6 +11,7 @@
   ],
   "author": "Elchanan Shor",
   "dependencies": {
-    "deepmerge": "^4.2.2"
+    "deepmerge": "^4.2.2",
+    "json-ptr": "^2.0.0"
   }
 }

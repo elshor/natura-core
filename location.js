@@ -1,14 +1,13 @@
 import {JsonPointer} from 'json-ptr'
-import { specType, mergeSpec, specProperties } from './spec';
-import {assume} from './error'
-import calc, { isExpression, calcValue } from './calc';
-import {entityType,entityValue} from './entity'
-import i18n from 'src/i18n';
-import {patternText} from './pattern'
-import Type from './type'
+import { specType, mergeSpec, specProperties } from './spec.js';
+import {assume} from './error.js'
+import calc, { isExpression, calcValue } from './calc.js';
+import {entityType,entityValue} from './entity.js'
+import {patternText} from './pattern.js'
+import Type from './type.js'
 
 export function createLocation(data,dictionary=new Dictionary(),path=''){
-	return new Location(data,dictionary,uriHash(path),i18n(),uriResource(path));
+	return new Location(data,dictionary,uriHash(path),null,uriResource(path));
 }
 
 class Location{

@@ -1,10 +1,11 @@
-import { LoadError, assume, ParamValue } from "./error";
-import { loadPackage } from "./data";
-import { specType } from "./spec";
-import { parsePattern } from "./pattern";
-import {entity,entityType,entityIsArray} from './entity'
+import { LoadError, assume, ParamValue } from "./error.js";
+import { loadPackage } from "./data.js";
+import { specType } from "./spec.js";
+import { parsePattern } from "./pattern.js";
+import {entityType,entityIsArray} from './entity.js'
 import deepmerge from "deepmerge";
-import Reference from './reference'
+import base from './packages/base.js'
+import {createLocation} from './location.js'
 
 export default class Dictionary{
 	constructor(packages=['base']){
@@ -351,7 +352,7 @@ export default class Dictionary{
 		assume(entityType(pkgObject) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");
 
 		//convert the raw package object to entity so we can use value functions defined in the specs
-		return entity(pkgObject,this);
+		return createLocation(pkgObject,this).entity;
 	}
 }
 

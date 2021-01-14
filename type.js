@@ -1,5 +1,5 @@
 import {IllegalType} from './error.js'
-import calc from "./calc";
+import calc from "./calc.js";
 
 export default function Type(type,location){
 	if(typeof type === 'string'){

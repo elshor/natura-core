@@ -1,5 +1,5 @@
-import { assume } from './error';
-import Reference from './reference'
+import { assume } from './error.js';
+import Reference from './reference.js'
 
 /**
  * @name ContextEntry

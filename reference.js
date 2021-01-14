@@ -1,4 +1,4 @@
-import { assume } from "./error"
+import { assume } from "./error.js"
 
 export default function reference(label,valueType,path){
 	assume(label,'label of reference must be specified');
