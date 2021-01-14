@@ -1,5 +1,4 @@
-import { specIsa } from "../spec";
-import basicTypes from "./basic-types"
+import basicTypes from "./basic-types.js"
 
 const entities = 	[
 	{
@@ -617,6 +616,7 @@ const entities = 	[
 	{
 		name:'join text',
 		title:'join text',
+		fn:'join@natura/lib/base(elements)',
 		isa:'expression',
 		valueType:'string',
 		pattern:'join <<elements>>',
