@@ -8,7 +8,7 @@ import base from './packages/base.js'
 import {createLocation} from './location.js'
 
 export default class Dictionary{
-	constructor(packages=['base']){
+	constructor(packages=[base]){
 		assume(entityIsArray(packages),'packages should be an array. It is '+JSON.stringify(packages));
 		this.packages = packages;
 		this.reset();
@@ -25,6 +25,7 @@ export default class Dictionary{
 		this.collectionRepo = [];
 		this.instances = {};
 		this.instancesByType = {};
+		this.functions = {};
 
 		//initialization registerations
 		this._registerType('entity definition group',{isa:['definition group']});
@@ -107,7 +108,7 @@ export default class Dictionary{
 		this.resetVersion();
 	}
 
-	setPackages(packages=['base']){
+	setPackages(packages=[base]){
 		this.packages = packages;
 	}
 
@@ -195,6 +196,37 @@ export default class Dictionary{
 		this.instances[name] = value;
 	}
 
+	/**
+	 * @typedef FunctionEntry Define how an action or expression type uses a function. It can specify a function from an imported library, a class function or a predefined function within calling context. For traits, the subject is passed as the `this` object.
+	 * @property {String} library - export library for this function
+	 * @property {String} object used for object functions to determine which spec property is associated with the function object
+	 * @property {String} name - name of the function to call
+	 * @property {String[]} args an array of spec properties to be called as arguments. If an argument is preceeded with a `>` then it is treated as a callback
+	 * @property {Boolean=false} defer this function should not be called immediatly but instead create a function argument that can be called later upon request. This is used for actions that are called based on condition or after previous action
+	 */
+	/**
+	 * Associate a function with a type name. This is used to define functions used to calculate expressions and execute actions.
+	 * @param {String} name type name
+	 * @param {FunctionEntry} functionEntry
+	 */
+	_registerFunction(name,functionEntry){
+		if(typeof functionEntry === 'string'){
+			const parsed = functionEntry.match(/^([^@]+)@([^\(]+)\(([^^\)]*)\)$/);
+			assume(parsed,'function reference failed to parse',functionEntry);
+			this.functions[name] = {
+				library:parsed[2],
+				name:parsed[1],
+				args:parsed[3].split(',').map(item=>item.trim())
+			}
+		}else{
+			this.functions[name] = functionEntry;
+		}
+	}
+
+	getFunctionEntry(name){
+		return this.functions[name] || {};
+	}
+
 	getInstancesByType(type){
 		return Object.keys(this.instancesByType)
 			.filter(key=>this.isa(key,type))
@@ -227,7 +259,7 @@ export default class Dictionary{
 			return null;
 		}
 	}
-	
+
 	getInstanceType(type){
 		//TODO handle an
 		return this.getTypeSpec(type).instanceType || 'a '+type;
@@ -337,6 +369,11 @@ export default class Dictionary{
 		if(spec.instanceType){
 			this._registerInstanceType(spec.instanceType,type);
 		}
+
+		//register fn
+		if(spec.fn){
+			this._registerFunction(type,spec.fn);
+		}
 	}
 	_registerIsa(type,parent){
 		if(!Array.isArray(this.isaRepo[parent])){
@@ -358,12 +395,6 @@ export default class Dictionary{
 
 function deepCopy(source){
 	return source.$raw || source;
-}
-
-function union(arrays){
-	const all = {};
-	arrays.forEach(arr=>arr.forEach(item=>all[item]=true));
-	return Object.keys(all);
 }
 
 function unique(arr){
