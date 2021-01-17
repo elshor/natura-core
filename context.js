@@ -22,7 +22,7 @@ import Reference from './reference.js'
  * @param {contextIterator} iterator 
  * @param {String} type 
  * @param {String} name 
- * @param {String} scope the current scope. Each time a use scope is followed, the new scope is added to the scope with a preceding # symbol
+ * @param {String} scope the current scope. Each time a use scope is followed, the new scope is added to the scope with a preceding > symbol
  */
 export function contextSearch(location,iterator,type,name,scope='',visitIt){
 	let current = previousContextLocation(location);//skip current
@@ -105,7 +105,7 @@ function emitComponent(referenced,entry,it,type,name){
 		name,
 		'a component',
 		ref + ' component',
-		Reference(ref + ' component','a component',referenced.path)
+		Reference(ref + ' component','a component','$refs>'+ref)
 	) === false){
 		return false;
 	}
@@ -126,7 +126,7 @@ function basicEmit(referenced,entry,iterator,type,name,scope){
 		name,
 		entry.type,
 		entry.name,
-		Reference(entry.name,entry.type,scope + "#" + entry.access)
+		Reference(entry.name,entry.type,scope + ">" + entry.access)
 	);
 }
 
@@ -159,7 +159,7 @@ function emitHash(location,entry,iterator,type,name,scope=''){
 			name,
 			instanceType,
 			children[i].property,
-			Reference(children[i].property,instanceType,scope+'#'+children[i].property)
+			Reference(children[i].property,instanceType,scope+'>'+children[i].property)
 		) === false){
 			return false;
 		}
@@ -186,7 +186,7 @@ function emitHash(location,entry,iterator,type,name,scope=''){
 				proxy.isReference? proxy.value : Reference(
 					children[i].property,
 					instanceType,
-					scope+'#'+children[i].property+'/proxy'
+					scope+'>'+children[i].property
 				)
 			) === false){
 				return false;
@@ -216,7 +216,7 @@ function useScope(referenced,entry,iterator,type,name,scope,visitIt){
 	if(property.isEmpty){
 		return true;//continue search
 	}
-	scope = entry.access? scope+'#' + entry.access : scope;
+	scope = entry.access? scope+'>' + entry.access : scope;
 	return scopeSearch(
 		property,
 		property.type,
