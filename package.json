@@ -1,6 +1,6 @@
 {
   "name": "natura",
-  "type":"module",
+  "type": "module",
   "version": "0.0.1",
   "description": "Core functionality needed to work with natura. This package contains the natura logic without UI. It should be used by the client and server",
   "scripts": {
@@ -12,6 +12,7 @@
   "author": "Elchanan Shor",
   "dependencies": {
     "deepmerge": "^4.2.2",
-    "json-ptr": "^2.0.0"
+    "json-ptr": "^2.0.0",
+    "pluralize": "^8.0.0"
   }
 }

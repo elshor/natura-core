@@ -5,6 +5,7 @@ import calc, { isExpression, calcValue } from './calc.js';
 import {entityType,entityValue} from './entity.js'
 import {patternText} from './pattern.js'
 import Type from './type.js'
+import langLib from './lang.js'
 
 export function createLocation(data,dictionary=new Dictionary(),path=''){
 	return new Location(data,dictionary,uriHash(path),null,uriResource(path));
@@ -16,7 +17,7 @@ class Location{
 		this.uri = uri
 		this.dictionary = dictionary;
 		this.path = path;
-		this.lang = lang;
+		this.lang = lang || langLib();
 		this._children = {};
 	}
 	get value(){
