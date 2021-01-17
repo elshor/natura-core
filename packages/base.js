@@ -224,17 +224,22 @@ const entities = 	[
 		title:'event definition',
 		pattern:'<<name>>',
 		show:['pattern','description','properties','context'],
-		additional:['show'],
+		additional:['show','fn'],
 		properties:{
 			pattern:{type:'pattern',placeholder:'Type in the event pattern',description:'The event pattern is how the pattern is refered to. E.g. user clicks on <<element>>'},
 			description:{type:'richtext'},
 			properties:{hashSpec:{type:'property spec'},expanded:true},
 			context:{expanded:false,type:'context entry*'},
-			show:{type:'string*'}
+			show:{type:'string*'},
+			fn:{
+				type:'text',
+				description:'A reference to the registering event function. The function is described in the format of `functionName@package(arg1,arg2) where args are names of properties. The registering function will be called where `this` is the callback function to register.'
+			}
 		},
 	},
 	{
 		name:'event handler',
+		description:'An event handler. The event handler calls the event function passing it the action callback function as `this`. The event handler is expected to call the function `addEventListener` on the componenet/element',
 		pattern:'when <<event>> then <<action>>',
 		properties:{
 			event:{
