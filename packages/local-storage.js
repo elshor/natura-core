@@ -97,7 +97,7 @@ const entities = [
 	{
 		name:'record query',
 		isa:['expression'],
-		fn:'query@natura/local-storage(recordType,>filters)',
+		fn:'query@natura/lib/local-storage(recordType,>filters)',
 		inlineDetails:'collapsed',
 		title:'local storage selected records',
 		pattern:'selected <<recordType>> records',
