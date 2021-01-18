@@ -28,25 +28,7 @@ export function specHasProperties(spec){
 	return Object.keys(spec.properties).length > 0;
 }
 
-export function valueSpec(value,dictionary){
-	assume(dictionary);
-	switch(typeof value){
-	case 'number':
-		return {type:'number'};
-	case 'string':
-		return {type:'string'};
-	case 'boolean':
-		return {type:'booldean'};
-	case 'object':
-		if(value === 'null'){
-			return {};
-		}else	if(typeof value.$type === 'string'){
-			return dictionary.getTypeSpec(value.$type);
-		}
-	default:
-		return {};
-	}
-}
+
 
 export function placeholder(spec,propertyName){
 	if(!spec){

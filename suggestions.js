@@ -1,4 +1,4 @@
-import { specType, valueSpec, specComputedPattern} from "./spec.js";
+import { specType, specComputedPattern} from "./spec.js";
 import { assume } from "./error.js";
 import { generateNewElement } from "src/components/utils.js";
 import {calcTemplate} from './template.js'
@@ -53,7 +53,7 @@ export function getSuggestions(location,filter,spec){
 				value: value,
 				description: dictionary.getTypeSpec(type).description,
 				source:'class',
-				text: suggestionText(value,itsExpectedSpec,dictionary)
+				text: suggestionText(value,itsExpectedSpec,dictionary,true)
 			});
 		});
 	}
@@ -86,7 +86,7 @@ export function getSuggestions(location,filter,spec){
 			value: value,
 			description: dictionary.getTypeSpec(type).description,
 			source:'expression',
-			text:suggestionText(value,itsExpectedSpec,dictionary)
+			text:suggestionText(value,itsExpectedSpec,dictionary,true)
 		});
 		});
 	
@@ -104,21 +104,24 @@ export function hasSuggestions(location, filter){
 	return getSuggestions(location,filter).list.length > 0;
 }
 
-export function suggestionText(value, spec,dictionary){
+export function suggestionText(value, spec,dictionary,isNew=false){
 	assume(spec);
 	assume(dictionary);
 	if(value !== null && typeof value === 'object' && value.$type !== undefined){
 		//if there is an explicit type then replace it
 		spec = dictionary.getTypeSpec(value.$type);
 	}
-	if(spec.template){
+
+	if(isNew && spec.title){
+		return spec.title;
+	}else	if(spec.template){
 		return calcTemplate(spec.template,value);
 	}else if(isPrimitive(value)){
 		return value.toString();
 	}else if(specComputedPattern(spec)){
 		return specComputedPattern(spec);
 	}else{
-		return specType(valueSpec(value,dictionary));
+		return JSON.stringify(value);
 	}
 }
 
