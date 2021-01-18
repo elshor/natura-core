@@ -239,7 +239,12 @@ const entities = 	[
 	},
 	{
 		name:'event handler',
-		description:'An event handler. The event handler calls the event function passing it the action callback function as `this`. The event handler is expected to call the function `addEventListener` on the componenet/element',
+		description:`An event handler. The event handler calls the event function with <code>this</code> object that has the following properties:<ul>
+		<li>registerEvent - a function that registeres and event. It takes the following arguments: target,eventName, handler
+		<li>handler - the function to execute
+		</ul>
+		It is important to use the registerEvent function because it takes care of unregistering event in case of development environment with hot reload
+		`,
 		pattern:'when <<event>> then <<action>>',
 		properties:{
 			event:{
