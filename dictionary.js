@@ -1,5 +1,4 @@
 import { LoadError, assume, ParamValue } from "./error.js";
-import { loadPackage } from "./data.js";
 import { specType } from "./spec.js";
 import { parsePattern } from "./pattern.js";
 import {entityType,entityIsArray} from './entity.js'
@@ -85,21 +84,19 @@ export default class Dictionary{
 	/**
 	 * Initial load of packages to the dictionary. This must be called before the dictionary is used
 	 */
-	async load(dynamicPackages){
+	load(dynamicPackages){
 		return this.reload(dynamicPackages);
 	}
 
 	/**
 	 * Reload the packages. This should be called when the packages are changed and need to be reprocessed. All packages are reloaded. In addition, dynamicPackages are also loaded
 	 */
-	async reload(dynamicPackages=[]){
+	reload(dynamicPackages=[]){
 		dynamicPackages =	entityIsArray(dynamicPackages)?
 			dynamicPackages :
 			[dynamicPackages];
 		const packagesToLoad = this.packages.concat(dynamicPackages)
-		const loaded = await Promise.all(
-			packagesToLoad.map(pkg=>this._loadPackage(pkg))
-		);
+		const loaded = packagesToLoad.map(pkg=>this._loadPackage(pkg))
 		this.reset();
 		loaded.forEach(pkg=>{
 			const packageCopy = deepCopy(pkg);
@@ -169,9 +166,9 @@ export default class Dictionary{
 	 * Add a package to the dictionary. the package can either be a string identifying the package or the package object itself
 	 * @param {Object|String} pckg the package to add
 	 */
-	async addPackage(pckg){
+	addPackage(pckg){
 		this.packages.push(pckg);
-		await this.reload();
+		this.reload();
 	}
 
 	_isDefinitionGroup(entity){
@@ -384,12 +381,11 @@ export default class Dictionary{
 	_registerInstanceType(instanceType,type){
 		this.instanceTypes[instanceType] = type;
 	}
-	async _loadPackage(pckg){
-		const pkgObject = entityType(pckg) === 'string'?await loadPackage(pckg) : pckg;
-		assume(entityType(pkgObject) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");
+	_loadPackage(pckg){
+		assume(entityType(pckg) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");
 
 		//convert the raw package object to entity so we can use value functions defined in the specs
-		return createLocation(pkgObject,this).entity;
+		return createLocation(pckg,this).entity;
 	}
 }
 
