@@ -1,2 +1,4 @@
 node_modules/*
 .vscode/*
+dev/credentials.js
+packages/jquery-ui.js
