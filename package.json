@@ -13,12 +13,15 @@
   "author": "Elchanan Shor",
   "dependencies": {
     "@cloudant/cloudant": "^4.3.0",
+    "clone": "^2.1.2",
     "deepmerge": "^4.2.2",
     "json-ptr": "^2.0.0",
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
     "change-case": "^4.1.2",
-    "jsdoc": "^3.6.6"
+    "jsdoc": "^3.6.6",
+    "jsdoc-api": "^6.0.0",
+    "terminal-kit": "^1.45.9"
   }
 }

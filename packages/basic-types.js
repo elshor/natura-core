@@ -91,26 +91,16 @@ export default [
 		fn:'isNot@natura/lib/base(a number)'
 	},
 	{
-		name:'boolean is',
+		name:'boolean is true',
 		isa:['trait.boolean'],
-		pattern:'is <<a boolean>>',
-		fn:'is@natura/lib/base(a boolean)'
+		pattern:'is true',
+		fn:'isTrue@natura/lib/base()'
 	},
 	{
-		name:'boolean is not',
+		name:'boolean is false',
 		isa:['trait.boolean'],
-		pattern:'is not <<a boolean>>',
-		fn:'isNot@natura/lib/base(a boolean)'
-	},
-	{
-		name:'true',
-		valueType:'a boolean',
-		fn:'getTrue@natura/lib/base()'
-	},
-	{
-		name:'false',
-		valueType:'a boolean',
-		fn:'getFalse@natura/lib/base()'
+		pattern:'is false',
+		fn:'isFalse@natura/lib/base()'
 	},
 ///////////////////////////////////////////////////////////////////////////////
 //functions

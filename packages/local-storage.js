@@ -250,7 +250,6 @@ const entities = [
 		name: 'local storage record name',
 		placeholder:'select record type',
 		options:({location})=>{
-			console.log('local storage record name',location.dictionary.getClassMembers('local storage record'));
 			return location.dictionary.getClassMembers('local storage record');
 		}
 	},

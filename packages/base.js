@@ -262,7 +262,10 @@ const entities = 	[
 			}
 		},
 		show:['action'],
-		emitOrder:['event','action']
+		emitOrder:['event','action'],
+		scope:[
+			{$type:'use scope',property:'event'}
+		]
 	},
 	{
 		name:'text',
@@ -283,7 +286,8 @@ const entities = 	[
 		properties:{
 			access:'text',
 			type:{type:'text',placeholder:'entity type'},
-			name:{type:'pattern'}
+			name:{type:'pattern'},
+			useScope:{type:'boolean',description:'Use the scope of the emited object. If set to true then scope search iterates through the type scope entries or scope function'}
 		}
 	},
 	{
@@ -313,6 +317,7 @@ const entities = 	[
 	},
 	{
 		name:'use scope',
+		description:'use a scope of property where property is a type',
 		pattern:'use scope of <<property>> accessed as <<access>>',
 		isa:['scope entry','context entry'],
 		properties:{

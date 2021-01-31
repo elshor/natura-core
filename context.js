@@ -87,9 +87,9 @@ function visitScopeEntry(referenced,entry,iterator,type,name,scope='',visitIt=un
 		case 'use scope':
 			return useScope(referenced,entry,iterator,type,name,scope,visitIt);
 		case 'emit component':
-			return emitComponent(referenced,entry,iterator,type,name);
+			return emitComponent(referenced,entry,iterator,type,name,scope,visitIt);
 		case 'emit hash':
-			return emitHash(referenced,entry,iterator,type,name);
+			return emitHash(referenced,entry,iterator,type,name,scope,visitIt);
 		default:
 			assume(false,'expected known scope entry. Got',entry.$type);
 	}
@@ -118,16 +118,24 @@ function emitComponent(referenced,entry,it,type,name){
 	return true;
 }
 
-function basicEmit(referenced,entry,iterator,type,name,scope){
-	return match(
+function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
+	if(match(
 		referenced.dictionary,
 		iterator,
 		type,
 		name,
 		entry.type,
 		entry.name,
-		Reference(entry.name,entry.type,scope + ">" + entry.access)
-	);
+		Reference(entry.name,entry.type,scope + ">" + entry.access),
+		entry.description
+	)===false){
+		return false;
+	}
+	if(entry.useScope){
+		return scopeSearch(referenced,entry.type,iterator,type,name,scope,visitIt);
+	}else{
+		return true;
+	}
 }
 
 function emitProperty(location,entry,iterator,type,name,scope){
@@ -227,6 +235,7 @@ function useScope(referenced,entry,iterator,type,name,scope,visitIt){
 		visitIt
 	) !== false;
 }
+
 /**
  * Find the location to be visited before current location when evaluating context. The order in which context is evaluated determines
  * @param {Location} location current location
@@ -250,11 +259,11 @@ function previousContextLocation(location){
 	return location.previous || location.parent;
 }
 
-function match(dictionary, it, queryType,queryName, type,name,value){
+function match(dictionary, it, queryType,queryName, type,name,value,description){
 	const matchType = !queryType || dictionary.isa(type,queryType);
 	const matchName = !queryName || queryName === name;
 	if(matchType && matchName){
-		return it({type,name,value});
+		return it({type,name,value,description});
 	}else{
 		return true;
 	}

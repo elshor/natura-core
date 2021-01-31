@@ -3,6 +3,8 @@ import {sentenceCase} from 'change-case'
 import fs from 'fs'
 import {patternFields} from '../pattern.js'
 import upload from './upload.mjs'
+import terminal from  'terminal-kit';
+const term = terminal.terminal;
 
 processFile('./lib/','./packages/','jquery-ui');
 
@@ -24,20 +26,24 @@ async function processFile(inputPath,outputPath,filename){
 	input.forEach(item=>addTypeDef(item,output.entities.members));
 	fs.writeFileSync(outputPath+filename+'.js','export default '+JSON.stringify(output,null,'  '));
 	await upload(output);
-	console.info('uploaded',filename,'package');
+	term.green.bold('uploaded ',filename,' package');
 }
 
 function addTypeDef(input,output){
 	const naturaTag = (input.tags||[]).find(item=>item.title==="natura");
 	if(naturaTag){
-		const parsed = naturaTag.text.match(/^(expression|action|event)\s+(.*)$/);
+		const parsed = naturaTag.text.match(/^(expression|action|event|trait|entity)(\s+(.*))?$/);
 		if(parsed){
 			switch(parsed[1]){
 				case 'action':
-					return addActionType(input,parsed[2],output);
+					return addActionType(input,parsed[3],output);
 				case 'event':
-					return addEventType(input,parsed[2],output);
-			}
+					return addEventType(input,parsed[3],output);
+				case 'trait':
+					return addTraitType(input,parsed[3],output);
+				case 'entity':
+					return addEntityType(input,parsed[3],output);
+					}
 		}
 	}
 }
@@ -50,14 +56,16 @@ function addActionType(input,pattern,output){
 		isa:['action'],
 		title:getTag(input,'title'),
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
-		fn:`${input.name}@${moduleName(input)}(${input.params.map(item=>item.name).join(',')})`,
+		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
 		show,
 		pattern,
 		description:input.description,
-		properties:propertiesObject(input.params)
+		properties:propertiesObject(input.params||[])
 	};
+
 	output.push(def);
 }
+
 function addEventType(input,pattern,output){
 	const fields = patternFields(pattern).map(field=>field.name);
 	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
@@ -66,11 +74,75 @@ function addEventType(input,pattern,output){
 		isa:['event'],
 		title:getTag(input,'title'),
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
-		fn:`${input.name}@${moduleName(input)}(${input.params.map(item=>item.name).join(',')})`,
+		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
 		show,
 		pattern,
 		description:input.description,
-		properties:propertiesObject(input.params)
+		properties:propertiesObject(input.params||[])
+	};
+	if(input.type){
+		//use scope of event type. this will enable for example referencing KeyState in MouseEvent
+		def.scope = [{
+			$type:'basic emit',
+			type:appType(input.type.names),
+			name:'the event',
+			access:'event',
+			useScope:true
+		}]
+	}
+	output.push(def);
+}
+
+function addEntityType(input,pattern,output){
+	const fields = patternFields(pattern||'').map(field=>field.name);
+	const show = (input.properties||[]).map(param=>param.name).filter(name=>!fields.includes(name));
+	const def = {
+		name:appType(input.name),
+		instanceType: appType(input.name,true),
+		isa:['application type'],
+		title:getTag(input,'title'),
+		inlineDetails:show.length>0 ? 'collapsed' : 'none',
+		fn:`${input.name}@${moduleName(input)}(${(input.properties||[]).map(item=>item.name).join(',')})`,
+		show,
+		pattern,
+		description:input.description,
+		properties:propertiesObject(input.properties||[]),
+		scope: Object.entries(propertiesObject(input.properties||[])).map(([key,value])=>(
+			{$type:'basic emit',type:value.type,name:value.placeholder,access:key,description:value.description}
+		))
+	};
+
+	//check if there is a  type definition. This can be used to register options or isa relationships
+	((input.type||{}).names||[]).forEach(item=>{
+		const json = safeParse(item);
+		if(json === undefined){
+			//assume the type is a type, not a JSON optino
+			def.isa.push(appType(item));
+		}else{
+			//name is an option
+			if(!def.options){
+				def.options = [];
+			}
+			def.options.push(json);
+		}
+	});
+	output.push(def);
+}
+
+function addTraitType(input,pattern,output){
+	const fields = patternFields(pattern).map(field=>field.name);
+	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
+	const thisType = appType(input.this||'any');
+	const def = {
+		name:appType(input.name),
+		isa:['trait.' + thisType],
+		title:getTag(input,'title'),
+		inlineDetails:show.length>0 ? 'collapsed' : 'none',
+		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
+		show,
+		pattern,
+		description:input.description,
+		properties:propertiesObject(input.params||[])
 	};
 	output.push(def);
 }
@@ -94,9 +166,9 @@ function appType(name,instance=false){
 
 function propertiesObject(params){
 	const ret = {};
-	params.forEach(param=>{
+	(params||[]).forEach(param=>{
 		const spec = {
-			type:appType(param.type.names,true),
+			type:appType((param.type||{}).names,true),
 		};
 		if((param.description||'').match(/\-/)){
 			//split the description to description and placeholder
@@ -106,7 +178,7 @@ function propertiesObject(params){
 			spec.placeholder = param.description;
 		}
 
-		if(Array.isArray(param.type.names) && param.type.names.length > 1){
+		if(param.type && Array.isArray(param.type.names) && param.type.names.length > 1){
 			//this is a selection type. Assuming types are JSON parsable
 			spec.options = param.type.names.map(name=>safeParse(name)).filter(name=>name !== undefined);
 		}

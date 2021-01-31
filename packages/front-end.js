@@ -56,17 +56,6 @@ const entities = [
 	}
 ]
 
-registerEvent('click','user clicks on <<an element>>');
-registerEvent('update','user updates <<an element>>');
-registerEvent('dblClick','user double clicks on <<an element>>','double click event');
-registerEvent('type','user types <<a key>> in <<an element>>',undefined,'a key,an element');
-registerEvent('focus','<<an element>> is focused');
-registerEvent('blur','<<an element>> is blurred');
-registerEvent('contextmenu','user opens context menu on <<an element>>', 'context menu click');
-registerEvent('mouseenter','mouse enters <<an element>>','mouse enter');
-registerEvent('mouseleave','mouse leavs <<an element>>','mouse leave');
-registerEvent('input','value of input <<an element>> changes');
-
 registerStyle('background color','backgroundColor');
 registerStyle('font color','color');
 registerStyle('border style','borderStyle');

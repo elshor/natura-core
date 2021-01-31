@@ -4,6 +4,7 @@ import { generateNewElement } from "src/components/utils.js";
 import {calcTemplate} from './template.js'
 import { calcValue } from "./calc.js";
 import {contextEntries} from './context.js'
+import clone from 'clone'
 
 ///////////////////////////////////////////////////////////
 //Definitions
@@ -29,12 +30,15 @@ export function getSuggestions(location,filter,spec){
 	const expectedType = calcValue(itsExpectedSpec.type,location.context);
 
 	//options suggestions
-	const options = calcValue(itsExpectedSpec.options,location.context)
+	const optionsType = dictionary.isInstance(expectedType)? 
+		dictionary.typeOfInstance(expectedType) : expectedType;
+	const optionsSpec = optionsType === expectedType? itsExpectedSpec : dictionary.getTypeSpec(optionsType);
+	const options = calcValue(optionsSpec.options,location.context);
 	if(hasFunction(options,'forEach')){
 		//the spec has an array options property (or other object that supports forEach function)
 		options.forEach(option=>
 			ret.list.push({
-				value:option,
+				value:clone(option),
 				text: suggestionText(option,itsExpectedSpec,dictionary),
 				source:'option'
 			})
@@ -63,7 +67,7 @@ export function getSuggestions(location,filter,spec){
 	//TODO check scope
 	entries.forEach(entry=>{
 		ret.list.push({
-			value: entry,
+			value: clone(entry),
 			text:suggestionText(entry,itsExpectedSpec,dictionary)
 		})
 	})
@@ -71,10 +75,11 @@ export function getSuggestions(location,filter,spec){
 	//context instances
 	contextEntries(location,expectedType).forEach(entry=>{
 		ret.list.push({
-			value: entry.value,
+			value: clone(entry.value),
 			source:'context',
 			text:entry.name,
-			path:entry.path
+			path:entry.path,
+			description:entry.description
 		})
 	});
 
