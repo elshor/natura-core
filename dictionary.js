@@ -198,8 +198,7 @@ export default class Dictionary{
 	 * @property {String} library - export library for this function
 	 * @property {String} object used for object functions to determine which spec property is associated with the function object
 	 * @property {String} name - name of the function to call
-	 * @property {String[]} args an array of spec properties to be called as arguments. If an argument is preceeded with a `>` then it is treated as a callback
-	 * @property {Boolean=false} defer this function should not be called immediatly but instead create a function argument that can be called later upon request. This is used for actions that are called based on condition or after previous action
+	 * @property {String[]} args an array of spec properties to be called as arguments.
 	 */
 	/**
 	 * Associate a function with a type name. This is used to define functions used to calculate expressions and execute actions.
