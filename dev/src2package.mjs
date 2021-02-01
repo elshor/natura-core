@@ -45,6 +45,8 @@ function addTypeDef(input,output){
 					return addEntityType(input,parsed[3],output);
 				case 'object':
 					return addObjectType(input,parsed[3],output);
+				case 'expression':
+					return addExpressionType(input,parsed[3],output);
 			}
 		}else{
 			term.red('Error - using an unidentified natura tag format at ',`(${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
@@ -63,6 +65,29 @@ function addActionType(input,pattern,output){
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
 		show,
 		pattern,
+		description:input.description,
+		properties:propertiesObject(input.params||[])
+	};
+
+	output.push(def);
+}
+
+function addExpressionType(input,pattern,output){
+	const fields = patternFields(pattern).map(field=>field.name);
+	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
+	if(!Array.isArray(input.returns || input.returns.length !== 1)){
+		term.red('Error - expression must be defined with exactly one returns type',`(${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
+		return;
+	}
+	const def = {
+		name:appType(input.name),
+		isa:['expression'],
+		title:getTag(input,'title'),
+		inlineDetails:show.length>0 ? 'collapsed' : 'none',
+		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
+		show,
+		pattern,
+		valueType:appType(input.returns[0].type.names,true),
 		description:input.description,
 		properties:propertiesObject(input.params||[])
 	};
