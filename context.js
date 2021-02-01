@@ -132,7 +132,7 @@ function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 		return false;
 	}
 	if(entry.useScope){
-		return scopeSearch(referenced,entry.type,iterator,type,name,scope,visitIt);
+		return scopeSearch(referenced,entry.type,iterator,type,name,scope + ">" + entry.access,visitIt);
 	}else{
 		return true;
 	}
