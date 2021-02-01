@@ -1,4 +1,6 @@
 import {assume,MissingParam } from './error.js'
+import clone from 'clone'
+import calc from './calc.js'
 
 export function entityType(data){
 	if(typeof data === 'object' && data !== null && data.$isProxy===true){
@@ -49,7 +51,7 @@ export function generateNewEntity(type,context={},dictionary){
 		if(spec.properties){
 			Object.keys(spec.properties).forEach(prop=>{
 				if(spec.properties[prop].init !== undefined){
-					ret[prop] = deepmerge(calc(spec.properties[prop].init,context));
+					ret[prop] = clone(calc(spec.properties[prop].init,context));
 				}
 			});
 		}
