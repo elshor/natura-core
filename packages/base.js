@@ -633,11 +633,11 @@ const entities = 	[
 		title:'join text',
 		fn:'join@natura/lib/base(elements)',
 		isa:'expression',
-		valueType:'string',
+		valueType:'a string',
 		pattern:'join <<elements>>',
 		properties:{
-			elements:'text*',
-			childSpec:{
+			elements:{
+				type:'a string*',
 				placeholder:'text to join'
 			}
 		}
