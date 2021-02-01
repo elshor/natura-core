@@ -165,9 +165,14 @@ function appType(name,instance=false){
 	if(!typeof name === 'string'){
 		throw new Error('unexpected format');
 	}
+	let ending = '';
+	if(name.match(/^Array\.\<(.+)\>$/)){
+		name = name.match(/^Array\.\<(.+)\>$/)[1];
+		ending = '*';
+}
 	const type = sentenceCase(name||'').toLocaleLowerCase().trim();
 	const useAn = ['a','i','o','u','h','e'].includes(type[0]);
-	return instance?((useAn?'an ':'a ') + type) : type;
+	return instance?((useAn?'an ':'a ') + type + ending) : (type + ending);
 }
 
 function propertiesObject(params){
