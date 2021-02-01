@@ -108,7 +108,13 @@ function addEntityType(input,pattern,output){
 		description:input.description,
 		properties:propertiesObject(input.properties||[]),
 		scope: Object.entries(propertiesObject(input.properties||[])).map(([key,value])=>(
-			{$type:'basic emit',type:value.type,name:value.placeholder,access:key,description:value.description}
+			{
+				$type:'basic emit',
+				type:value.type,
+				name:value.placeholder,
+				access:key.replace(/\./g,">"),
+				description:value.description
+			}
 		))
 	};
 
