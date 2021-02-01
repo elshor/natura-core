@@ -201,8 +201,15 @@ function appType(name,instance=false){
 		ending = '*';
 }
 	const type = sentenceCase(name||'').toLocaleLowerCase().trim();
+	return instance?(asInstance(type) + ending) : (type + ending);
+}
+
+function asInstance(type){
+	if(type === 'any'){
+		return 'any instance';
+	}
 	const useAn = ['a','i','o','u','h','e'].includes(type[0]);
-	return instance?((useAn?'an ':'a ') + type + ending) : (type + ending);
+	return (useAn?'an ':'a ') + type;
 }
 
 function propertiesObject(params){
