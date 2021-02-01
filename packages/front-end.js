@@ -1,12 +1,5 @@
 const entities = [
 	{
-		name: 'log',
-		title:'log message',
-		isa:['action'],
-		pattern:'log <<a string>>',
-		fn:'log@natura/lib/front-end(a string)'
-	},
-	{
 		name: 'alert',
 		title:'alert message',
 		isa:['action'],
@@ -79,16 +72,6 @@ export default {
 		members:entities,
 		model:{isa:[]}
 	}
-}
-
-function registerEvent(name,pattern,title,args="an element"){
-	entities.push({
-		name:name +'.event',
-		isa:['event'],
-		title:title || (name + ' event'),
-		pattern,
-		fn:`on${name.substr(0,1).toUpperCase()}${name.substr(1)}@natura/lib/front-end(${args})`,
-	})
 }
 
 function registerStyle(name,cssName,valueType='text'){
