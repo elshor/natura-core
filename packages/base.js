@@ -641,6 +641,61 @@ const entities = 	[
 				placeholder:'text to join'
 			}
 		}
+	},
+	{
+		name:'property',
+		description:'a property of an object. This is used to define setters and getters',
+		properties:{
+			name:{type:'string',description:'name of the property'},
+			objectType:{type:'type',description:'the type of the object the property refers to'},
+			pattern:{type:'pattern',description:'the pattern for displaying the property of the object. E.g. name of <<element>>. If pattern is not specified then use the format "<<property name>> of <<object>>'},
+			valueType:{type:'type',description:'the value type of the property'},
+			description:{type:'richtext',description:'Description of the property'},
+			access:{type:'string',description:'The path to the property using > instead of . like in reference access'}
+		},
+		register(dictionary,_,spec){
+			//get the pattern
+			const pattern = spec.pattern || `${spec.name} of <<object>>`;
+			const name = 'property.' + pattern;
+			
+			//add the pattern if does not exist
+			if(!dictionary.typeHasSpec(name)){
+				dictionary._registerType(name,{
+					name,
+					pattern,
+					isa:['expression','property accessor'],
+					valueType:spec.valueType,
+					description:spec.description,
+					properties:{
+						object:{type:'an object.'+name,placeholder:'the object'},
+						access:{init:spec.access}
+					}
+				});
+			}
+
+			//tag object type
+			dictionary._registerIsa(spec.objectType,'object.' + name);
+			dictionary._registerInstanceType('an object.' + name,'object.'+name);
+		}
+	},
+	{
+		name:'set',
+		title:'set property',
+		isa:'action',
+		description:'set a property value of an object.',
+		pattern:'set <<prop>> to <<value>>',
+		properties:{
+			prop:{type:'property accessor',placeholder:'property to set'},
+			value:{placeholder:'value to set',type:function({$location}){
+				const prop = $location.sibling('prop');
+				if(!prop){
+					//property not set, return any
+					return 'any instance';
+				}
+				const valueType = prop.spec.valueType;
+				return valueType || 'any instance';
+			}}
+		}
 	}
 ]
 

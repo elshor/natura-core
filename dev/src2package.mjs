@@ -32,7 +32,7 @@ async function processFile(inputPath,outputPath,filename){
 function addTypeDef(input,output){
 	const naturaTag = (input.tags||[]).find(item=>item.title==="natura");
 	if(naturaTag){
-		const parsed = naturaTag.text.match(/^(expression|action|event|trait|entity)(\s+(.*))?$/);
+		const parsed = naturaTag.text.match(/^(expression|action|event|trait|entity|object)(\s+(.*))?$/);
 		if(parsed){
 			switch(parsed[1]){
 				case 'action':
@@ -43,7 +43,11 @@ function addTypeDef(input,output){
 					return addTraitType(input,parsed[3],output);
 				case 'entity':
 					return addEntityType(input,parsed[3],output);
-					}
+				case 'object':
+					return addObjectType(input,parsed[3],output);
+			}
+		}else{
+			term.red('Error - using an unidentified natura tag format at ',`(${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
 		}
 	}
 }
@@ -98,11 +102,11 @@ function addEntityType(input,pattern,output){
 	const show = (input.properties||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const def = {
 		name:appType(input.name),
+		title:appType(input.name),
 		instanceType: appType(input.name,true),
 		isa:['application type'],
 		title:getTag(input,'title'),
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
-		fn:`${input.name}@${moduleName(input)}(${(input.properties||[]).map(item=>item.name).join(',')})`,
 		show,
 		pattern,
 		description:input.description,
@@ -134,6 +138,32 @@ function addEntityType(input,pattern,output){
 	});
 	output.push(def);
 }
+
+function addObjectType(input,pattern,output){
+	const def = {
+		name:appType(input.name),
+		instanceType: appType(input.name,true),
+		isa:['application type'],
+		title:getTag(input,'title'),
+		description:input.description,
+		properties:propertiesObject(input.properties||[]),
+	};
+
+	//register all properties
+	Object.entries(propertiesObject(input.properties||[])).forEach(([key,value])=>{
+		output.push({
+			$type:'property',
+			name:value.placeholder || appType(key),
+			access:key.replace(/\./g,">"),
+			objectType:appType(input.name),
+			valueType:value.type,
+			description:value.description
+		})
+	});
+
+	output.push(def);
+}
+
 
 function addTraitType(input,pattern,output){
 	const fields = patternFields(pattern).map(field=>field.name);
