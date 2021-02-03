@@ -658,7 +658,8 @@ const entities = 	[
 			const pattern = spec.pattern || `${spec.name} of <<object>>`;
 			const name = 'property.' + pattern;
 			
-			//add the pattern if does not exist
+			//add the pattern if does not exist 
+			//TODO need to fix this. valuetype should be'value.'+name and it shoule be a subtupe of valueType
 			if(!dictionary.typeHasSpec(name)){
 				dictionary._registerType(name,{
 					name,
