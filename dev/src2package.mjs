@@ -260,6 +260,7 @@ function propertiesObject(params){
 	(params||[]).forEach(param=>{
 		const spec = {
 			type:appType((param.type||{}).names,true),
+			title:appType(param.name)
 		};
 		if((param.description||'').match(/\-/)){
 			//split the description to description and placeholder
