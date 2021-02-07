@@ -8,6 +8,10 @@ const term = terminal.terminal;
 
 processFile('./lib/','./packages/','jquery-ui');
 
+function warn(input,...items){
+	term.yellow(...items);
+	term.yellow(` (${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
+}
 
 
 async function processFile(inputPath,outputPath,filename){
@@ -55,7 +59,7 @@ function addTypeDef(input,output){
 }
 
 function addActionType(input,pattern,output){
-	const fields = patternFields(pattern).map(field=>field.name);
+	const fields = getFields(input,pattern);
 	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const def = {
 		name:appType(input.name),
@@ -73,7 +77,7 @@ function addActionType(input,pattern,output){
 }
 
 function addExpressionType(input,pattern,output){
-	const fields = patternFields(pattern).map(field=>field.name);
+	const fields = getFields(input,pattern);
 	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	if(!Array.isArray(input.returns || input.returns.length !== 1)){
 		term.red('Error - expression must be defined with exactly one returns type',`(${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
@@ -96,7 +100,7 @@ function addExpressionType(input,pattern,output){
 }
 
 function addEventType(input,pattern,output){
-	const fields = patternFields(pattern).map(field=>field.name);
+	const fields = getFields(input,pattern);
 	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const def = {
 		name:appType(input.name),
@@ -123,7 +127,7 @@ function addEventType(input,pattern,output){
 }
 
 function addEntityType(input,pattern,output){
-	const fields = patternFields(pattern||'').map(field=>field.name);
+	const fields = getFields(input,pattern);
 	const show = (input.properties||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const def = {
 		name:appType(input.name),
@@ -191,7 +195,7 @@ function addObjectType(input,pattern,output){
 
 
 function addTraitType(input,pattern,output){
-	const fields = patternFields(pattern).map(field=>field.name);
+	const fields = getFields(input,pattern);
 	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const thisType = appType(input.this||'any');
 	const def = {
@@ -286,3 +290,13 @@ function safeParse(text){
 	}
 }
 
+function getFields(input,pattern){
+	const props = propertiesObject(input.params||[]);
+	const fields = patternFields(pattern).map(field=>{
+		if(!props[field.name]){
+			warn(input,'the field "',field.name,'" in the pattern "',pattern,'" is not in the params list');
+		}
+		return field.name;
+	});
+	return fields;
+}
