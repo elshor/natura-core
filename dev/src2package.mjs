@@ -84,8 +84,8 @@ function addActionType(input,pattern,output){
 function addExpressionType(input,pattern,output){
 	const fields = getFields(input,pattern);
 	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
-	if(!Array.isArray(input.returns || input.returns.length !== 1)){
-		term.red('Error - expression must be defined with exactly one returns type',`(${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
+	if(!Array.isArray(input.returns) || input.returns.length !== 1){
+		error(input,'Expression must be defined with exactly one returns type');
 		return;
 	}
 	if(!input.returns[0].type){
@@ -300,7 +300,7 @@ function safeParse(text){
 }
 
 function getFields(input,pattern){
-	const props = propertiesObject(input.params||[]);
+	const props = propertiesObject(input.params||input.properties || []);
 	const fields = patternFields(pattern).map(field=>{
 		if(!props[field.name]){
 			warn(input,'the field "',field.name,'" in the pattern "',pattern,'" is not in the params list');
