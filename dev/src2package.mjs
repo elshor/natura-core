@@ -233,11 +233,16 @@ function appType(name,instance=false){
 	if(!typeof name === 'string'){
 		throw new Error('unexpected format');
 	}
+
+	//if name ends with $ then in any case don't generate an instance
+	if(name.endsWith('$')){
+		instance = false;
+	}
 	let ending = '';
 	if(name.match(/^Array\.\<(.+)\>$/)){
 		name = name.match(/^Array\.\<(.+)\>$/)[1];
 		ending = '*';
-}
+	}
 	const type = sentenceCase(name||'').toLocaleLowerCase().trim();
 	return instance?(asInstance(type) + ending) : (type + ending);
 }
