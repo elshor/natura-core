@@ -174,8 +174,9 @@ const entities = 	[
 	{
 		pattern:'if <<condition>> then <<action>> otherwise <<alternateAction>>',
 		name:'condition statement',
+		description:'Test if a condition is true. If it is true then execution action. Otherwise eecute the alternate action if exists.',
+		title:'condition statement',
 		isa:['action'],
-		show:['action','alternateAction'],
 		properties:{
 			'condition':{type:'condition'},
 			'action':{type:'action',placeholder:'action to perform', description:"Specify here the action to perform when the condition is true."},
@@ -261,7 +262,6 @@ const entities = 	[
 				description:'Select <b>action</b> to perform when the event is triggered (when event occurs)'
 			}
 		},
-		show:['action'],
 		emitOrder:['event','action'],
 		scope:[
 			{$type:'use scope',property:'event'}
@@ -657,8 +657,8 @@ const entities = 	[
 			//get the pattern
 			const pattern = spec.pattern || `${spec.name} of <<object>>`;
 			const name = 'property.' + pattern;
-			
-			//add the pattern if does not exist 
+
+			//add the pattern if does not exist
 			//TODO need to fix this. valuetype should be'value.'+name and it shoule be a subtupe of valueType
 			if(!dictionary.typeHasSpec(name)){
 				dictionary._registerType(name,{
