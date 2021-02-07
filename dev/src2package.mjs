@@ -13,6 +13,11 @@ function warn(input,...items){
 	term.yellow(` (${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
 }
 
+function error(input,...items){
+	term.red(...items);
+	term.red(` (${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
+}
+
 
 async function processFile(inputPath,outputPath,filename){
 	const input = jsdoc.explainSync({
@@ -81,6 +86,10 @@ function addExpressionType(input,pattern,output){
 	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	if(!Array.isArray(input.returns || input.returns.length !== 1)){
 		term.red('Error - expression must be defined with exactly one returns type',`(${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
+		return;
+	}
+	if(!input.returns[0].type){
+		error(input,'The expression "',input.name,'" does not have a return type defined. Make sure the definition has a curly bracket enclosed type definition');
 		return;
 	}
 	const def = {
