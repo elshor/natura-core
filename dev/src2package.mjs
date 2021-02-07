@@ -35,7 +35,7 @@ async function processFile(inputPath,outputPath,filename){
 	input.forEach(item=>addTypeDef(item,output.entities.members));
 	fs.writeFileSync(outputPath+filename+'.js','export default '+JSON.stringify(output,null,'  '));
 	await upload(output);
-	term.green.bold('uploaded ',filename,' package');
+	term.green.bold(new Date().toLocaleTimeString(),' uploaded ',filename,' package');
 }
 
 function addTypeDef(input,output){
