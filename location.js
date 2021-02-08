@@ -313,6 +313,8 @@ function locationExpectedSpec(location){
 		//its parent is an array
 		const childSpec = parentSpec.childSpec || {};
 		childSpec.type = childSpec.type || itemType(specType(parentSpec));
+		childSpec.placeholder = childSpec.placeholder || parentSpec.placeholder;
+		childSpec.description = childSpec.description || parentSpec.description;
 		return mergeSpec(
 			childSpec,
 			location.dictionary.getTypeSpec(Type(itemType(specType(parentSpec)),this))
