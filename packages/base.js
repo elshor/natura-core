@@ -195,7 +195,14 @@ const entities = 	[
 		show:['sequence'],
 		expanded:true,
 		properties:{
-			sequence:{type:'action*',expanded:true,hideName:true,required:true}
+			sequence:{
+				type:'action*',
+				expanded:true,
+				hideName:true,
+				required:true,
+				placeholder:'action to perform',
+				description:'Specify an action to perform. the actions will be executed in order, waiting for previous asynchronous action to complete (such as resource load)'
+			}
 		}
 	},
 	{
