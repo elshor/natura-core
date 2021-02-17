@@ -73,28 +73,31 @@ export function getSuggestions(location,filter,spec){
 	})
 
 	//context instances
-	contextEntries(location,expectedType).forEach(entry=>{
-		ret.list.push({
-			value: clone(entry.value),
-			source:'context',
-			text:entry.name,
-			path:entry.path,
-			description:entry.description
-		})
-	});
+	if(expectedType){
+		contextEntries(location,expectedType).forEach(entry=>{
+			ret.list.push({
+				value: clone(entry.value),
+				source:'context',
+				text:entry.name,
+				path:entry.path,
+				description:entry.description
+			})
+		});
+	}
 
 	//dictionary expressions
-	const types = dictionary.getExpressionsByValueType(expectedType);
-	types.forEach(type=>{
-		const value = generateNewElement(type,null,dictionary);
-		ret.list.push({
-			value: value,
-			description: dictionary.getTypeSpec(type).description,
-			source:'expression',
-			text:suggestionText(value,itsExpectedSpec,dictionary,true)
+	if(expectedType){
+		const types = dictionary.getExpressionsByValueType(expectedType);
+		types.forEach(type=>{
+			const value = generateNewElement(type,null,dictionary);
+			ret.list.push({
+				value: value,
+				description: dictionary.getTypeSpec(type).description,
+				source:'expression',
+				text:suggestionText(value,itsExpectedSpec,dictionary,true)
+			});
 		});
-		});
-	
+	}
 	ret.list = ret.list.filter(item=>
 		item.text.toLowerCase().includes(filter.toLowerCase())
 	);
