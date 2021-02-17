@@ -138,10 +138,9 @@ function hasFunction(obj,method){
 }
 
 function scoreSuggestion(suggestion,filter){
-	suggestionText.score =
-		sourceScore[suggestion.source] +
-		suggestion.text.search(filter)===0?0.09:0
-
+	suggestion.score =
+		(sourceScore[suggestion.source]) +
+		(suggestion.text.search(filter)===0?0.09:0)
 }
 
 function comp(a,b){
