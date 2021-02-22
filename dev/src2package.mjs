@@ -3,6 +3,7 @@ import {sentenceCase} from 'change-case'
 import fs from 'fs'
 import {patternFields} from '../pattern.js'
 import upload from './upload.mjs'
+import {uploadS3} from './uploads3.mjs'
 import terminal from  'terminal-kit';
 const term = terminal.terminal;
 
@@ -19,13 +20,15 @@ function error(input,...items){
 }
 
 
-async function processFile(inputPath,outputPath,filename){
+async function processFile(inputPath,filename){
+	const path = inputPath + filename + '.js';
 	const input = jsdoc.explainSync({
-		files:inputPath + filename + '.js'
+		files:path
 	});
 	const output = {
 		name:filename,
 		_id:'public:'+filename,
+		files:['packages/'+filename+'/index.js'],
 		entities:{
 			$type:'entity definition group',
 			members:[],
@@ -33,8 +36,8 @@ async function processFile(inputPath,outputPath,filename){
 		}
 	};
 	input.forEach(item=>addTypeDef(item,output.entities.members));
-	fs.writeFileSync(outputPath+filename+'.js','export default '+JSON.stringify(output,null,'  '));
 	await upload(output);
+	await uploadS3('natura-code','packages/'+filename+'/index.js',fs.readFileSync(path,'utf8'),'text/javascript');
 	term.green.bold(new Date().toLocaleTimeString(),' uploaded ',filename,' package');
 }
 
@@ -285,7 +288,7 @@ function moduleName(def){
 	if(!parsed){
 		throw new Error('unexpected explain format');
 	}
-	return 'natura/lib/'+parsed[1];
+	return '/packages/'+parsed[1];
 }
 
 function getTag(input,tag){
