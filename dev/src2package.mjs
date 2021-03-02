@@ -7,7 +7,7 @@ import {uploadS3} from './uploads3.mjs'
 import terminal from  'terminal-kit';
 const term = terminal.terminal;
 
-processFile('./lib/','./packages/','jquery-ui');
+processFile('./lib/','s3');
 
 function warn(input,...items){
 	term.yellow(...items);
@@ -72,7 +72,6 @@ function addActionType(input,pattern,output){
 	const def = {
 		name:appType(input.name),
 		isa:['action'],
-		title:getTag(input,'title'),
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
 		show,
@@ -80,6 +79,31 @@ function addActionType(input,pattern,output){
 		description:input.description,
 		properties:propertiesObject(input.params||[])
 	};
+	processAdditionalTags(input,def);
+	if(Array.isArray(input.returns)){
+		def.context = [];
+		input.returns.forEach(returnItem=>{
+			const type = appType(returnItem.type.names,true);
+			if(typeof returnItem.description !== 'string'  || returnItem.description.trim()===''){
+				//no reference or access specified
+				def.context.push({
+					$type:'basic emit',
+					type,
+					name:'the return value',
+					access:'_'
+				});
+			}else{
+				//there are both, access and name
+				const parsed = returnItem.description.match(/^\s*(.+?)\s*(\-\s*(.*?)\s*)?$/);
+				def.context.push({
+					$type:'basic emit',
+					type,
+					name: parsed[3] || parsed[1],
+					access:parsed[3]? parsed[1] : '_'//if access defined then use it, otherwise _
+				});
+			}
+		})
+	}
 
 	output.push(def);
 }
@@ -98,7 +122,6 @@ function addExpressionType(input,pattern,output){
 	const def = {
 		name:appType(input.name),
 		isa:['expression'],
-		title:getTag(input,'title'),
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
 		show,
@@ -107,7 +130,7 @@ function addExpressionType(input,pattern,output){
 		description:input.description,
 		properties:propertiesObject(input.params||[])
 	};
-
+	processAdditionalTags(input,def);
 	output.push(def);
 }
 
@@ -117,7 +140,6 @@ function addEventType(input,pattern,output){
 	const def = {
 		name:appType(input.name),
 		isa:['event'],
-		title:getTag(input,'title'),
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
 		show,
@@ -125,6 +147,7 @@ function addEventType(input,pattern,output){
 		description:input.description,
 		properties:propertiesObject(input.params||[])
 	};
+	processAdditionalTags(input,def);
 	if(input.type){
 		//use scope of event type. this will enable for example referencing KeyState in MouseEvent
 		def.scope = [{
@@ -146,7 +169,6 @@ function addEntityType(input,pattern,output){
 		title:appType(input.name),
 		instanceType: appType(input.name,true),
 		isa:['application type'],
-		title:getTag(input,'title'),
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		show,
 		pattern,
@@ -185,10 +207,11 @@ function addObjectType(input,pattern,output){
 		name:appType(input.name),
 		instanceType: appType(input.name,true),
 		isa:['application type'],
-		title:getTag(input,'title'),
+		show : (input.properties||[]).map(prop=>prop.name),
 		description:input.description,
 		properties:propertiesObject(input.properties||[]),
 	};
+	processAdditionalTags(input,def);
 
 	//register all properties
 	Object.entries(propertiesObject(input.properties||[])).forEach(([key,value])=>{
@@ -213,7 +236,6 @@ function addTraitType(input,pattern,output){
 	const def = {
 		name:appType(input.name),
 		isa:['trait.' + thisType],
-		title:getTag(input,'title'),
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
 		show,
@@ -221,6 +243,7 @@ function addTraitType(input,pattern,output){
 		description:input.description,
 		properties:propertiesObject(input.params||[])
 	};
+	processAdditionalTags(input,def);
 	output.push(def);
 }
 
@@ -238,15 +261,16 @@ function appType(name,instance=false){
 	}
 
 	//if name ends with $ then in any case don't generate an instance
-	if(name.endsWith('$')){
+	if(name.endsWith('$') || name.match(/^Array\.\<(.+)\$\>$/)){
 		instance = false;
 	}
 	let ending = '';
 	if(name.match(/^Array\.\<(.+)\>$/)){
-		name = name.match(/^Array\.\<(.+)\>$/)[1];
+		name = name.match(/^Array\.\<(.+)\$?\>$/)[1];
 		ending = '*';
 	}
-	const type = sentenceCase(name||'').toLocaleLowerCase().trim();
+	const humanName = (name||'').split('.').map(item=>sentenceCase(item)).join('.');
+	const type = humanName.toLocaleLowerCase().trim();
 	return instance?(asInstance(type) + ending) : (type + ending);
 }
 
@@ -265,12 +289,34 @@ function propertiesObject(params){
 			type:appType((param.type||{}).names,true),
 			title:appType(param.name)
 		};
-		if((param.description||'').match(/\-/)){
+		const parsed = (param.description||'').match(/^\s*(.+?)\s*(\-\s*(.*?)\s*)?(\((.*)\))?\s*$/);
+		if(parsed && parsed[3]){
 			//split the description to description and placeholder
-			spec.placeholder = param.description.split('-')[0].trim();
-			spec.description = param.description.split('-')[1].trim();
-		}else{
-			spec.placeholder = param.description;
+			spec.placeholder = parsed[1];
+			spec.description = parsed[3];
+		}else if(parsed && parsed[1]){
+			spec.placeholder = parsed[1];
+		}
+
+		//check for additional property modifiers
+		if(parsed && parsed[5]){
+			parsed[5].split(',').map(item=>item.trim()).forEach(mod=>{
+				switch(mod){
+					case 'expanded':
+						spec.expanded = true;
+						break;
+					case 'readonly':
+						spec.readonly = true;
+						break;
+					case 'required':
+						spec.required = true;
+						break;
+					case 'hideName':
+					case 'hide name':
+						spec.hideName = true;
+						break;
+				}
+			})
 		}
 
 		if(param.type && Array.isArray(param.type.names) && param.type.names.length > 1){
@@ -317,4 +363,19 @@ function getFields(input,pattern){
 		return field.name;
 	});
 	return fields;
+}
+
+function processAdditionalTags(input,def){
+	const title = getTag(input,'title');
+	if(title){
+		def.title = title;
+	}
+	const isa = getTag(input,'isa');
+	if(isa){
+		def.isa = isa.split(',').map(item=>item.trim()).map(item=>appType(item));
+	}
+	if(getTag(input,'inlineExpanded')){
+		def.inlineDetails = "expanded";
+		def.expanded = true;
+	}
 }
