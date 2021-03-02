@@ -1,9 +1,11 @@
 import { assume } from './error.js';
+import {calcTemplate} from './template.js'
+import Type from './type.js'
 import Reference from './reference.js'
 
 /**
  * @name ContextEntry
- * @param {String} type 
+ * @param {String} type
  * @param {String} name
  * @param {String} path the path identifying the reference. This can be used to ensure a reference does not appear twice in the suggestions
  * @param {*} value
@@ -18,10 +20,10 @@ import Reference from './reference.js'
  */
 /**
  * Search for entities within the location context
- * @param {Location} location 
- * @param {contextIterator} iterator 
- * @param {String} type 
- * @param {String} name 
+ * @param {Location} location
+ * @param {contextIterator} iterator
+ * @param {String} type
+ * @param {String} name
  * @param {String} scope the current scope. Each time a use scope is followed, the new scope is added to the scope with a preceding > symbol
  */
 export function contextSearch(location,iterator,type,name,scope='',visitIt){
@@ -119,14 +121,19 @@ function emitComponent(referenced,entry,it,type,name){
 }
 
 function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
+	const emitName = calcTemplate(entry.name,referenced.entity);
 	if(match(
 		referenced.dictionary,
 		iterator,
 		type,
 		name,
 		entry.type,
-		entry.name,
-		Reference(entry.name,entry.type,scope + ">" + entry.access),
+		emitName,
+		Reference(
+			emitName,
+			entry.type,
+			scope + ">" + entry.access
+		),
 		entry.description
 	)===false){
 		return false;
@@ -198,7 +205,7 @@ function emitHash(location,entry,iterator,type,name,scope=''){
 				)
 			) === false){
 				return false;
-			}	
+			}
 		}
 	}
 	return true;
@@ -247,7 +254,7 @@ function previousContextLocation(location){
 	}
 	const parent = location.parent;
 	const emitOrder = parent? (parent.spec.emitOrder || []): null;
-	if(Array.isArray(emitOrder)){
+	if(Array.isArray(emitOrder) && !Type(parent.spec.type).isCollection){
 		//we have emitOrder defined. Check where we are and move to previous location
 		const pos = emitOrder.indexOf(location.property);
 		if(pos > 0){
@@ -273,7 +280,7 @@ export function contextEntries(location,type,name){
 	const values = {};
 	contextSearch(location,(entry)=>{
 		const id = (entry && typeof entry.value === 'object')?
-			entry.value.path||entry.name : 
+			entry.value.path||entry.name :
 			entry.value;
 		if(!values[id]){
 			values[id] = entry;
