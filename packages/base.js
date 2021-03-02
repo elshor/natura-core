@@ -350,7 +350,7 @@ const entities = 	[
 		description: 'Specification of an object property.',
 		pattern:'<<type>>',
 		show:['type','placeholder'],
-		additional:['description','default','expanded','required','hashSpec','readonly','title','actions','namePlaceholder'],
+		additional:['description','default','expanded','required','hashSpec','readonly','title','actions','namePlaceholder','hideName','displayInline'],
 		properties:{
 			type:{type:'string',placeholder:'property type'},
 			placeholder:{type:'string'},
@@ -371,7 +371,15 @@ const entities = 	[
 				description:'Define spec for properties array items'
 			},
 			title:{type:'text',title:'title'},
-			required:{type:'boolean'}
+			required:{type:'boolean'},
+			hideName:{
+				type:'boolean',
+				description:'hide the name of the property. Unless displayInline is explicitly set to true, this also hides the inline value'
+			},
+			displayInline:{
+				type:'boolen',
+				description:'Determine if this property should display inline. If set to true then the inline value is displayed (even if hideName is set to true). If value is set to false then the inline value will not be displayed'
+			}
 		}
 	},
 	{
