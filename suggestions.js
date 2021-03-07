@@ -13,7 +13,7 @@ import clone from 'clone'
 ///////////////////////////////////////////////////////////
 //Actions
 ///////////////////////////////////////////////////////////
-export function getSuggestions(location,filter,spec){
+export function getSuggestions(location,filter,spec,allowExpressions){
 	const dictionary = location.dictionary;
 	const ret = {
 		state: 'loaded',
@@ -30,7 +30,7 @@ export function getSuggestions(location,filter,spec){
 	const expectedType = calcValue(itsExpectedSpec.type,location.context);
 
 	//options suggestions
-	const optionsType = dictionary.isInstance(expectedType)? 
+	const optionsType = dictionary.isInstance(expectedType)?
 		dictionary.typeOfInstance(expectedType) : expectedType;
 	const optionsSpec = optionsType === expectedType? itsExpectedSpec : dictionary.getTypeSpec(optionsType);
 	const options = calcValue(optionsSpec.options,location.context);
@@ -86,8 +86,11 @@ export function getSuggestions(location,filter,spec){
 	}
 
 	//dictionary expressions
-	if(expectedType){
-		const types = dictionary.getExpressionsByValueType(expectedType);
+	if(expectedType && allowExpressions){
+		const searchType = dictionary.isInstance(expectedType)? 
+			expectedType : 
+			dictionary.instanceType(expectedType);
+		const types = dictionary.getExpressionsByValueType(searchType);
 		types.forEach(type=>{
 			const value = generateNewElement(type,null,dictionary);
 			ret.list.push({
