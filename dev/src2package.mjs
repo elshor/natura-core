@@ -7,7 +7,7 @@ import {uploadS3} from './uploads3.mjs'
 import terminal from  'terminal-kit';
 const term = terminal.terminal;
 
-processFile('./lib/','s3');
+processFile(process.argv[2]);
 
 function warn(input,...items){
 	term.yellow(...items);
@@ -20,11 +20,14 @@ function error(input,...items){
 }
 
 
-async function processFile(inputPath,filename){
-	const path = inputPath + filename + '.js';
-	const input = jsdoc.explainSync({
-		files:path
-	});
+async function processFile(path){
+	const filename = path.match(/\/|\\([^\\\/]*)\.(js|mjs)$/)[1];
+	let input;
+	try{
+		input = jsdoc.explainSync({files:path});
+	}catch(e){
+		error('document parse error',e.message);
+	}
 	const output = {
 		name:filename,
 		_id:'public:'+filename,
@@ -199,6 +202,12 @@ function addEntityType(input,pattern,output){
 			def.options.push(json);
 		}
 	});
+
+	//if the kind of input is function then add fn property
+	if(input.kind === 'function'){
+		def.fn = `${input.name}@${moduleName(input)}(${(input.properties||[]).map(item=>item.name).join(',')})`;
+
+	}
 	output.push(def);
 }
 
