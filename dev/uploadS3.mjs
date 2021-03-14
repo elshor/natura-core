@@ -27,16 +27,17 @@ export async function uploadS3(bucket,id,content,contentType=guessContentType(id
 		}
 	}
 	try{
+		const url = `https://${config['data-endpoint']}/${bucket}/${encodeURIComponent(id)}`;
 		const res = await axios({
 			method:'put',
-			url:`https://${config['data-endpoint']}/${bucket}/${encodeURIComponent(id)}`,
+			url,
 			data:content,
 			headers:{
 				Authorization: 'Bearer ' + tokenRes.data.access_token,
 				'Content-Type':contentType
 			}
 		});
-		console.info('Uploaded file',id,'to bucket',bucket);
+		console.info('Uploaded',url);
 		return true;
 	}catch(e){
 		console.error('Exception uploading object',e);
