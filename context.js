@@ -254,7 +254,7 @@ function previousContextLocation(location){
 	}
 	const parent = location.parent;
 	const emitOrder = parent? (parent.spec.emitOrder || []): null;
-	if(Array.isArray(emitOrder) && !Type(parent.spec.type).isCollection){
+	if(Array.isArray(emitOrder) && !Type(parent.spec.type,parent).isCollection){
 		//we have emitOrder defined. Check where we are and move to previous location
 		const pos = emitOrder.indexOf(location.property);
 		if(pos > 0){
