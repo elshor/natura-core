@@ -36,9 +36,9 @@ async function processFile(path){
 		files:['packages/'+filename+'/index.js'],
 		entities:{$type:'entity definition group',members:[]},
 		actions:{$type:'action definition group',members:[]},
-		properties:[],
+		properties:{$type:'entity definition group',members:[]},
 		events:{$type:'event definition group',members:[]},
-		traits:[],
+		traits:{$type:'entity definition group',members:[]},
 		expressions:{$type:'expression definition group',name:'expressions',members:[]}
 	};
 	input.forEach(item=>addTypeDef(item,output));
@@ -58,11 +58,11 @@ function addTypeDef(input,output){
 				case 'event':
 					return addEventType(input,parsed[3],output.events.members);
 				case 'trait':
-					return addTraitType(input,parsed[3],output.traits);
+					return addTraitType(input,parsed[3],output.traits.members);
 				case 'entity':
 					return addEntityType(input,parsed[3],output.entities.members);
 				case 'object':
-					return addObjectType(input,parsed[3],output.entities.members,output.properties);
+					return addObjectType(input,parsed[3],output.entities.members,output.properties.members);
 				case 'expression':
 					return addExpressionType(input,parsed[3],output.expressions.members);
 			}
