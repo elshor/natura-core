@@ -29,16 +29,19 @@ async function processFile(path){
 		error('document parse error',e.message);
 	}
 	const output = {
+		$type:'package',
+		packages:['base'],
 		name:filename,
 		_id:'public:'+filename,
 		files:['packages/'+filename+'/index.js'],
-		entities:{
-			$type:'entity definition group',
-			members:[],
-			model:{isa:[]}
-		}
+		entities:{$type:'entity definition group',members:[]},
+		actions:{$type:'action definition group',members:[]},
+		properties:[],
+		events:{$type:'event definition group',members:[]},
+		traits:[],
+		expressions:{$type:'expression definition group',name:'expressions',members:[]}
 	};
-	input.forEach(item=>addTypeDef(item,output.entities.members));
+	input.forEach(item=>addTypeDef(item,output));
 	await upload(output);
 	await uploadS3('natura-code','packages/'+filename+'/index.js',fs.readFileSync(path,'utf8'),'text/javascript');
 	term.green.bold(new Date().toLocaleTimeString(),' uploaded ',filename,' package');
@@ -51,17 +54,17 @@ function addTypeDef(input,output){
 		if(parsed){
 			switch(parsed[1]){
 				case 'action':
-					return addActionType(input,parsed[3],output);
+					return addActionType(input,parsed[3],output.actions.members);
 				case 'event':
-					return addEventType(input,parsed[3],output);
+					return addEventType(input,parsed[3],output.events.members);
 				case 'trait':
-					return addTraitType(input,parsed[3],output);
+					return addTraitType(input,parsed[3],output.traits);
 				case 'entity':
-					return addEntityType(input,parsed[3],output);
+					return addEntityType(input,parsed[3],output.entities.members);
 				case 'object':
-					return addObjectType(input,parsed[3],output);
+					return addObjectType(input,parsed[3],output.entities.members,output.properties);
 				case 'expression':
-					return addExpressionType(input,parsed[3],output);
+					return addExpressionType(input,parsed[3],output.expressions.members);
 			}
 		}else{
 			term.red('Error - using an unidentified natura tag format at ',`(${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
@@ -74,6 +77,7 @@ function addActionType(input,pattern,output){
 	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const def = {
 		name:appType(input.name),
+		$type:'js action',
 		isa:['action'],
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
@@ -124,6 +128,7 @@ function addExpressionType(input,pattern,output){
 	}
 	const def = {
 		name:appType(input.name),
+		$type:'js expression',
 		isa:['expression'],
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
@@ -142,6 +147,7 @@ function addEventType(input,pattern,output){
 	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const def = {
 		name:appType(input.name),
+		$type:'js event',
 		isa:['event'],
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
@@ -169,6 +175,7 @@ function addEntityType(input,pattern,output){
 	const show = (input.properties||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const def = {
 		name:appType(input.name),
+		$type:'js type',
 		title:appType(input.name),
 		instanceType: appType(input.name,true),
 		isa:['application type'],
@@ -211,9 +218,10 @@ function addEntityType(input,pattern,output){
 	output.push(def);
 }
 
-function addObjectType(input,pattern,output){
+function addObjectType(input,pattern,output,properties){
 	const def = {
 		name:appType(input.name),
+		$type:'js type',
 		instanceType: appType(input.name,true),
 		isa:['application type'],
 		show : (input.properties||[]).map(prop=>prop.name),
@@ -224,7 +232,7 @@ function addObjectType(input,pattern,output){
 
 	//register all properties
 	Object.entries(propertiesObject(input.properties||[])).forEach(([key,value])=>{
-		output.push({
+		properties.push({
 			$type:'property',
 			name:value.placeholder || appType(key),
 			access:key.replace(/\./g,">"),
@@ -243,7 +251,9 @@ function addTraitType(input,pattern,output){
 	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const thisType = appType(input.this||'any');
 	const def = {
+		$type:'js trait',
 		name:appType(input.name),
+		subject:thisType,
 		isa:['trait.' + thisType],
 		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,

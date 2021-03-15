@@ -16,10 +16,12 @@ const entities = 	[
 	},
 	{
 		name:'package',
-		show:['name','description','entityTypes','propertyTypes','events','expressions','actions'],
+		show:['name','description','actions','events','expressions','entities','properties','traits'],
 		properties:{
 			name:{type:'text',placeholder:'Package name'},
 			description:{type:'richtext'},
+			traits:{type:'trait*',expanded:true},
+			properties:{type:'property*',expanded:true},
 			expressions:{
 				type:'expression definition group',
 				title:'expressions',
@@ -31,7 +33,7 @@ const entities = 	[
 					name:'expressions'
 				}
 			},
-			entityTypes:{
+			entities:{
 				type:'entity definition group',
 				title:'application types',
 				description:'List of application types that may be used in the application.',
@@ -660,6 +662,8 @@ const entities = 	[
 	{
 		name:'property',
 		description:'a property of an object. This is used to define setters and getters',
+		pattern:'<<name>> of <<objectType>> (<<valueType>>)',
+		show:['description'],
 		properties:{
 			name:{type:'string',description:'name of the property'},
 			objectType:{type:'type',description:'the type of the object the property refers to'},
@@ -712,7 +716,63 @@ const entities = 	[
 				return valueType || 'any instance';
 			}}
 		}
+	},
+	{
+		name:'js action',
+		show:['title','pattern','description'],
+		pattern:'<<name>>',
+		properties:{
+			title:{type:'string'},
+			name:{type:'string'},
+			pattern:{type:'pattern'},
+			description:{type:'richtext'},
+		}
+	},
+	{
+		name:'js expression',
+		show:['title','pattern','description'],
+		pattern:'<<name>>',
+		properties:{
+			title:{type:'string'},
+			name:{type:'string'},
+			pattern:{type:'pattern'},
+			description:{type:'richtext'},
+		}
+	},
+	{
+		name:'js event',
+		show:['title','pattern','description'],
+		pattern:'<<name>>',
+		properties:{
+			title:{type:'string'},
+			name:{type:'string'},
+			pattern:{type:'pattern'},
+			description:{type:'richtext'},
+		}
+	},
+	{
+		name:'js type',
+		show:['title','description'],
+		pattern:'<<name>>',
+		properties:{
+			title:{type:'string'},
+			name:{type:'string'},
+			description:{type:'richtext'},
+		}
+	},
+	{
+		name:'js trait',
+		show:['name','description','subject'],
+		pattern:'<<subject>> <<pattern>>',
+		properties:{
+			subject:{type:'string',readonly:true,inlineClass:'text-bold',placeholder:'trait subject'},
+			title:{type:'string'},
+			pattern:{type:'pattern'},
+			name:{type:'string'},
+			description:{type:'richtext'},
+		}
 	}
+
 ]
 
 export default {
