@@ -305,6 +305,7 @@ function propertiesObject(params){
 	const ret = {};
 	(params||[]).forEach(param=>{
 		const spec = {
+			$type:'js type prop',
 			type:appType((param.type||{}).names,true),
 			title:appType(param.name)
 		};
@@ -341,6 +342,7 @@ function propertiesObject(params){
 		if(param.type && Array.isArray(param.type.names) && param.type.names.length > 1){
 			//this is a selection type. Assuming types are JSON parsable
 			spec.options = param.type.names.map(name=>safeParse(name)).filter(name=>name !== undefined);
+			spec.$type = 'js options prop'
 		}
 		//set property spec
 		ret[param.name] = spec;

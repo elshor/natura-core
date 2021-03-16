@@ -1,3 +1,4 @@
+import { placeholder } from "natura/spec";
 import basicTypes from "./basic-types.js"
 
 const entities = 	[
@@ -719,50 +720,54 @@ const entities = 	[
 	},
 	{
 		name:'js action',
-		show:['title','pattern','description'],
+		show:['title','pattern','description','properties'],
 		pattern:'<<name>>',
 		properties:{
 			title:{type:'string'},
 			name:{type:'string'},
 			pattern:{type:'pattern'},
 			description:{type:'richtext'},
+			properties:{title:'parameters',hashSpec:{type:'js prop',placeholder:'type of parameter'}}
 		}
 	},
 	{
 		name:'js expression',
-		show:['title','pattern','description'],
+		show:['title','pattern','description','properties'],
 		pattern:'<<name>>',
 		properties:{
 			title:{type:'string'},
 			name:{type:'string'},
 			pattern:{type:'pattern'},
 			description:{type:'richtext'},
+			properties:{title:'parameters',hashSpec:{type:'js prop'}}
 		}
 	},
 	{
 		name:'js event',
-		show:['title','pattern','description'],
+		show:['title','pattern','description','properties'],
 		pattern:'<<name>>',
 		properties:{
 			title:{type:'string'},
 			name:{type:'string'},
 			pattern:{type:'pattern'},
 			description:{type:'richtext'},
+			properties:{title:'parameters',hashSpec:{type:'js prop'}}
 		}
 	},
 	{
 		name:'js type',
-		show:['title','description'],
+		show:['title','description','properties'],
 		pattern:'<<name>>',
 		properties:{
 			title:{type:'string'},
 			name:{type:'string'},
+			properties:{title:'properties',hashSpec:{type:'js prop'}},
 			description:{type:'richtext'},
 		}
 	},
 	{
 		name:'js trait',
-		show:['name','description','subject'],
+		show:['name','description','subject','properties'],
 		pattern:'<<subject>> <<pattern>>',
 		properties:{
 			subject:{type:'string',readonly:true,inlineClass:'text-bold',placeholder:'trait subject'},
@@ -770,9 +775,35 @@ const entities = 	[
 			pattern:{type:'pattern'},
 			name:{type:'string'},
 			description:{type:'richtext'},
+			properties:{title:'parameters',hashSpec:{type:'js prop'}}
+		}
+	},
+	{
+		name:'js type prop',
+		title:'application type',
+		isa:['js prop'],
+		pattern:'<<type>>',
+		show:['title','description','placeholder'],
+		properties:{
+			type:{type:'type',placeholder:'type of the parameter'},
+			title:{type:'string',placeholder:'title of parameter',description:'the user friendly name of the parameter'},
+			description:{type:'richtext'},
+			placeholder:{type:'string',placeholder:'placeholder to use for parameter value'}
+		}
+	},
+	{
+		name:'js options prop',
+		title:'selection type',
+		pattern:'one of <<options>>',
+		isa:['js prop'],
+		show:['title','description','placeholder'],
+		properties:{
+			title:{type:'string',placeholder:'title of parameter',description:'the user friendly name of the parameter'},
+			description:{type:'richtext'},
+			placeholder:{type:'string',placeholder:'placeholder to use for parameter value'},
+			options:{type:'string*',childSpec:{placeholder:'add option'}}
 		}
 	}
-
 ]
 
 export default {
