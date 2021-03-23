@@ -4,13 +4,14 @@
  */
 import { assume } from "./error.js"
 
-export default function reference(label,valueType,path){
+export default function reference(label,valueType,path,description){
 	assume(label,'label of reference must be specified');
 	assume(valueType,'value type for reference must be specified');
 	return {
 		$type:'reference',
 		label,
 		valueType,
-		path
+		path,
+		description
 	}
 };
