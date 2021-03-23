@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 export default function calc(expression, context={}){
 	if(typeof expression === 'function'){
 		return expression(context);
