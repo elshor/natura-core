@@ -10,14 +10,8 @@ import { calcValue } from "./calc.js";
 import {contextEntries} from './context.js'
 import clone from 'clone'
 
-///////////////////////////////////////////////////////////
-//Definitions
-///////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////
-//Actions
-///////////////////////////////////////////////////////////
-export function getSuggestions(location,filter,spec,allowExpressions){
+export function getSuggestions(location,filter,spec,allowExpressions,externalContext){
 	const dictionary = location.dictionary;
 	const ret = {
 		state: 'loaded',
@@ -75,6 +69,21 @@ export function getSuggestions(location,filter,spec,allowExpressions){
 			text:suggestionText(entry,itsExpectedSpec,dictionary)
 		})
 	})
+
+	//external context
+	if(expectedType && externalContext){
+		externalContext.forEach(entry=>{
+			if(entry.valueType===expectedType){
+				ret.list.push({
+					value: clone(entry.value),
+					source:'context',
+					text:entry.label,
+					path:entry.path,
+					description:entry.description
+				})
+			}
+		})
+	}
 
 	//context instances
 	if(expectedType){
