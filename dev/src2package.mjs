@@ -39,13 +39,18 @@ async function processFile(path){
 		_id:'public:'+filename,
 		files:['packages/'+filename+'/index.js'],
 		entities:{$type:'entity definition group',members:[]},
+		instances:{$type:'entity definition group',members:[]},
 		actions:{$type:'action definition group',members:[]},
 		properties:{$type:'entity definition group',members:[]},
 		events:{$type:'event definition group',members:[]},
 		traits:{$type:'entity definition group',members:[]},
 		expressions:{$type:'expression definition group',name:'expressions',members:[]}
 	};
-	input.forEach(item=>addTypeDef(item,output));
+	try{
+		input.forEach(item=>addTypeDef(item,output));
+	}catch(e){
+		error(input,'Exception while processing file',e);
+	}
 	await upload(output);
 	await uploadS3('natura-code','packages/'+filename+'/index.js',fs.readFileSync(path,'utf8'),'text/javascript');
 	term.green.bold(new Date().toLocaleTimeString(),' uploaded ',filename,' package');
@@ -54,7 +59,7 @@ async function processFile(path){
 function addTypeDef(input,output){
 	const naturaTag = (input.tags||[]).find(item=>item.title==="natura");
 	if(naturaTag){
-		const parsed = naturaTag.text.match(/^(expression|action|event|trait|entity|object)(\s+(.*))?$/);
+		const parsed = naturaTag.text.match(/^(options|expression|action|event|trait|entity|object)(\s+(.*))?$/);
 		if(parsed){
 			switch(parsed[1]){
 				case 'action':
@@ -69,6 +74,8 @@ function addTypeDef(input,output){
 					return addObjectType(input,parsed[3],output.entities.members,output.properties.members);
 				case 'expression':
 					return addExpressionType(input,parsed[3],output.expressions.members);
+				case 'options':
+					return addOptionsType(input,parsed[3],output.instances.members);
 			}
 		}else{
 			term.red('Error - using an unidentified natura tag format at ',`(${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
@@ -117,6 +124,26 @@ function addActionType(input,pattern,output){
 	}
 
 	output.push(def);
+}
+
+function addOptionsType(input,pattern,instances){
+	(input.properties||[]).forEach(prop=>{
+		const valueType = prop.type.names? prop.type.names[0] : prop.memberof;
+		let value = safeParse(prop.defaultvalue);
+		if(value === undefined){
+			value = prop.defaultvalue;
+		}
+		const def = {
+			$type:'js instance',
+			id:prop.longname,
+			description:prop.description,
+			type:appType(valueType),
+			value,
+			label:safeParse(prop.name) || prop.name
+		}
+		instances.push(def);
+	})
+
 }
 
 function addExpressionType(input,pattern,output){
@@ -219,6 +246,7 @@ function addEntityType(input,pattern,output){
 		def.fn = `${input.name}@${moduleName(input)}(${(input.properties||[]).map(item=>item.name).join(',')})`;
 
 	}
+	processAdditionalTags(input,def);
 	output.push(def);
 }
 
@@ -325,7 +353,8 @@ function propertiesObject(params){
 		//check for additional property modifiers
 		if(parsed && parsed[5]){
 			parsed[5].split(',').map(item=>item.trim()).forEach(mod=>{
-				switch(mod){
+				const parts=mod.split(':').map(item=>item.trim());
+				switch(parts[0]){
 					case 'expanded':
 						spec.expanded = true;
 						break;
@@ -338,6 +367,9 @@ function propertiesObject(params){
 					case 'hideName':
 					case 'hide name':
 						spec.hideName = true;
+						break;
+					case 'pathOptions':
+						spec.options = {$type:'path options',path:parts[1]}
 						break;
 				}
 			})
@@ -399,8 +431,68 @@ function processAdditionalTags(input,def){
 	if(isa){
 		def.isa = isa.split(',').map(item=>item.trim()).map(item=>appType(item));
 	}
+	const template = getTag(input,'temp');
+	if(template){
+		def.template = template;
+	}
 	if(getTag(input,'inlineExpanded')){
 		def.inlineDetails = "expanded";
 		def.expanded = true;
+	}
+	const hat = getTag(input,'hat');
+	if(hat){
+		const parsed = hat.match(/^(\S+)\s+(\S+)\s*(?:\|\s*(.*))?$/);
+		if(!parsed){
+			error(input,'The hat tag has the wrong format. Should be: icon topic | description');
+		}else{
+			def.hat = {
+				$type:'hat action',
+				action:{
+					$type:'post message',
+					topic: parsed[2]
+				},
+				hint:parsed[3],
+				icon:parsed[1]
+			}
+		}
+	}
+	const change = getTag(input,'change');
+	if(change){
+		const parsed = change.match(/^\s*(\S+)(?:\s+(.*))?$/);
+		if(!parsed){
+			error(input,'The change tag has the wrong format. Should be: topic path/to/object?');
+		}else{
+			def.onchange = {
+				$type:'post message',
+				topic: parsed[1],
+				message:parsed[2]?parsed[2].trim() : undefined
+			}
+		}
+	}
+	const del = getTag(input,'delete');
+	if(del){
+		const parsed = del.match(/^\s*(\S+)(?:\s+(.*))?$/);
+		if(!parsed){
+			error(input,'The delete tag has the wrong format. Should be: topic path/to/object?');
+		}else{
+			def.ondelete = {
+				$type:'post message',
+				topic: parsed[1],
+				message:parsed[2]?parsed[2].trim() : undefined
+			}
+		}
+	}
+	const create = getTag(input,'create');
+	if(create){
+		const parsed = create.match(/^\s*(\S+)(?:\s+(.*))?$/);
+		if(!parsed){
+			error(input,'The create tag has the wrong format. Should be: topic path/to/object?');
+		}else{
+			def.oncreate = {
+				$type:'post message',
+				topic: parsed[1],
+				message:parsed[2]?parsed[2].trim() : undefined
+			}
+		}
 	}
 }
