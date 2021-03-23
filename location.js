@@ -27,6 +27,13 @@ class Location{
 	get value(){
 		return locationValue(this);
 	}
+
+	/**
+	 * Get the JSON raw value of this location. Any references are dereferenced
+	 */
+	get raw(){
+		return locationRawValue(this);
+	}
 	/**
 	 * @returns {Spec}
 	 */
@@ -376,40 +383,13 @@ function asNumber(n){
 
 function locationContext(location){
 	return Object.assign(
-		{},{$location:location,location}
+		{},{$location:location,location,$dictionary:location.dictionary}
 	);
 }
 
 function locationEntity(location){
 	return new Proxy(location,{
-		get: function(location,prop){
-			if(typeof prop === 'symbol'){
-				//props can only be strings so pass it on to raw object
-				return location.value[prop];
-			}
-			if(prop === '$spec'){
-				return location.spec;
-			}
-			if(prop === '$value'){
-				return location.value;
-			}
-			if(prop === '$raw'){
-				return locationRawValue(location);
-			}
-			if(prop === '$isProxy'){
-				return true;
-			}
-			if(prop === '$parent'){
-				return location.parent.entity;
-			}
-			const value = location.child(prop).value;
-			if(typeof value === 'object' && value !== null){
-				//value is an object. Return its entity proxy
-				return location.child(prop).entity;
-			}else{
-				return value;
-			}
-		},
+		get: entityGet,
 		set(location,prop,value){
 			const thisObject = location.value;
 			if(typeof thisObject === 'object' && thisObject !== null){
@@ -458,11 +438,46 @@ function locationEntity(location){
 	})
 }
 
+function entityGet(location,prop){
+	if(location.isReference){
+		return entityGet(location.referenced,prop);
+	}
+	if(typeof prop === 'symbol'){
+		//props can only be strings so pass it on to raw object
+		return location.value[prop];
+	}
+	if(prop === '$spec'){
+		return location.spec;
+	}
+	if(prop === '$value'){
+		return location.value;
+	}
+	if(prop === '$raw'){
+		return locationRawValue(location);
+	}
+	if(prop === '$isProxy'){
+		return true;
+	}
+	if(prop === '$parent'){
+		return location.parent.entity;
+	}
+	const value = location.child(prop).value;
+	if(typeof value === 'object' && value !== null){
+		//value is an object. Return its entity proxy
+		return location.child(prop).entity;
+	}else{
+		return value;
+	}
+}
 /**
  * convert the location value to raw JSON - calculating default and value properties
+ * references are dererenced returning their value
  * @param {Location} location
  */
 function locationRawValue(location){
+	if(location.isReference){
+		return locationRawValue(location.referenced);
+	}
 	const value = location.value;
 	if(typeof value !== 'object'){
 		return value;
