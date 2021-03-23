@@ -177,11 +177,12 @@ class Location{
 	 */
 	get referenced(){
 		if(this.isReference){
-			return createLocation(
-				getResource(this.value.path,this) || this.data,
+			const ret = createLocation(
+				getResource(this.value.path||'',this,this.data),
 				this.dictionary,
-				this.value.path
+				uriHash(this.value.path)
 			);
+			return ret;
 		}else{
 			return this;
 		}
@@ -498,9 +499,9 @@ class LocationChild extends Location{
 
 function uriHash(uri){
 	try{
-		const hash = new URL(uri).hash;
-		if(hash[0]==='#' && hash[1]!=='/'){
-			return '#/' + hash.substr(1);
+		const hash = new URL(uri).hash.substr(1);
+		if(hash[0]!=='/'){
+			return '/' + hash;
 		}else{
 			return hash;
 		}
@@ -518,12 +519,13 @@ function uriResource(uri){
 	}
 }
 
-function getResource(uri,location){
-	const parsed = uri.match(/^dictionary\:\/\/([^\#]+)(.*)?$/);
+function getResource(uri,location,defaultData){
+	const parsed = uri.match(/^dictionary\:([^\#]+)(.*)?$/);
 	if(parsed){
 		//the location references an instance from the dictionary
-		return location.dictionary.getInstanceByID(parsed[1]);
+		const ret = location.dictionary.getInstanceByID(parsed[1]);
+		return ret;
 	}else{
-		return null;
+		return defaultData;
 	}
 }

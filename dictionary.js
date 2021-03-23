@@ -9,6 +9,7 @@ import {entityType,entityIsArray} from './entity.js'
 import deepmerge from "deepmerge";
 import base from './packages/base.js'
 import {createLocation} from './location.js'
+import reference from "./reference.js";
 
 export default class Dictionary{
 	constructor(packages=[base]){
@@ -183,18 +184,18 @@ export default class Dictionary{
 	}
 		/**
 	 * Register an instance in the dictionary for later retrieval
-	 * @param {String} name identification of instance
+	 * @param {String} id identification of instance
 	 * @param {String} type type to register
 	 * @param {*} value value of instance
 	 */
-	_registerInstance(name, type, value){
+	_registerInstance(id, type, value,label,description){
 		if(type){
 			if(!this.instancesByType[type]){
 				this.instancesByType[type] = [];
 			}
-			this.instancesByType[type].push({name,type,value});
+			this.instancesByType[type].push({id,type,value,label,description});
 		}
-		this.instances[name] = value;
+		this.instances[id] = value;
 	}
 
 	/**
@@ -227,12 +228,22 @@ export default class Dictionary{
 		return this.functions[name] || {};
 	}
 
+	/**
+	 * Get a list of references to instances stored in the dictionary.
+	 * @param {Type} type type of instances to search for
+	 * @returns Reference[]
+	 */
 	getInstancesByType(type){
 		return Object.keys(this.instancesByType)
 			.filter(key=>this.isa(key,type))
 			.map(key=>this.instancesByType[key])
 			.flat()
-			.map(entry=>entry.value);
+			.map(entry=>reference(
+				entry.label||entry.id,
+				entry.type,
+				'dictionary:'+entry.id,
+				entry.description
+			));
 	}
 
 	/**
