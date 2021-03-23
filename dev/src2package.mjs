@@ -429,7 +429,7 @@ function processAdditionalTags(input,def){
 	}
 	const isa = getTag(input,'isa');
 	if(isa){
-		def.isa = isa.split(',').map(item=>item.trim()).map(item=>appType(item));
+		def.isa = (def.isa||[]).concat(isa.split(',').map(item=>item.trim()).map(item=>appType(item)));
 	}
 	const template = getTag(input,'temp');
 	if(template){
