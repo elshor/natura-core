@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "description": "Core functionality needed to work with natura. This package contains the natura logic without UI. It should be used by the client and server",
   "scripts": {
-    "build": "node dev/src2package.mjs"
+    "build": "node dev/src2package.mjs \"c:\\Users\\eshor\\Dropbox (Arza Winery)\\dev\\natura-core\\lib\\wix poc.js\""
   },
   "sideEffects": [
     "./src/data.js"
