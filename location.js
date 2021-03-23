@@ -459,7 +459,7 @@ function entityGet(location,prop){
 		return true;
 	}
 	if(prop === '$parent'){
-		return location.parent.entity;
+		return location.parent? location.parent.entity : undefined;
 	}
 	const value = location.child(prop).value;
 	if(typeof value === 'object' && value !== null){
