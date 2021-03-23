@@ -28,13 +28,19 @@ export function getSuggestions(location,filter,spec,allowExpressions,externalCon
 	const expectedType = calcValue(itsExpectedSpec.type,location.context);
 
 	//options suggestions
-	const optionsType = dictionary.isInstance(expectedType)?
-		dictionary.typeOfInstance(expectedType) : expectedType;
-	const optionsSpec = optionsType === expectedType? itsExpectedSpec : dictionary.getTypeSpec(optionsType);
-	const options = calcValue(optionsSpec.options,location.context);
-	if(hasFunction(options,'forEach')){
+	let options=[];
+	if(itsExpectedSpec.options){
+		//options are explicitly set - just use it
+		options = itsExpectedSpec.options;
+	}else{
+		const optionsType = dictionary.isInstance(expectedType)?
+			dictionary.typeOfInstance(expectedType) : expectedType;
+		options = dictionary.getTypeSpec(optionsType).options;
+	}
+	const calculatedOptions = calcValue(options,location.context);
+	if(hasFunction(calculatedOptions,'forEach')){
 		//the spec has an array options property (or other object that supports forEach function)
-		options.forEach(option=>
+		calculatedOptions.forEach(option=>
 			ret.list.push({
 				value:clone(option),
 				text: suggestionText(option,itsExpectedSpec,dictionary),
