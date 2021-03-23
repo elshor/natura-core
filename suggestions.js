@@ -72,7 +72,9 @@ export function getSuggestions(location,filter,spec,allowExpressions,externalCon
 	entries.forEach(entry=>{
 		ret.list.push({
 			value: clone(entry),
-			text:suggestionText(entry,itsExpectedSpec,dictionary)
+			text:entry.label,
+			source:'instance',
+			description:entry.description
 		})
 	})
 
@@ -95,7 +97,7 @@ export function getSuggestions(location,filter,spec,allowExpressions,externalCon
 	if(expectedType){
 		contextEntries(location,expectedType).forEach(entry=>{
 			ret.list.push({
-				value: clone(entry.value),
+				value: clone(entry.value||entry.name),//if value not specified then treat the name as value
 				source:'context',
 				text:entry.name,
 				path:entry.path,
@@ -106,8 +108,8 @@ export function getSuggestions(location,filter,spec,allowExpressions,externalCon
 
 	//dictionary expressions
 	if(expectedType && allowExpressions){
-		const searchType = dictionary.isInstance(expectedType)? 
-			expectedType : 
+		const searchType = dictionary.isInstance(expectedType)?
+			expectedType :
 			dictionary.instanceType(expectedType);
 		const types = dictionary.getExpressionsByValueType(searchType);
 		types.forEach(type=>{
@@ -181,6 +183,7 @@ function comp(a,b){
 
 const sourceScore = {
 	option:0.9,
+	instance:0.9,
 	context:0.8,
 	class:0.6,
 	expression:0.5,
