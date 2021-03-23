@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 import { assume } from "./error.js"
 
 export default function reference(label,valueType,path){

@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 import {locate} from '../context'
 import Reference from '../reference'
 

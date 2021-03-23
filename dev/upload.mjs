@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 import Cloudant from '@cloudant/cloudant';
 import cred from './credentials.js'
 
@@ -21,6 +25,7 @@ export default async function (doc){
 		}else{
 			doc._rev = existingPublishedDoc._rev;
 		}
+		console.info('uploaded package','https://natura.eu-gb.cf.appdomain.cloud/doc/'+encodeURIComponent(doc._id));
 	}catch{
 		delete doc._rev;
 	}
@@ -29,6 +34,7 @@ export default async function (doc){
 	try{
 		const res = await db.use('docs').insert(doc);
 	}catch(e){
+		console.error('Got exception in load package',e);
 		throw {
 			module:'publish-doc',
 			error:'unknown',

@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 import {JsonPointer} from 'json-ptr'
 import { specType, mergeSpec, specProperties } from './spec.js';
 import {assume} from './error.js'

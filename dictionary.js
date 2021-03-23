@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 import { LoadError, assume, ParamValue } from "./error.js";
 import { specType } from "./spec.js";
 import { parsePattern } from "./pattern.js";

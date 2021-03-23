@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 import { specType, specComputedPattern} from "./spec.js";
 import { assume } from "./error.js";
 import { generateNewElement } from "src/components/utils.js";
