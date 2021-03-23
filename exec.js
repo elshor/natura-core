@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 /**
  * Execute an action. The action is an action type where its spec has an exec property with function. The exec function is called with the action object as this.
  * @param {Action} action action type object to perform
