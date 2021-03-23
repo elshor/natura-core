@@ -65,6 +65,18 @@ class Location{
 			return 'any'
 		}
 	}
+
+	/**
+	 * Get the spec of the entity type. If the type is an instance then return type of instance
+	 */
+	get valueSpec(){
+		let type = this.type;
+		if(this.dictionary.isInstance(type)){
+			type = this.dictionary.typeOfInstance(type);
+		}
+		return this.dictionary.getTypeSpec(type);
+	}
+
 	get expectedSpec(){
 		if(this._expectedSpec){
 			return this._expectedSpec;
