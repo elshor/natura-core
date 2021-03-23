@@ -3,7 +3,9 @@
  *   All rights reserved.
  */
 import { placeholder } from "natura/spec";
+import { createLocation } from "../location.js";
 import basicTypes from "./basic-types.js"
+import {calcTemplate} from '../template'
 
 const entities = 	[
 	{
@@ -179,40 +181,6 @@ const entities = 	[
 		isa:['expression']
 	},
 	{
-		pattern:'if <<condition>> then <<action>> otherwise <<alternateAction>>',
-		name:'condition statement',
-		description:'Test if a condition is true. If it is true then execution action. Otherwise eecute the alternate action if exists.',
-		title:'condition statement',
-		isa:['action'],
-		properties:{
-			'condition':{type:'condition'},
-			'action':{type:'action',placeholder:'action to perform', description:"Specify here the action to perform when the condition is true."},
-			'alternateAction':{
-				type:'action',
-				placeholder:'action if condition is false',
-				title:'otherwise'
-			}
-		}
-	},
-	{
-		name: 'action sequence to perform',
-		displayPattern:'do the following actions',
-		inlineDetails:'expanded',
-		isa:['action'],
-		show:['sequence'],
-		expanded:true,
-		properties:{
-			sequence:{
-				type:'action*',
-				expanded:true,
-				hideName:true,
-				required:true,
-				placeholder:'action to perform',
-				description:'Specify an action to perform. the actions will be executed in order, waiting for previous asynchronous action to complete (such as resource load)'
-			}
-		}
-	},
-	{
 		name: 'condition',
 		pattern:'<<subject>> <<trait>>',
 		properties:{
@@ -350,7 +318,8 @@ const entities = 	[
 	},
 	{
 		name:'reference',
-		template: '{{label}}'
+		template: '{{label}}',
+		inlineClass:'text-primary'
 	},
 	{
 		name:'property spec',
@@ -482,6 +451,39 @@ const entities = 	[
 				options:['button','upload'],
 				default:'button'
 			},
+		}
+	},
+	{
+		name:'post message',
+		description:'Post a message to the containing application or server. This is an editor action that is activated by clicling an entity action icon or button. If message is specified then it is treated as a path to object to send. Otherwise, the function passes the location value',
+		show:['topic','message'],
+		isa:['editor action'],
+		exec(context,{postMessage}){
+			function getLocations(message){
+				const paths = message.split(',')
+					.map(item=>item.trim())
+					.map(item=>item[0]!=='/'? '/'+item : item);
+				const values = paths.map(path=>calcPath(context,path))
+				return values.length===1?values[0] : values;
+			}
+			const message = getLocations(this.message||'');
+			postMessage(this.topic,message);
+
+		},
+		properties:{
+			topic:{type:'text'},
+			message:{type:'text',description:'message to send. If message is not specified then send the triggering entity'}
+		}
+	},
+	{
+		name:'hat action',
+		description:'An entity action that is activated by clicking an icon that appears above the inline-value',
+		pattern:'<<title>>',
+		show:['hint','icon','action'],
+		properties:{
+			action:{type:'editor action'},
+			icon:{type:'text',placeholder:'name of icon',description:'name of material icon to use'},
+			hint:{type:'text',description:'The tooltip for the hat icon'},
 		}
 	},
 	{
@@ -665,6 +667,12 @@ const entities = 	[
 		}
 	},
 	{
+		name:'path options',
+		calc:function(context){
+			return calcPath(context,this.path);
+		}
+	},
+	{
 		name:'property',
 		description:'a property of an object. This is used to define setters and getters',
 		pattern:'<<name>> of <<objectType>> (<<valueType>>)',
@@ -704,22 +712,15 @@ const entities = 	[
 		}
 	},
 	{
-		name:'set',
-		title:'set property',
-		isa:'action',
-		description:'set a property value of an object.',
-		pattern:'set <<prop>> to <<value>>',
-		properties:{
-			prop:{type:'property accessor',placeholder:'property to set'},
-			value:{placeholder:'value to set',type:function({$location}){
-				const prop = $location.sibling('prop');
-				if(!prop){
-					//property not set, return any
-					return 'any instance';
-				}
-				const valueType = prop.spec.valueType;
-				return valueType || 'any instance';
-			}}
+		name:'js instance',
+		register:function(dictionary,type,spec){
+			dictionary._registerInstance(
+				spec.id,
+				spec.type,
+				spec.value,
+				spec.label,
+				spec.description
+			)
 		}
 	},
 	{
@@ -727,8 +728,8 @@ const entities = 	[
 		show:['title','pattern','description','properties'],
 		pattern:'<<name>>',
 		properties:{
-			title:{type:'string'},
-			name:{type:'string'},
+			title:{type:'text'},
+			name:{type:'text'},
 			pattern:{type:'pattern'},
 			description:{type:'richtext'},
 			properties:{title:'parameters',hashSpec:{type:'js prop',placeholder:'type of parameter'}}
@@ -739,8 +740,8 @@ const entities = 	[
 		show:['title','pattern','description','properties'],
 		pattern:'<<name>>',
 		properties:{
-			title:{type:'string'},
-			name:{type:'string'},
+			title:{type:'text'},
+			name:{type:'text'},
 			pattern:{type:'pattern'},
 			description:{type:'richtext'},
 			properties:{title:'parameters',hashSpec:{type:'js prop'}}
@@ -751,8 +752,8 @@ const entities = 	[
 		show:['title','pattern','description','properties'],
 		pattern:'<<name>>',
 		properties:{
-			title:{type:'string'},
-			name:{type:'string'},
+			title:{type:'text'},
+			name:{type:'text'},
 			pattern:{type:'pattern'},
 			description:{type:'richtext'},
 			properties:{title:'parameters',hashSpec:{type:'js prop'}}
@@ -761,12 +762,14 @@ const entities = 	[
 	{
 		name:'js type',
 		show:['title','description','properties'],
+		additional:['hat'],
 		pattern:'<<name>>',
 		properties:{
-			title:{type:'string'},
-			name:{type:'string'},
+			title:{type:'text'},
+			name:{type:'text'},
 			properties:{title:'properties',hashSpec:{type:'js prop'}},
 			description:{type:'richtext'},
+			hat: {type:'hat action'}
 		}
 	},
 	{
@@ -774,10 +777,10 @@ const entities = 	[
 		show:['name','description','subject','properties'],
 		pattern:'<<subject>> <<pattern>>',
 		properties:{
-			subject:{type:'string',readonly:true,inlineClass:'text-bold',placeholder:'trait subject'},
-			title:{type:'string'},
+			subject:{type:'text',readonly:true,inlineClass:'text-bold',placeholder:'trait subject'},
+			title:{type:'text'},
 			pattern:{type:'pattern'},
-			name:{type:'string'},
+			name:{type:'text'},
 			description:{type:'richtext'},
 			properties:{title:'parameters',hashSpec:{type:'js prop'}}
 		}
@@ -790,9 +793,9 @@ const entities = 	[
 		show:['title','description','placeholder'],
 		properties:{
 			type:{type:'type',placeholder:'type of the parameter'},
-			title:{type:'string',placeholder:'title of parameter',description:'the user friendly name of the parameter'},
+			title:{type:'text',placeholder:'title of parameter',description:'the user friendly name of the parameter'},
 			description:{type:'richtext'},
-			placeholder:{type:'string',placeholder:'placeholder to use for parameter value'}
+			placeholder:{type:'strtexting',placeholder:'placeholder to use for parameter value'}
 		}
 	},
 	{
@@ -802,10 +805,10 @@ const entities = 	[
 		isa:['js prop'],
 		show:['title','description','placeholder'],
 		properties:{
-			title:{type:'string',placeholder:'title of parameter',description:'the user friendly name of the parameter'},
+			title:{type:'text',placeholder:'title of parameter',description:'the user friendly name of the parameter'},
 			description:{type:'richtext'},
-			placeholder:{type:'string',placeholder:'placeholder to use for parameter value'},
-			options:{type:'string*',childSpec:{placeholder:'add option'}}
+			placeholder:{type:'text',placeholder:'placeholder to use for parameter value'},
+			options:{type:'text*',childSpec:{placeholder:'add option'}}
 		}
 	}
 ]
@@ -852,4 +855,14 @@ function defaultInstanceType({location}){
 		const useAn = ['a','i','o','u','h'].includes(name[0]);
 		return (useAn?'an ':'a ') + name;
 	}
+}
+
+function calcPath(context,path){
+	path = path==='/'?'':path;
+	const val = createLocation(
+		context.location.entity,
+		context.$dictionary,
+		path
+	).value;
+	return val && typeof val === 'object' && val.$isProxy? val.$value : val;
 }
