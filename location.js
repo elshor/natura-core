@@ -450,7 +450,12 @@ function entityGet(location,prop){
 		return location.spec;
 	}
 	if(prop === '$value'){
-		return location.value;
+		const value = location.value;
+		if(value && typeof value === 'object' && value.$isProxy){
+			return value.$value;
+		}else{
+			return value;
+		}
 	}
 	if(prop === '$raw'){
 		return locationRawValue(location);
