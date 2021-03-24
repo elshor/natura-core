@@ -153,7 +153,15 @@ export function suggestionText(value, spec,dictionary,isNew=false){
 	}else if(specComputedPattern(spec)){
 		return specComputedPattern(spec);
 	}else{
-		return JSON.stringify(value);
+		const ret =  
+			value.title || 
+			value.label || 
+			value.name || 
+			value.description || 
+			(value.$type? (value.$type + ' '+ (value.ref||value.id||'')) :null)|| 
+			'no title';
+		console.log('ret',ret);
+		return ret;
 	}
 }
 
