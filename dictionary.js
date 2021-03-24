@@ -117,6 +117,9 @@ export default class Dictionary{
 		if(!type){
 			return {};
 		}
+		if(this.isInstance(type)){
+			type = this.typeOfInstance(type);
+		}
 		return this.repo[type.toString()] || {};
 	}
 	/**
