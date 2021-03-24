@@ -104,8 +104,7 @@ export default class Dictionary{
 		const loaded = packagesToLoad.map(pkg=>this._loadPackage(pkg))
 		this.reset();
 		loaded.forEach(pkg=>{
-			const packageCopy = deepCopy(pkg);
-			this._processPackage(packageCopy);
+			this._processPackage(pkg);
 		});
 		this.resetVersion();
 	}
@@ -316,10 +315,12 @@ export default class Dictionary{
 		if(typeof pkgSpec.register === 'function'){
 			//register function defined for the package - process it
 			pkgSpec.register(this,pkg.$type,pkg);
-		}
-		for(let p in pkg){
-			if(this._isDefinitionGroup(pkg[p])){
-				this._processDefinition(pkg[p]);
+		}else{
+			const pkgCopy = deepCopy(pkg);
+			for(let p in pkgCopy){
+				if(this._isDefinitionGroup(pkgCopy[p])){
+					this._processDefinition(pkgCopy[p]);
+				}
 			}
 		}
 	}
