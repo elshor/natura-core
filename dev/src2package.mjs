@@ -9,18 +9,29 @@ import {patternFields} from '../pattern.js'
 import upload from './upload.mjs'
 import {uploadS3} from './uploads3.mjs'
 import terminal from  'terminal-kit';
+import {assume} from '../error.js'
+import { exit } from 'process'
+
 const term = terminal.terminal;
 
 processFile(process.argv[2]);
 
 function warn(input,...items){
-	term.yellow(...items);
-	term.yellow(` (${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
+	items.forEach(item=>term.yellow(item));
+	if(input.meta){
+		term.yellow(` (${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
+	}else{
+		term.yellow('(no file info)\n');
+	}
 }
 
 function error(input,...items){
-	term.red(...items);
-	term.red(` (${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
+	items.forEach(item=>term.red(item));
+	if(input.meta){
+		term.red(` (${input.meta.filename}:${input.meta.lineno}:${input.meta.columnno})\n`);
+	}else{
+		term.red('(no file info)\n')
+	}
 }
 
 
@@ -49,7 +60,8 @@ async function processFile(path){
 	try{
 		input.forEach(item=>addTypeDef(item,output));
 	}catch(e){
-		error(input,'Exception while processing file',e);
+		error(input,'Exception while processing file',e.message,e.stack);
+		exit(1);
 	}
 	await upload(output);
 	await uploadS3('natura-code','packages/'+filename+'/index.js',fs.readFileSync(path,'utf8'),'text/javascript');
@@ -84,19 +96,16 @@ function addTypeDef(input,output){
 }
 
 function addActionType(input,pattern,output){
-	const fields = getFields(input,pattern);
-	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const def = {
 		name:appType(input.name),
 		$type:'js action',
 		isa:['action'],
-		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
-		show,
 		pattern,
-		description:input.description,
-		properties:propertiesObject(input.params||[])
+		description:input.description
 	};
+	processProperties(input.params||[],def);
+	processShow(input,pattern,def);
 	processAdditionalTags(input,def);
 	if(Array.isArray(input.returns)){
 		def.context = [];
@@ -147,8 +156,6 @@ function addOptionsType(input,pattern,instances){
 }
 
 function addExpressionType(input,pattern,output){
-	const fields = getFields(input,pattern);
-	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	if(!Array.isArray(input.returns) || input.returns.length !== 1){
 		error(input,'Expression must be defined with exactly one returns type');
 		return;
@@ -161,32 +168,28 @@ function addExpressionType(input,pattern,output){
 		name:appType(input.name),
 		$type:'js expression',
 		isa:['expression'],
-		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
-		show,
 		pattern,
 		valueType:appType(input.returns[0].type.names,true),
 		description:input.description,
-		properties:propertiesObject(input.params||[])
 	};
+	processProperties(input.params,def);
+	processShow(input,pattern,def);
 	processAdditionalTags(input,def);
 	output.push(def);
 }
 
 function addEventType(input,pattern,output){
-	const fields = getFields(input,pattern);
-	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const def = {
 		name:appType(input.name),
 		$type:'js event',
 		isa:['event'],
-		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
-		show,
 		pattern,
 		description:input.description,
-		properties:propertiesObject(input.params||[])
 	};
+	processProperties(input.params,def);
+	processShow(input,pattern,def);
 	processAdditionalTags(input,def);
 	if(input.type){
 		//use scope of event type. this will enable for example referencing KeyState in MouseEvent
@@ -202,44 +205,43 @@ function addEventType(input,pattern,output){
 }
 
 function addEntityType(input,pattern,output){
-	const fields = getFields(input,pattern);
-	const show = (input.properties||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const def = {
 		name:appType(input.name),
 		$type:'js type',
 		title:appType(input.name),
 		instanceType: appType(input.name,true),
 		isa:['application type'],
-		inlineDetails:show.length>0 ? 'collapsed' : 'none',
-		show,
 		pattern,
-		description:input.description,
-		properties:propertiesObject(input.properties||[]),
-		scope: Object.entries(propertiesObject(input.properties||[])).map(([key,value])=>(
-			{
-				$type:'basic emit',
-				type:value.type,
-				name:value.placeholder,
-				access:key.replace(/\./g,">"),
-				description:value.description
-			}
-		))
-	};
+		description:input.description
+	}
+	processProperties(input.properties,def);
+	processShow(input,pattern,def);
+	def.scope = Object.entries(def.properties).map(([key,value])=>(
+		{
+			$type:'basic emit',
+			type:value.type,
+			name:value.placeholder,
+			access:key.replace(/\./g,">"),
+			description:value.description
+		}
+	))
 
 	//check if there is a  type definition. This can be used to register options or isa relationships
-	((input.type||{}).names||[]).forEach(item=>{
-		const json = safeParse(item);
-		if(json === undefined){
-			//assume the type is a type, not a JSON optino
-			def.isa.push(appType(item));
-		}else{
-			//name is an option
-			if(!def.options){
-				def.options = [];
-			}
-			def.options.push(json);
-		}
-	});
+	if(input.type && typeof input.type==='object' && Array.isArray(input.type.names)){
+			input.type.names.forEach(item=>{
+			const json = safeParse(item);
+			if(json === undefined){
+				//assume the type is a type, not a JSON optino
+				def.isa.push(appType(item));
+			}else{
+				//name is an option
+				if(!def.options){
+					def.options = [];
+				}
+				def.options.push(json);
+			};
+		});
+	}
 
 	//if the kind of input is function then add fn property
 	if(input.kind === 'function'){
@@ -258,12 +260,12 @@ function addObjectType(input,pattern,output,properties){
 		isa:['application type'],
 		show : (input.properties||[]).map(prop=>prop.name),
 		description:input.description,
-		properties:propertiesObject(input.properties||[]),
 	};
+	processProperties(input.properties,def);
 	processAdditionalTags(input,def);
 
 	//register all properties
-	Object.entries(propertiesObject(input.properties||[])).forEach(([key,value])=>{
+	Object.entries(def.properties).forEach(([key,value])=>{
 		properties.push({
 			$type:'property',
 			name:value.placeholder || appType(key),
@@ -279,22 +281,20 @@ function addObjectType(input,pattern,output,properties){
 
 
 function addTraitType(input,pattern,output){
-	const fields = getFields(input,pattern);
-	const show = (input.params||[]).map(param=>param.name).filter(name=>!fields.includes(name));
 	const thisType = appType(input.this||'any');
 	const def = {
 		$type:'js trait',
 		name:appType(input.name),
 		subject:thisType,
 		isa:['trait.' + thisType],
-		inlineDetails:show.length>0 ? 'collapsed' : 'none',
 		fn:`${input.name}@${moduleName(input)}(${(input.params||[]).map(item=>item.name).join(',')})`,
-		show,
 		pattern,
 		description:input.description,
-		properties:propertiesObject(input.params||[])
 	};
+	processProperties(input.params,def);
 	processAdditionalTags(input,def);
+	processShow(input,pattern,def);
+	
 	output.push(def);
 }
 
@@ -333,9 +333,16 @@ function asInstance(type){
 	return (useAn?'an ':'a ') + type;
 }
 
-function propertiesObject(params){
+/**
+ * Generate properties object. Note: this function can have side effect on owner so only call this function with owner once per owner
+ * @param params 
+ * @param owner 
+ * @returns 
+ */
+function processProperties(params=[],owner){
+	assume(owner,'processProperties must have an owner');
 	const ret = {};
-	(params||[]).forEach(param=>{
+	params.forEach(param=>{
 		const spec = {
 			$type:'js type prop',
 			type:appType((param.type||{}).names,true),
@@ -371,6 +378,17 @@ function propertiesObject(params){
 					case 'pathOptions':
 						spec.options = {$type:'path options',path:parts[1]}
 						break;
+					case 'emit':
+						if(owner){
+							owner.context = owner.context || [];
+							owner.context.push({
+								$type:'emit property',
+								property:param.name,
+								type:spec.type,
+								name: parts[1] || 'the ' + spec.type,
+							});	
+						}
+						break;
 				}
 			})
 		}
@@ -383,7 +401,14 @@ function propertiesObject(params){
 		//set property spec
 		ret[param.name] = spec;
 	});
-	return ret;
+	owner.properties = ret;
+}
+
+function processShow(input,pattern,def){
+	assume(def && def.properties,'processProperties must be called before processShow');
+	const fields = getFields(input,pattern,def.properties);
+	def.show = Object.keys(def.properties).filter(name=>!fields.includes(name));
+	def.inlineDetails = def.show.length>0 ? 'collapsed' : 'none';
 }
 
 function moduleName(def){
@@ -411,8 +436,8 @@ function safeParse(text){
 	}
 }
 
-function getFields(input,pattern){
-	const props = propertiesObject(input.params||input.properties || []);
+function getFields(input,pattern,props){
+	assume(props,'getFields must have props');
 	const fields = patternFields(pattern).map(field=>{
 		if(!props[field.name]){
 			warn(input,'the field "',field.name,'" in the pattern "',pattern,'" is not in the params list');

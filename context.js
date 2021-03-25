@@ -1,7 +1,12 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 import { assume } from './error.js';
 import {calcTemplate} from './template.js'
 import Type from './type.js'
 import Reference from './reference.js'
+import {createLocation} from './location.js'
 
 /**
  * @name ContextEntry
@@ -22,8 +27,8 @@ import Reference from './reference.js'
  * Search for entities within the location context
  * @param {Location} location
  * @param {contextIterator} iterator
- * @param {String} type
- * @param {String} name
+ * @param {String} type type to search for or null for any type
+ * @param {String} name name to search for or null for any name
  * @param {String} scope the current scope. Each time a use scope is followed, the new scope is added to the scope with a preceding > symbol
  */
 export function contextSearch(location,iterator,type,name,scope='',visitIt){
@@ -34,6 +39,7 @@ export function contextSearch(location,iterator,type,name,scope='',visitIt){
 		current = previousContextLocation(current);
 	}
 }
+
 
 function visit(location,iterator,type,name,scope,visitIt){
 	const referenced = location.referenced;
@@ -71,12 +77,15 @@ function visitEntry(referenced,entry,iterator,type,name,scope='',visitIt){
 			return basicEmit(referenced,entry,iterator,type,name,scope);
 		case 'use scope':
 			return useScope(referenced,entry,iterator,type,name,scope,visitIt);
+		case 'use context':
+			return useContext(referenced,entry,iterator,type,name,scope,visitIt);
 		case 'emit property':
 			return emitProperty(referenced,entry,iterator,type,name);
 		default:
 			assume(false,'expected known context entry. Got',entry.$type);
 		}
 }
+
 function visitScopeEntry(referenced,entry,iterator,type,name,scope='',visitIt=undefined){
 	scope = scope || '';
 	if(!entry || typeof entry !== 'object'){
@@ -226,6 +235,17 @@ function scopeSearch(location,scopeType,iterator,type,name,scope,visitIt){
 	return true;//continue search
 }
 
+/**
+ * use the context of a property. It goes over context entries of property spec
+ */
+function useContext(referenced,entry,iterator,type,name,scope,visitIt){
+	const property = referenced.child(entry.property).referenced;
+	if(property.isEmpty){
+		return true;//continue search
+	}
+	return visit(property,iterator,type,name,scope,visitIt);
+}
+
 function useScope(referenced,entry,iterator,type,name,scope,visitIt){
 	const property = referenced.child(entry.property).referenced;
 	if(property.isEmpty){
@@ -296,4 +316,53 @@ export function locate(location,type,name){
 		value = entry.value;
 	},type,name);
 	return value;
+}
+
+/**
+ * Create a context object that encapsulates all entities in the location context. The return value is a proxy. When getting a property the following search is executed
+ * <br>if property is $location then return the location
+ * <br>if property is $dictionary then return the dictionary of current location
+ * <br>if property is $isProxy then return true
+ * <br>if property is $value then calculate the value of current location. If the location is a reference then dereference it first
+ * <br>if value of current location has the search property then return it
+ * <br>search the context for an entity with name equal to the property
+ * <br>
+ * if `contextLocation` is specified then use its context for context search rather than searching the location context. This might be usefull for example after deleting an entity where we want to use its parent context search.
+ * @param {Location} location current location
+ * @param  {Location} contextLocation optional location to use for context search. Default is location
+ * @returns Object
+ */
+export function locationContext(location,contextLocation=location){
+	return new Proxy(location,{
+		get(location,prop){
+			if(prop === '$location'){
+				return location;
+			}
+			if(prop==='$dictionary'){
+				return location.dictionary;
+			}
+			if(prop==='$value'){
+				//return the value of current location (dereferenced)
+				return location.referenced.value;
+			}
+			if(prop==='$isProxy'){
+				//this property signals that we can use $value
+				return true;
+			}
+			//check if location value has the property
+			const entity = location.referenced.entity;
+			if(prop in entity){
+				return entity[prop];
+			}
+
+			//search context
+			let found;
+			contextSearch(contextLocation,({type,name,value})=>{
+				found = value;
+				return false;
+			},null,prop)
+			//wrap result in location object so we get dereference and other location features
+			return createLocation(found,location.dictionary).entity;
+		}
+	})
 }

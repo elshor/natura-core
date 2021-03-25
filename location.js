@@ -8,6 +8,7 @@ import {assume} from './error.js'
 import calc, { isExpression, calcValue } from './calc.js';
 import {entityType,entityValue} from './entity.js'
 import {patternText} from './pattern.js'
+import {locationContext} from './context.js'
 import Type from './type.js'
 import langLib from './lang.js'
 
@@ -381,12 +382,6 @@ function asNumber(n){
 	}
 }
 
-function locationContext(location){
-	return Object.assign(
-		{},{$location:location,location,$dictionary:location.dictionary}
-	);
-}
-
 function locationEntity(location){
 	return new Proxy(location,{
 		get: entityGet,
@@ -423,7 +418,7 @@ function locationEntity(location){
 		},
 		has(location,key){
 			const thisObject = location.value;
-			return Reflect.has(thisObject,key);
+			return thisObject && typeof thisObject === 'object' && Reflect.has(thisObject,key);
 		},
 		defineProperty(){
 			throw new Error('Not Implemented');

@@ -160,7 +160,6 @@ export function suggestionText(value, spec,dictionary,isNew=false){
 			value.description || 
 			(value.$type? (value.$type + ' '+ (value.ref||value.id||'')) :null)|| 
 			'no title';
-		console.log('ret',ret);
 		return ret;
 	}
 }

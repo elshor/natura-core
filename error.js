@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 export function assume(condition,...message){
 	if(!condition){
 		console.error('Assumption Failed:',...message);

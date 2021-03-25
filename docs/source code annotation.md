@@ -30,7 +30,8 @@ This describes how to annotate source code so it can be turned into a natura pac
 * expanded
 * hideName
 * required
-* pathOptions:the path - add options based on a path
+* pathOptions - add options based on a path `pathOptions:path/of/options`
+* emit - emit the property to context `emit:emit name`
 ## additiona topics
 * using instance vs. type - $ at the end
 * arrays - Type[] or Type$[] for non-instance array

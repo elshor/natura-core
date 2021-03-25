@@ -6,6 +6,7 @@ import { placeholder } from "natura/spec";
 import { createLocation } from "../location.js";
 import basicTypes from "./basic-types.js"
 import {calcTemplate} from '../template'
+import {JsonPointer} from 'json-ptr'
 
 const entities = 	[
 	{
@@ -247,6 +248,9 @@ const entities = 	[
 		emitOrder:['event','action'],
 		scope:[
 			{$type:'use scope',property:'event'}
+		],
+		context:[
+			{$type:'use context',property:'event'}
 		]
 	},
 	{
@@ -847,8 +851,8 @@ function defaultDefinitionModel(context){
 	return {$type:'definition model',isa:[location.lang.singular(name)]};
 }
 
-function defaultInstanceType({location}){
-	const spec = location? location.parent.value : {};
+function defaultInstanceType({$location}){
+	const spec = $location? $location.parent.value : {};
 	if(spec && typeof spec === 'object' && (spec.name || spec.type)){
 		const name = spec.name || spec.type;
 		//TODO need to use linguistic library for this
@@ -858,11 +862,9 @@ function defaultInstanceType({location}){
 }
 
 function calcPath(context,path){
-	path = path==='/'?'':path;
-	const val = createLocation(
-		context.location.entity,
-		context.$dictionary,
-		path
-	).value;
+	if(path==='/'){
+		path='';
+	}
+	const val = JsonPointer.get(context,path);
 	return val && typeof val === 'object' && val.$isProxy? val.$value : val;
 }
