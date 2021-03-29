@@ -181,7 +181,11 @@ class Location{
 	}
 
 	get isReference(){
-		return specType(this.spec) === 'reference'
+		function isSelfReference(location){
+			//self reference is a reference to itself. This should not be considered a reference because it will cause endless recursion
+			return location.path === '' && location.data.$type === 'reference'
+		}
+		return specType(this.spec) === 'reference' && !isSelfReference(this);
 	}
 
 	/**
@@ -433,9 +437,10 @@ function locationEntity(location){
 	})
 }
 
-function entityGet(location,prop){
+function entityGet(location,prop,receiver,depth=0){
+	assume(depth < 5,'exceed maximum depth in reference calls');
 	if(location.isReference){
-		return entityGet(location.referenced,prop);
+		return entityGet(location.referenced,prop,receiver, depth+1);
 	}
 	if(typeof prop === 'symbol'){
 		//props can only be strings so pass it on to raw object
