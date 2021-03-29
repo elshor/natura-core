@@ -48,6 +48,12 @@ export function getSuggestions(location,filter,spec,allowExpressions,externalCon
 			})
 		);
 	}
+	if(itsExpectedSpec.options){
+		//if options are specified then ignore any other suggestion types
+		filterSuggestions(ret,filter);
+		sortSuggestions(ret,filter);
+		return ret;	
+	}
 
 	//category types suggestions
 	if(dictionary.isClass(expectedType)){
@@ -108,6 +114,18 @@ export function getSuggestions(location,filter,spec,allowExpressions,externalCon
 
 	//dictionary expressions
 	if(expectedType && allowExpressions){
+
+	filterSuggestions(ret,filter);
+	sortSuggestions(ret,filter);
+	return ret;
+}
+
+function filterSuggestions(suggestions,filter){
+	suggestions.list = suggestions.list.filter(item=>
+		item.text.toLowerCase().includes(filter.toLowerCase())
+	);
+}
+
 		const searchType = dictionary.isInstance(expectedType)?
 			expectedType :
 			dictionary.instanceType(expectedType);
@@ -129,8 +147,11 @@ export function getSuggestions(location,filter,spec,allowExpressions,externalCon
 	ret.list.forEach(item=>scoreSuggestion(item,filter));
 	ret.list.sort(comp)
 
-	return ret;
+function sortSuggestions(suggestions,filter){
+	suggestions.list.forEach(item=>scoreSuggestion(item,filter));
+	suggestions.list.sort(comp)	
 }
+
 
 export function hasSuggestions(location, filter){
 	return getSuggestions(location,filter).list.length > 0;
