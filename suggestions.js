@@ -114,6 +114,8 @@ export function getSuggestions(location,filter,spec,allowExpressions,externalCon
 
 	//dictionary expressions
 	if(expectedType && allowExpressions){
+		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec);
+	}
 
 	filterSuggestions(ret,filter);
 	sortSuggestions(ret,filter);
@@ -126,26 +128,31 @@ function filterSuggestions(suggestions,filter){
 	);
 }
 
-		const searchType = dictionary.isInstance(expectedType)?
-			expectedType :
-			dictionary.instanceType(expectedType);
-		const types = dictionary.getExpressionsByValueType(searchType);
-		types.forEach(type=>{
-			const value = generateNewElement(type,null,dictionary);
-			ret.list.push({
-				value: value,
-				description: dictionary.getTypeSpec(type).description,
-				source:'expression',
-				text:suggestionText(value,itsExpectedSpec,dictionary,true)
-			});
-		});
-	}
-	ret.list = ret.list.filter(item=>
-		item.text.toLowerCase().includes(filter.toLowerCase())
-	);
+function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpectedSpec){
+	const searchType = dictionary.isInstance(expectedType)?
+		expectedType :
+		dictionary.instanceType(expectedType);
+const types = dictionary.getExpressionsByValueType(searchType);
+types.forEach(type=>{
+	const value = generateNewElement(type,null,dictionary);
+	suggestions.list.push({
+		value: value,
+		description: dictionary.getTypeSpec(type).description,
+		source:'expression',
+		text:suggestionText(value,itsExpectedSpec,dictionary,true)
+	});
+});
+}
 
-	ret.list.forEach(item=>scoreSuggestion(item,filter));
-	ret.list.sort(comp)
+export function hasExpressionSuggestions(location){
+	const itsExpectedSpec = location.expectedSpec;
+	const expectedType = calcValue(itsExpectedSpec.type,location.context);
+	const searchType = location.dictionary.isInstance(expectedType)?
+		expectedType :
+		location.dictionary.instanceType(expectedType);
+	const types = location.dictionary.getExpressionsByValueType(searchType);
+	return types.length > 0;
+}
 
 function sortSuggestions(suggestions,filter){
 	suggestions.list.forEach(item=>scoreSuggestion(item,filter));
