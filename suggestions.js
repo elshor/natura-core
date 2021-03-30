@@ -20,12 +20,12 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	//generate suggestions
 	assume(location);
 	const itsExpectedSpec = spec || location.expectedSpec;
-
 	if(!itsExpectedSpec){
 		//apparently there is no expected spec. This can be because we are in an editor of property name. just return an empty list
 		return ret;
 	}
 	const expectedType = calcValue(itsExpectedSpec.type,location.context);
+	const isInstance = dictionary.isInstance(expectedType);
 
 	//options suggestions
 	let options=[];
@@ -75,6 +75,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	//dictionary instances
 	const entries = dictionary.getInstancesByType(expectedType);
 	//TODO check scope
+	//TODO should only work for instance types
 	entries.forEach(entry=>{
 		ret.list.push({
 			value: clone(entry),
@@ -99,8 +100,8 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		})
 	}
 
-	//context instances
-	if(expectedType){
+	//context instances - only relevant if the type is an instance
+	if(expectedType && isInstance){
 		contextEntries(location,expectedType).forEach(entry=>{
 			ret.list.push({
 				value: clone(entry.value||entry.name),//if value not specified then treat the name as value
@@ -112,8 +113,8 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		});
 	}
 
-	//dictionary expressions
-	if(expectedType && allowExpressions){
+	//dictionary expressions - only relevant if the type is an instance
+	if(expectedType && allowExpressions && isInstance){
 		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec);
 	}
 
