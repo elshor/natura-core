@@ -866,5 +866,7 @@ function calcPath(context,path){
 		path='';
 	}
 	const val = JsonPointer.get(context,path);
-	return val && typeof val === 'object' && val.$isProxy? val.$value : val;
+	const ret =  val && typeof val === 'object' && val.$isProxy? val.$value : val;
+	//check again if ret is a proxy then evaluate it. We do not do this recursivly so we don't get into infinite loop
+	return ret && typeof ret === 'object' && ret.$isProxy? ret.$value : ret;
 }
