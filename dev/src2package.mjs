@@ -378,8 +378,24 @@ function processProperties(params=[],owner){
 					case 'pathOptions':
 						spec.options = {$type:'path options',path:parts[1]}
 						break;
-					case 'emit':
-						if(owner){
+					case 'no insert':
+						spec.childSpec = spec.childSpec || {};
+						spec.childSpec.noInsert = true;
+						break;
+						case 'no cut':
+							spec.childSpec = spec.childSpec || {};
+							spec.childSpec.noCut = true;
+							break;
+						case 'no paste':
+							spec.childSpec = spec.childSpec || {};
+							spec.childSpec.noPaste = true;
+							break;
+						case 'emit':
+						case 'no copy':
+							spec.childSpec = spec.childSpec || {};
+							spec.childSpec.noCopy = true;
+							break;
+							if(owner){
 							owner.context = owner.context || [];
 							owner.context.push({
 								$type:'emit property',

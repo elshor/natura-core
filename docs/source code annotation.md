@@ -32,6 +32,10 @@ This describes how to annotate source code so it can be turned into a natura pac
 * required
 * pathOptions - add options based on a path `pathOptions:path/of/options`
 * emit - emit the property to context `emit:emit name`
+* no insert - selection menu should not show insert option
+* no cut - selection menu should not show cut option
+* no paste - selection menu should not show paste option
+* no copy - selection menu should not show copy option
 ## additiona topics
 * using instance vs. type - $ at the end
 * arrays - Type[] or Type$[] for non-instance array
