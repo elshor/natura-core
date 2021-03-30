@@ -424,7 +424,7 @@ function processShow(input,pattern,def){
 	assume(def && def.properties,'processProperties must be called before processShow');
 	const fields = getFields(input,pattern,def.properties);
 	def.show = Object.keys(def.properties).filter(name=>!fields.includes(name));
-	def.inlineDetails = def.show.length>0 ? 'collapsed' : 'none';
+	def.inlineDetails = def.inlineDetails || (def.show.length>0 ? 'collapsed' : 'none');
 }
 
 function moduleName(def){
@@ -435,10 +435,16 @@ function moduleName(def){
 	return '/packages/'+parsed[1];
 }
 
+/**
+ * get the tag value
+ * @param input input data from jsdoc parser
+ * @param tag the tag to look for. this must be lowercase
+ * @returns The tag value if exists or null if the tag exists but has no value
+ */
 function getTag(input,tag){
 	const item =  (input.tags||[]).find(item=>item.title===tag);
 	if(item){
-		return item.value;
+		return item.value || null;
 	}else{
 		return undefined;
 	}
@@ -476,7 +482,7 @@ function processAdditionalTags(input,def){
 	if(template){
 		def.template = template;
 	}
-	if(getTag(input,'inlineExpanded')){
+	if(getTag(input,'inlineexpanded') !== undefined){
 		def.inlineDetails = "expanded";
 		def.expanded = true;
 	}
