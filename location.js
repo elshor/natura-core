@@ -183,7 +183,8 @@ class Location{
 	get isReference(){
 		function isSelfReference(location){
 			//self reference is a reference to itself. This should not be considered a reference because it will cause endless recursion
-			return location.data.path === '' && location.data.$type === 'reference'
+			return (!location.data.path || location.data.path === '') && 
+				location.data.$type === 'reference'
 		}
 		return specType(this.spec) === 'reference' && !isSelfReference(this);
 	}
