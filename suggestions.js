@@ -11,7 +11,7 @@ import {contextEntries} from './context.js'
 import clone from 'clone'
 
 
-export function getSuggestions(location,filter,spec,allowExpressions,externalContext){
+export function getSuggestions(location,filter='',spec,allowExpressions,externalContext){
 	const dictionary = location.dictionary;
 	const ret = {
 		state: 'loaded',
