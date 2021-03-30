@@ -390,21 +390,21 @@ function processProperties(params=[],owner){
 							spec.childSpec = spec.childSpec || {};
 							spec.childSpec.noPaste = true;
 							break;
-						case 'emit':
 						case 'no copy':
 							spec.childSpec = spec.childSpec || {};
 							spec.childSpec.noCopy = true;
 							break;
-							if(owner){
-							owner.context = owner.context || [];
-							owner.context.push({
-								$type:'emit property',
-								property:param.name,
-								type:spec.type,
-								name: parts[1] || 'the ' + spec.type,
-							});	
-						}
-						break;
+							case 'emit':
+								if(owner){
+								owner.context = owner.context || [];
+								owner.context.push({
+									$type:'emit property',
+									property:param.name,
+									type:spec.type,
+									name: parts[1] || 'the ' + spec.type,
+								});	
+							}
+							break;
 				}
 			})
 		}
