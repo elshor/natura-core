@@ -18,11 +18,11 @@ This describes how to annotate source code so it can be turned into a natura pac
 * isa
 * title
 * inlineExpanded
-* change - action when entity changes - `@change event-name path-to-object,...?`
-* delete - action when entity is deleted - `@delete event-name path-to-object,...?`
-* create - action when new entity is created - `@create event-name path-to-object,...?`
-* hat - show icon on top of inline-value display. The format is `icon topic | description`
-* action - show an action button at the end of inline-value display. When user clicks on the action then a message is sent. The format is `icon topic | description`
+* change - action when entity changes - `@change event-name path-to-object,...?`. path-to-object can be a comma delimited list of paths.
+* delete - action when entity is deleted - `@delete event-name path-to-object,...?`. path-to-object can be a comma delimited list of paths.
+* create - action when new entity is created - `@create event-name path-to-object,...?`. path-to-object can be a comma delimited list of paths.
+* hat - show icon on top of inline-value display. The format is `icon topic  path-to-objects?| description`. path-to-object can be a comma delimited list of paths
+* action - show an action button at the end of inline-value display. When user clicks on the action then a message is sent. The format is `icon topic path-to-object?| description`. path-to-object can be a comma delimited list of paths.
 * 
 
 ## property and param modifiers

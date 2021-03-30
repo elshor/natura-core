@@ -466,17 +466,18 @@ function processAdditionalTags(input,def){
 	}
 	const hat = getTag(input,'hat');
 	if(hat){
-		const parsed = hat.match(/^(\S+)\s+(\S+)\s*(?:\|\s*(.*))?$/);
+		const parsed = hat.match(/^(\S+?)\s+([^\s\|]+?)(?:\s+([^\s\|][^\|]+?))?\s*(?:\|\s*(.*))?$/);
 		if(!parsed){
-			error(input,'The hat tag has the wrong format. Should be: icon topic | description');
+			error(input,'The hat tag has the wrong format. Should be: icon topic paths?| description');
 		}else{
 			def.hat = {
 				$type:'hat action',
 				action:{
 					$type:'post message',
-					topic: parsed[2]
+					topic: parsed[2],
+					message:parsed[3]
 				},
-				hint:parsed[3],
+				hint:parsed[4],
 				icon:parsed[1]
 			}
 		}
@@ -518,6 +519,26 @@ function processAdditionalTags(input,def){
 				topic: parsed[1],
 				message:parsed[2]?parsed[2].trim() : undefined
 			}
+		}
+	}
+
+	const action = getTag(input,'action');
+	if(action){
+		const parsed = action.match(/^(\S+?)\s+([^\s\|]+?)(?:\s+([^\s\|][^\|]+?))?\s*(?:\|\s*(.*))?$/);
+		if(!parsed){
+			error(input,'The action tag has the wrong format. Should be: icon topic paths?| description');
+		}else{
+			def.actions = [{
+				$type:'hat action',
+				action:{
+					$type:'post message',
+					topic: parsed[2],
+					message:parsed[3]
+				},
+				hint:parsed[4],
+				description:parsed[4],
+				icon:parsed[1]
+			}]
 		}
 	}
 }
