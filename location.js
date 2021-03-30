@@ -302,7 +302,7 @@ function locationSpec(location){
  */
 function locationValue(location){
 	const property = location.property;
-	if(property === undefined){
+	if(property === undefined || property === ''){
 		return location.data;
 	}
 	const parent = location.parent;
