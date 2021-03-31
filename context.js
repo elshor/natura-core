@@ -12,7 +12,7 @@ import {createLocation} from './location.js'
  * @name ContextEntry
  * @param {String} type
  * @param {String} name
- * @param {String} path the path identifying the reference. This can be used to ensure a reference does not appear twice in the suggestions
+ * @param {String} path the path identifying the reference. This can be used to ensure a reference does not appear twice in the suggestions or to prevent a self suggestions where the path is equal to the suggestion location
  * @param {*} value
  * @param {String} description
  */
@@ -166,7 +166,9 @@ function emitProperty(location,entry,iterator,type,name,scope){
 		name,
 		entry.type,
 		entry.name,
-		property
+		property,
+		undefined,
+		location.path + '/' + entry.property
 	);
 }
 
@@ -286,11 +288,11 @@ function previousContextLocation(location){
 	return location.previous || location.parent;
 }
 
-function match(dictionary, it, queryType,queryName, type,name,value,description){
+function match(dictionary, it, queryType,queryName, type,name,value,description,path){
 	const matchType = !queryType || dictionary.isa(type,queryType);
 	const matchName = !queryName || queryName === name;
 	if(matchType && matchName){
-		return it({type,name,value,description});
+		return it({type,name,value,description,path});
 	}else{
 		return true;
 	}

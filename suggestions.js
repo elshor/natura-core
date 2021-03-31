@@ -2,7 +2,7 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
-import { specType, specComputedPattern} from "./spec.js";
+import { specComputedPattern} from "./spec.js";
 import { assume } from "./error.js";
 import { generateNewElement } from "src/components/utils.js";
 import {calcTemplate} from './template.js'
@@ -103,6 +103,10 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	//context instances - only relevant if the type is an instance
 	if(expectedType && isInstance){
 		contextEntries(location,expectedType).forEach(entry=>{
+			//prevent self referencing context entity
+			if(entry.path && entry.path === location.path){
+				return;
+			}
 			ret.list.push({
 				value: clone(entry.value||entry.name),//if value not specified then treat the name as value
 				source:'context',
