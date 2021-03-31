@@ -394,8 +394,8 @@ function processProperties(params=[],owner){
 							spec.childSpec = spec.childSpec || {};
 							spec.childSpec.noCopy = true;
 							break;
-							case 'emit':
-								if(owner){
+						case 'emit':
+							if(owner){
 								owner.context = owner.context || [];
 								owner.context.push({
 									$type:'emit property',
