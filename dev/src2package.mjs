@@ -348,7 +348,7 @@ function processProperties(params=[],owner){
 			type:appType((param.type||{}).names,true),
 			title:appType(param.name)
 		};
-		const parsed = (param.description||'').match(/^\s*(.+?)\s*(\-\s*(.*?)\s*)?(\((.*)\))?\s*$/);
+		const parsed = (param.description||'').match(/^\s*(.+?)\s*(\-\s*(.*?)\s*)?(\(([^\)]*?)\))?\s*$/);
 		if(parsed && parsed[3]){
 			//split the description to description and placeholder
 			spec.placeholder = parsed[1];
@@ -405,6 +405,23 @@ function processProperties(params=[],owner){
 								});	
 							}
 							break;
+						case 'between':
+							if(typeof parts[1] !== 'string'){
+								error('Between modifier is missing the between values. Format should be "between: min-max');
+								break;
+							}
+							const parsed = parts[1].match(/^([+-]?\d+(\.\d+)?)\s*\-\s*([+-]?\d+(\.\d+)?)$/);
+							if(!parsed){
+								error('Error in between modifier syntax. Should be "between: min-max');
+								break;
+							}
+							ensureValidators(spec);
+							spec.validators.push({
+								$type:'range validator',
+								min:Number.parseFloat(parsed[1]),
+								max:Number.parseFloat(parsed[3])
+							})
+							break;
 				}
 			})
 		}
@@ -418,6 +435,12 @@ function processProperties(params=[],owner){
 		ret[param.name] = spec;
 	});
 	owner.properties = ret;
+}
+
+function ensureValidators(def){
+	if(!Array.isArray(def.validators)){
+		def.validators = [];
+	}
 }
 
 function processShow(input,pattern,def){

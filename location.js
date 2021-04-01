@@ -11,6 +11,7 @@ import {patternText} from './pattern.js'
 import {locationContext} from './context.js'
 import Type from './type.js'
 import langLib from './lang.js'
+import { isValid } from './validate.js';
 
 export function createLocation(data,dictionary=new Dictionary(),path=''){
 	return new Location(data,dictionary,uriHash(path),null,uriResource(path));
@@ -224,6 +225,20 @@ class Location{
 		const child = new LocationChild(this,prop);
 		this._children[prop] = child;
 		return child;
+	}
+
+	/**
+	 * Check if a value is valid at this location
+	 */
+	isValid(value){
+		return isValid(this,value);
+	}
+
+	/**
+	 * is true if the current value is valid at this location
+	 */
+	get valid(){
+		return isValid(this,this.value) === true;
 	}
 
 	get children(){

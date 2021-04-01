@@ -7,6 +7,7 @@ import { createLocation } from "../location.js";
 import basicTypes from "./basic-types.js"
 import {calcTemplate} from '../template'
 import {JsonPointer} from 'json-ptr'
+import { validators } from "../validate.js";
 
 const entities = 	[
 	{
@@ -834,7 +835,11 @@ function calcValueType({$location}){
 	return valueType || 'any'
 }
 
+//add basic types
 entities.push(...basicTypes);
+
+//add validators
+entities.push(...validators);
 
 function defaultDefinitionModel(context){
 	if(!context){
