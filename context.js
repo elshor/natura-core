@@ -331,7 +331,7 @@ export function locate(location,type,name){
  * <br>
  * if `contextLocation` is specified then use its context for context search rather than searching the location context. This might be usefull for example after deleting an entity where we want to use its parent context search.
  * @param {Location} location current location
- * @param  {Location} contextLocation optional location to use for context search. Default is location
+ * @param  {Location|Object} contextLocation optional location to use for context search. If the value is a non-location object then treat it as object context where if the get property is equal to a property in the context object then return it. Default is location
  * @returns Object
  */
 export function locationContext(location,contextLocation=location){
@@ -358,13 +358,19 @@ export function locationContext(location,contextLocation=location){
 			}
 
 			//search context
-			let found;
-			contextSearch(contextLocation,({type,name,value})=>{
-				found = value;
-				return false;
-			},null,prop)
-			//wrap result in location object so we get dereference and other location features
-			return createLocation(found,location.dictionary).entity;
+			if(contextLocation instanceof Location){
+				let found;
+				contextSearch(contextLocation,({type,name,value})=>{
+					found = value;
+					return false;
+				},null,prop)
+				//wrap result in location object so we get dereference and other location features
+				return createLocation(found,location.dictionary).entity;
+			}else{
+				if(prop in contextLocation){
+					return contextLocation[prop];
+				}
+			}
 		}
 	})
 }
