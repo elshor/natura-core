@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 import {assume,MissingParam } from './error.js'
 import clone from 'clone'
 import calc from './calc.js'

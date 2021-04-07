@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 import { assume } from "./error.js";
 import {specComputedPattern} from './spec.js'
 

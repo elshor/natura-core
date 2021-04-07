@@ -1,3 +1,7 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
 import {IllegalType} from './error.js'
 import calc from "./calc.js";
 
