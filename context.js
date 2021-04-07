@@ -358,7 +358,7 @@ export function locationContext(location,contextLocation=location){
 			}
 
 			//search context
-			if(contextLocation instanceof Location){
+			if(contextLocation.isLocation){
 				let found;
 				contextSearch(contextLocation,({type,name,value})=>{
 					found = value;

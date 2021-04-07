@@ -264,6 +264,10 @@ class Location{
 	sibling(prop){
 		return this.parent.child(prop);
 	}
+
+	get isLocation(){
+		return true;
+	}
 	
 	/**
 	 * set the value at the location
