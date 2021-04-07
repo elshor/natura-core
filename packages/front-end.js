@@ -1,3 +1,9 @@
+/*
+ *   Copyright (c) 2021 DSAS Holdings LTD.
+ *   All rights reserved.
+ */
+import actions from './actions.js'
+
 const entities = [
 	{
 		name:'front end script',
@@ -37,6 +43,8 @@ const entities = [
 		placeholder:'processing step such as filter or sort'
 	}
 ]
+
+entities.push(...actions);
 
 export default {
 	name:'data store',
