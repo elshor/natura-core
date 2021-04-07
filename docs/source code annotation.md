@@ -36,10 +36,11 @@ This describes how to annotate source code so it can be turned into a natura pac
 * no cut - selection menu should not show cut option
 * no paste - selection menu should not show paste option
 * no copy - selection menu should not show copy option
+* required - this property is required - make sure to show it when creating a new entity
+
 ## additiona topics
 * using instance vs. type - $ at the end
 * arrays - Type[] or Type$[] for non-instance array
 * @returns {Type} the type (emit type with name the type)
 * @returns {String} text - the string (emit text property of return value). Several returns are possible in single type definition
 * entity can be defined on a function in which case the function is called for the entity object
-* 

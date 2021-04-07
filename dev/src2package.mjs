@@ -394,6 +394,9 @@ function processProperties(params=[],owner){
 							spec.childSpec = spec.childSpec || {};
 							spec.childSpec.noCopy = true;
 							break;
+						case 'required':
+							spec.required = true;
+							break;
 						case 'emit':
 							if(owner){
 								owner.context = owner.context || [];
