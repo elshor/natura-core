@@ -12,6 +12,7 @@ import {locationContext} from './context.js'
 import Type from './type.js'
 import langLib from './lang.js'
 import { isValid } from './validate.js';
+import Dictionary from './dictionary.js'
 
 export function createLocation(data,dictionary=new Dictionary(),path=''){
 	return new Location(data,dictionary,uriHash(path),null,uriResource(path));
@@ -30,12 +31,6 @@ class Location{
 		return locationValue(this);
 	}
 
-	/**
-	 * Get the JSON raw value of this location. Any references are dereferenced
-	 */
-	get raw(){
-		return locationRawValue(this);
-	}
 	/**
 	 * @returns {Spec}
 	 */
@@ -168,11 +163,7 @@ class Location{
 	get context(){
 		return locationContext(this);
 	}
-	
-	get entity(){
-		return locationEntity(this);
-	}
-	
+		
 	get property(){
 		return JsonPointer.decode(this.path).pop();
 	}
@@ -403,135 +394,6 @@ function asNumber(n){
 		return Number.parseFloat(n);
 	}else{
 		return null;
-	}
-}
-
-function locationEntity(location){
-	return new Proxy(location,{
-		get: entityGet,
-		set(location,prop,value){
-			const thisObject = location.value;
-			if(typeof thisObject === 'object' && thisObject !== null){
-				const spec = location.child(prop).spec;
-				if(spec.value === undefined && spec.readonly !== true){
-					//value not defined in spec and property is not readonly
-					thisObject[prop] = value;
-				}else{
-					throw new TypeError(`property ${prop} is read only`);
-				}
-			}
-			return true;
-		},
-		enumerate(){
-			throw new Error('Not Implemented enumerate');
-		},
-		ownKeys(location){
-			//get thisObject keys. If spec has additional properties then add it to the list
-			const thisObject = location.value;
-			const spec = location.spec;
-			const ret = Reflect.ownKeys(thisObject);
-			const properties = specProperties(spec,location.dictionary);
-			if(typeof properties === 'object'){
-				Object.keys(properties).forEach(prop=>{
-					if(!ret.includes(prop)){
-						ret.push(prop);
-					}
-				});
-			}
-			return ret;
-		},
-		has(location,key){
-			const thisObject = location.value;
-			return thisObject && typeof thisObject === 'object' && Reflect.has(thisObject,key);
-		},
-		defineProperty(){
-			throw new Error('Not Implemented');
-		},
-		getOwnPropertyDescriptor(location,key){
-			const thisObject = location.value;
-			return Reflect.getOwnPropertyDescriptor(thisObject,key);
-		},
-		deleteProperty(){
-			throw new Error('Not Implemented deleteProperty');
-		}
-	})
-}
-
-function entityGet(location,prop,receiver,depth=0){
-	assume(depth < 5,'exceed maximum depth in reference calls');
-	if(location.isReference){
-		return entityGet(location.referenced,prop,receiver, depth+1);
-	}
-	if(typeof prop === 'symbol'){
-		//props can only be strings so pass it on to raw object
-		return location.value[prop];
-	}
-	if(prop === '$spec'){
-		return location.spec;
-	}
-	if(prop === '$value'){
-		const value = location.value;
-		if(value && typeof value === 'object' && value.$isProxy){
-			return value.$value;
-		}else{
-			return value;
-		}
-	}
-	if(prop === '$raw'){
-		return locationRawValue(location);
-	}
-	if(prop === '$isProxy'){
-		return true;
-	}
-	if(prop === '$parent'){
-		return location.parent? location.parent.entity : undefined;
-	}
-	const value = location.child(prop).value;
-	if(typeof value === 'object' && value !== null){
-		//value is an object. Return its entity proxy
-		return location.child(prop).entity;
-	}else{
-		return value;
-	}
-}
-/**
- * convert the location value to raw JSON - calculating default and value properties
- * references are dererenced returning their value
- * @param {Location} location
- */
-function locationRawValue(location){
-	if(location.isReference){
-		return locationRawValue(location.referenced);
-	}
-	const value = location.value;
-	if(typeof value !== 'object'){
-		return value;
-	}else if(value === null){
-		return null;
-	}else if(Array.isArray(value)){
-		//value is an array
-		return value.map(
-			(item,index)=>locationRawValue(location.child(index)));
-	}else{
-		//get object own keys
-		const props = Object.keys(value);
-
-		//add properties that are defined in the spec but are not in keys
-		const properties = specProperties(
-			location.spec,
-			location.dictionary
-		) || [];
-		Object.keys(properties).forEach(prop=>{
-			if(!props.includes(prop)){
-				props.push(prop);
-			}
-		});
-
-		//generate ret object
-		const ret = {};
-		props.forEach(
-			prop=>ret[prop] = locationRawValue(location.child(prop)));
-		return ret;
 	}
 }
 

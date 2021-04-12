@@ -103,9 +103,14 @@ export default class Dictionary{
 		const packagesToLoad = this.packages.concat(dynamicPackages)
 		const loaded = packagesToLoad.map(pkg=>this._loadPackage(pkg))
 		this.reset();
+		try{
 		loaded.forEach(pkg=>{
 			this._processPackage(pkg);
 		});
+	}catch(e){
+		console.log('exception',e);
+		debugger
+	}
 		this.resetVersion();
 	}
 
@@ -314,6 +319,7 @@ export default class Dictionary{
 	}
 
 	_processPackage(pkg){
+		assume(pkg && typeof pkg === 'object','package must be an object');
 		const pkgSpec = this.getTypeSpec(pkg.$type);
 		if(typeof pkgSpec.register === 'function'){
 			//register function defined for the package - process it
@@ -403,12 +409,12 @@ export default class Dictionary{
 		assume(entityType(pckg) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");
 
 		//convert the raw package object to entity so we can use value functions defined in the specs
-		return createLocation(pckg,this).entity;
+		return deepCopy(pckg);
 	}
 }
 
 function deepCopy(source){
-	return source.$raw || source;
+	return deepmerge({},source);
 }
 
 function unique(arr){
