@@ -14,6 +14,7 @@
     "@cloudant/cloudant": "^4.3.0",
     "clone": "^2.1.2",
     "deepmerge": "^4.2.2",
+    "handlebars": "^4.7.7",
     "json-ptr": "^2.0.0",
     "pluralize": "^8.0.0"
   },
