@@ -2,10 +2,7 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
-import { placeholder } from "natura/spec";
-import { createLocation } from "../location.js";
 import basicTypes from "./basic-types.js"
-import {calcTemplate} from '../template'
 import {JsonPointer} from 'json-ptr'
 import { validators } from "../validate.js";
 
