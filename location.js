@@ -261,19 +261,56 @@ class Location{
 	}
 	
 	/**
-	 * set the value at the location
+	 * set the value at the location. If the path to the location does not exist then create it. If the location property has format `#key` then assume the parent is an array (if doesn't exist) and create a new object with key set
 	 * @param {*} value value to set
 	 */
 	set(value){
 		const property = this.property;
+		const isHash =  (property.charAt(0) === '#');
 		const parent = this.parent;
-		if(!parent){
-			throw new TypeError(`location top value cannot be set`);
+		if(!parent.value){
+			//first set the value of parent
+			if(isHash || !Number.isNaN(Number.parseInt(property,10))){
+				//if the property is a hash or number then assuming the parent is an array
+				this.parent.set([]);
+			}else{
+				this.parent.set({});
+			}
 		}
-		parent.value[property] = value;
+		if(isHash){
+			//need to insert an object to the array. value must be an array
+			const parentValue = parent.value;
+			const hashKey = property.substr(1);
+			if(!Array.isArray(parentValue)){
+				throw new TypeError(`parent of hash value must be an array`);
+			}
+			if(value === null || typeof value !== 'object'){
+				throw new TypeError(`insert at hash property must be an object`);
+			}
+
+			//look for the hash object
+			let index = -1;
+			for(let i=0;i<parentValue.length;++i){
+				if(this.child(i).key === hashKey){
+					this.parent.child(i).set(value);
+					index = i;
+				}
+			}
+			if(index === -1){
+				//push value at the end
+				index = parentValue.length;
+				parentValue.push(value);
+			}
+
+			//now set the key so it will be returned by the hash property
+			const created = this.parent.child(index);
+			const keyProperty = created.spec.key || "$key";
+			created.value[keyProperty] = hashKey;
+		}else{
+			parent.value[property] = value;
+		}
 	}
 }
-
 
 /**
  * Find the spec associated with a specific location. The spec is calculated as follows:
@@ -322,6 +359,18 @@ function locationValue(location){
 	if(!parentValue){
 		return undefined;
 	}
+	const property = location.property;
+	if(typeof property === 'string' && property.charAt(0) === '#'){
+		//this is a hash property. Look for the first child of parent that its key matches the has key
+		const hashKey = property.substr(1);
+		for(let x in parentValue){
+			if(parent.child(x).key === hashKey){
+				return parent.child(x).value;
+			}
+		}
+		return undefined;
+	}
+
 	const value = parentValue[property];
 	if(value !== undefined){
 		return value;
@@ -407,6 +456,11 @@ class LocationChild extends Location{
 	}
 	get property(){
 		return this._property;
+	}
+	
+	get key(){
+		const keyProperty = this.spec.key || '$key';
+		return this.child(keyProperty).value;
 	}
 }
 

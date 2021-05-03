@@ -589,4 +589,9 @@ function processAdditionalTags(input,def){
 			}]
 		}
 	}
+
+	const key = getTag(input,'key');
+	if(key){
+		def.key = key;
+	}
 }

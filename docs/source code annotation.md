@@ -23,7 +23,7 @@ This describes how to annotate source code so it can be turned into a natura pac
 * create - action when new entity is created - `@create event-name path-to-object,...?`. path-to-object can be a comma delimited list of paths.
 * hat - show icon on top of inline-value display. The format is `icon topic  path-to-objects?| description`. path-to-object can be a comma delimited list of paths
 * action - show an action button at the end of inline-value display. When user clicks on the action then a message is sent. The format is `icon topic path-to-object?| description`. path-to-object can be a comma delimited list of paths.
-* 
+* key - the property that is used as object key. This is used to identify objects within arrays without using indexes that can change based on reordering.
 
 ## property and param modifiers
 * readonly
