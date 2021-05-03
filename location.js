@@ -311,8 +311,7 @@ function locationSpec(location){
  * @param {Location} location
  */
 function locationValue(location){
-	const property = location.property;
-	if(property === undefined || property === ''){
+	if(location.path === undefined || location.path === ''){
 		return location.data;
 	}
 	const parent = location.parent;
