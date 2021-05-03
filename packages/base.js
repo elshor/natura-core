@@ -460,7 +460,7 @@ const entities = 	[
 		description:'Post a message to the containing application or server. This is an editor action that is activated by clicling an entity action icon or button. If message is specified then it is treated as a path to object to send. Otherwise, the function passes the location value',
 		show:['topic','message'],
 		isa:['editor action'],
-		exec(context,{postMessage}){
+		exec(context,{postMessage,component}){
 			function getLocations(message){
 				const paths = message.split(',')
 					.map(item=>item.trim())
@@ -469,7 +469,7 @@ const entities = 	[
 				return values.length===1?values[0] : values;
 			}
 			const message = getLocations(this.message||'');
-			postMessage(this.topic,message);
+			postMessage(this.topic,message,component);
 
 		},
 		properties:{
