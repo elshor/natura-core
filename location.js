@@ -322,10 +322,7 @@ function locationSpec(location){
 	const expectedSpec = location.expectedSpec;
 	let actualSpec = {};
 	let value = undefined;
-	try{
-		value = JsonPointer.get(location.data,location.path);
-	}catch(e){
-	}
+	value = location.value;
 	if(entityType(value) ==='object' && value !== null && value.$type){
 		//use explicit type
 		actualSpec = location.dictionary.getTypeSpec(Type(value.$type,location));
