@@ -108,7 +108,7 @@ export default class Dictionary{
 			this._processPackage(pkg);
 		});
 	}catch(e){
-		console.log('exception',e);
+		console.error('Exception',e);
 		debugger
 	}
 		this.resetVersion();
@@ -219,12 +219,12 @@ export default class Dictionary{
 	 */
 	_registerFunction(name,functionEntry){
 		if(typeof functionEntry === 'string'){
-			const parsed = functionEntry.match(/^([^@]+)@([^\(]+)\(([^^\)]*)\)$/);
+			const parsed = functionEntry.match(/^([^@]+)@([^\(]+)(?:\(([^^\)]*)\))?$/);
 			assume(parsed,'function reference failed to parse',functionEntry);
 			this.functions[name] = {
 				library:parsed[2],
 				name:parsed[1],
-				args:parsed[3].split(',').map(item=>item.trim())
+				args:parsed[3]? parsed[3].split(',').map(item=>item.trim()) : []
 			}
 		}else{
 			this.functions[name] = functionEntry;
