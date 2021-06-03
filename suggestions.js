@@ -88,7 +88,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	//external context
 	if(expectedType && externalContext){
 		externalContext.forEach(entry=>{
-			if(entry.valueType===expectedType){
+			if(dictionary.isa(entry.valueType,expectedType)){
 				ret.list.push({
 					value: clone(entry.value),
 					source:'context',
