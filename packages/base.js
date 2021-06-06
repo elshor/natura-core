@@ -5,6 +5,7 @@
 import basicTypes from "./basic-types.js"
 import {JsonPointer} from 'json-ptr'
 import { validators } from "../validate.js";
+import actions from './actions.js'
 
 const entities = 	[
 	{
@@ -819,7 +820,7 @@ export default {
 	name:'base',
 	entities:{
 		$type:'entity definition group',
-		members:entities,
+		members:[...entities,...actions],
 		model:{isa:[]}
 	}
 }
