@@ -131,6 +131,9 @@ function emitComponent(referenced,entry,it,type,name){
 
 function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 	const emitName = calcTemplate(entry.name,referenced.entity);
+	if(!emitName){
+		return true;
+	}
 	if(match(
 		referenced.dictionary,
 		iterator,
