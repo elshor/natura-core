@@ -282,8 +282,9 @@ class Location{
 	/**
 	 * set the value at the location. If the path to the location does not exist then create it. If the location property has format `#key` then assume the parent is an array (if doesn't exist) and create a new object with key set
 	 * @param {*} value value to set
+	 * @param {Function} setter a function to be used to set the property value of an object. This should be used in situations like Vue reactive data where setting needs to make sure the object is reactive
 	 */
-	set(value){
+	set(value,setter=plainSetter){
 		const property = this.property;
 		const isHash =  (property.charAt(0) === '#');
 		const parent = this.parent;
@@ -318,15 +319,15 @@ class Location{
 			if(index === -1){
 				//push value at the end
 				index = parentValue.length;
-				parentValue.push(value);
+				setter(parentValue,parentValue.length,value);
 			}
 
 			//now set the key so it will be returned by the hash property
 			const created = this.parent.child(index);
 			const keyProperty = created.spec.key || "$key";
-			created.value[keyProperty] = hashKey;
+			setter(created.value,keyProperty, hashKey);;
 		}else{
-			parent.value[property] = value;
+			setter(parent.value,property,value);
 		}
 	}
 }
@@ -511,4 +512,8 @@ function getResource(uri,location,defaultData){
 	}else{
 		return defaultData;
 	}
+}
+
+function plainSetter(obj,key,value){
+	obj[key]=value;
 }
