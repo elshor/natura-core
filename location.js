@@ -261,6 +261,25 @@ class Location{
 	}
 	
 	/**
+	 * Delete the value at the path. If the path points to an item in an array then the function uses splice to remove the element
+	 */
+	delete(){
+		const parentValue = this.parent.value;
+		if(Array.isArray(parentValue)){
+			//ensure property is a number
+			const pos = typeof this.property === 'number'? 
+				this.property : 
+				Number.parseInt(this.property,10);
+			if(Number.isNaN(pos) || pos < 0){
+				throw new TypeError('Array index should be a positive integer');
+			}
+			parentValue.splice(pos,1);
+		}else{
+			delete parentValue[this.property];
+		}
+	}
+
+	/**
 	 * set the value at the location. If the path to the location does not exist then create it. If the location property has format `#key` then assume the parent is an array (if doesn't exist) and create a new object with key set
 	 * @param {*} value value to set
 	 */
