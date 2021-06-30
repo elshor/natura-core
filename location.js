@@ -292,9 +292,9 @@ class Location{
 			//first set the value of parent
 			if(isHash || !Number.isNaN(Number.parseInt(property,10))){
 				//if the property is a hash or number then assuming the parent is an array
-				this.parent.set([]);
+				this.parent.set([],setter);
 			}else{
-				this.parent.set({});
+				this.parent.set({},setter);
 			}
 		}
 		if(isHash){
@@ -312,7 +312,7 @@ class Location{
 			let index = -1;
 			for(let i=0;i<parentValue.length;++i){
 				if(this.child(i).key === hashKey){
-					this.parent.child(i).set(value);
+					this.parent.child(i).set(value,setter);
 					index = i;
 				}
 			}
@@ -330,7 +330,29 @@ class Location{
 			setter(parent.value,property,value);
 		}
 	}
+
+	/**
+	 * If $parent is an array and property is a number then insert value into location using splice function. Otherwise, just set it
+	 * @param {*} value value to insert
+	 * @param {Function} setter setter function to use for setting values. Use this for special setting handling like for ractive objects in Vue
+	 * @param {Function} inserter inserter function to use. This should be used when special insert handling is required such as handling reactivity in Vue
+	 */
+	insert(value,setter=plainSetter,inserter=plainInserter){
+		const parent = this.parent.value;
+		const key = this.property
+		if(Array.isArray(parent)){
+			const pos = typeof key === 'number'? key : Number.parseInt(key,10);
+			if(Number.isNaN(pos)){
+				setter(parent,key,value)
+			}else{
+				inserter(parent,pos,value)
+			}
+		}else{
+			setter(parent,key,value)
+		}	
+	}
 }
+
 
 /**
  * Find the spec associated with a specific location. The spec is calculated as follows:
@@ -516,4 +538,8 @@ function getResource(uri,location,defaultData){
 
 function plainSetter(obj,key,value){
 	obj[key]=value;
+}
+
+function plainInserter(arr,pos,value){
+	arr.splice(pos,0,value);
 }
