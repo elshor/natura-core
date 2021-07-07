@@ -25,7 +25,6 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		return ret;
 	}
 	const expectedType = calcValue(itsExpectedSpec.type,location.context);
-	const isInstance = dictionary.isInstance(expectedType);
 
 	//options suggestions
 	let options=[];
@@ -100,8 +99,8 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		})
 	}
 
-	//context instances - only relevant if the type is an instance
-	if(expectedType && isInstance){
+	//context instances
+	if(expectedType){
 		contextEntries(location,expectedType).forEach(entry=>{
 			//prevent self referencing context entity
 			if(entry.path && entry.path === location.path){
@@ -117,8 +116,8 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		});
 	}
 
-	//dictionary expressions - only relevant if the type is an instance
-	if(expectedType && allowExpressions && isInstance){
+	//dictionary expressions
+	if(expectedType && allowExpressions){
 		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec);
 	}
 
@@ -134,10 +133,7 @@ function filterSuggestions(suggestions,filter){
 }
 
 function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpectedSpec){
-	const searchType = dictionary.isInstance(expectedType)?
-		expectedType :
-		dictionary.instanceType(expectedType);
-const types = dictionary.getExpressionsByValueType(searchType);
+const types = dictionary.getExpressionsByValueType(expectedType);
 types.forEach(type=>{
 	const value = generateNewElement(type,null,dictionary);
 	suggestions.list.push({
@@ -152,10 +148,7 @@ types.forEach(type=>{
 export function hasExpressionSuggestions(location){
 	const itsExpectedSpec = location.expectedSpec;
 	const expectedType = calcValue(itsExpectedSpec.type,location.context);
-	const searchType = location.dictionary.isInstance(expectedType)?
-		expectedType :
-		location.dictionary.instanceType(expectedType);
-	const types = location.dictionary.getExpressionsByValueType(searchType);
+	const types = location.dictionary.getExpressionsByValueType(expectedType);
 	return types.length > 0;
 }
 
