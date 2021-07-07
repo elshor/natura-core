@@ -270,6 +270,7 @@ const entities = 	[
 		pattern:'emit a <<type>> referenced as <<name>> accessed as <<access>>',
 		properties:{
 			access:'text',
+			property:'text',
 			type:{type:'text',placeholder:'entity type'},
 			name:{type:'pattern'},
 			useScope:{type:'boolean',description:'Use the scope of the emited object. If set to true then scope search iterates through the type scope entries or scope function'}

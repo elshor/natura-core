@@ -134,6 +134,9 @@ function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 	if(!emitName){
 		return true;
 	}
+	//if access starts with + then replace + with location $id
+	const access = typeof entry.access === 'string' && entry.access.charAt(0)==='+'?
+		referenced.child('$id').value + entry.access.substr(1) : (entry.access||'')
 	if(match(
 		referenced.dictionary,
 		iterator,
@@ -141,12 +144,14 @@ function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 		name,
 		entry.type,
 		emitName,
-		Reference(
-			emitName,
-			entry.type,
-			scope + ">" + entry.access
-		),
-		entry.description
+		{
+			$type:'reference',
+			label:emitName,
+			valueType:entry.type,
+			path: scope + ">" + access
+		},
+		entry.description,
+		referenced.path + '/' + entry.property
 	)===false){
 		return false;
 	}
