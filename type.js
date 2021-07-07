@@ -4,6 +4,7 @@
  */
 import {IllegalType} from './error.js'
 import calc from "./calc.js";
+import { encodePointerSegments } from 'json-ptr';
 
 export default function Type(type,location){
 	if(typeof type === 'string'){
@@ -18,15 +19,23 @@ export default function Type(type,location){
 	if(type instanceof BaseType){
 		return type;
 	}else if(type !== null && typeof type === 'object'){
+		const val = location.parent.value;
 		switch(type.$type){
 			case 'copy type':
-				const val = location.parent.value;
 				if(val && typeof val === 'object' && val[type.property]){
 					return new BaseType(val[type.property]);
 				}else{
 					return new BaseType('any');
 				}
-			default:
+				case 'type property':
+					const pre = type.pre? type.pre+'.' : '';
+					const ending = type.collection? '*': '';
+					if(val && typeof val === 'object' && val[type.property]){
+						return new BaseType(pre + val[type.property] + ending);
+					}else{
+						return new BaseType('any');
+					}
+				default:
 				throw new Error(IllegalType);
 		}
 	}

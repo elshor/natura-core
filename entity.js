@@ -52,6 +52,7 @@ export function generateNewEntity(type,context={},dictionary){
 
 		//if type is registered, look for init values in properties
 		const spec = dictionary.getTypeSpec(type);
+
 		if(spec.properties){
 			Object.keys(spec.properties).forEach(prop=>{
 				if(spec.properties[prop].init !== undefined){
@@ -59,6 +60,16 @@ export function generateNewEntity(type,context={},dictionary){
 				}
 			});
 		}
+		if(spec.$specialized){
+			//if this type is specialized then we need to copy $specialized into the generated object
+			Object.assign(ret,spec.$specialized);
+		}
+
+		//if a generic type is specified then copy it to the generated object. This will be used to associate a funtion with this object
+		if(spec.$generic){
+			ret.$generic = spec.$generic;
+		}
+
 		return ret;
 	}
 }

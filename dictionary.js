@@ -8,8 +8,8 @@ import { parsePattern } from "./pattern.js";
 import {entityType,entityIsArray} from './entity.js'
 import deepmerge from "deepmerge";
 import base from './packages/base.js'
-import {createLocation} from './location.js'
 import reference from "./reference.js";
+import { calcTemplate } from "./template.js";
 
 export default class Dictionary{
 	constructor(packages=[base]){
@@ -194,6 +194,9 @@ export default class Dictionary{
 	 * @param {String} id identification of instance
 	 * @param {String} type type to register
 	 * @param {*} value value of instance
+	 * @param {String} label the name used to display the instance
+	 * @param {String} description description of the instance. This can be used in suggestions for additional info
+	 * @returns {Reference} a reference to the instance
 	 */
 	_registerInstance(id, type, value,label,description){
 		if(type){
@@ -201,8 +204,15 @@ export default class Dictionary{
 				this.instancesByType[type] = [];
 			}
 			this.instancesByType[type].push({id,type,value,label,description});
+			this.instances[id] = value;
+			return reference(
+				label||id,
+				type,
+				'dictionary:'+ id,
+				description,
+				value
+			)
 		}
-		this.instances[id] = value;
 	}
 
 	/**
@@ -218,6 +228,9 @@ export default class Dictionary{
 	 * @param {FunctionEntry} functionEntry
 	 */
 	_registerFunction(name,functionEntry){
+		if(!functionEntry){
+			return;
+		}
 		if(typeof functionEntry === 'string'){
 			const parsed = functionEntry.match(/^([^@]+)@([^\(]+)(?:\(([^^\)]*)\))?$/);
 			assume(parsed,'function reference failed to parse',functionEntry);
@@ -248,8 +261,9 @@ export default class Dictionary{
 			.map(entry=>reference(
 				entry.label||entry.id,
 				entry.type,
-				'dictionary:'+entry.id,
-				entry.description
+				undefined,//don't use path - instead use inline value
+				entry.description,
+				entry.value
 			));
 	}
 
@@ -379,23 +393,52 @@ export default class Dictionary{
 		});
 		this.repo[type]=spec;
 
-		//register valueType
-		if(entityType(spec.valueType) === 'string'){
-			if(this.valueTypeRepo[spec.valueType] === undefined){
-				this.valueTypeRepo[spec.valueType] = []
-			}
-			this.valueTypeRepo[spec.valueType].push(type);
-		}
-		//register instanceType
-		if(spec.instanceType){
+		if(!isGenericType(spec)){
+			//for generic types we do not register isa and valueType - only for their specializations
+			this._registerValueType(spec.valueType,type);
 			this._registerInstanceType(spec.instanceType,type);
 		}
-
-		//register fn
-		if(spec.fn){
-			this._registerFunction(type,spec.fn);
-		}
+		this._registerFunction(type,spec.fn);
 	}
+/**
+ * A specialized type is a type that is derived from a generic type and its insance value is initialized with specific properties. It is a similar concept to genrics in typescript however, the specialized values are part of the instance object. The reason for that is that we need the specialized values in the instance so we can use them in the application. 
+ * The properties title, description and pattern in the generic type are treated as handlebars templates where the data is the specialized value object
+ * @param {String} type the type name of the specialized type
+ * @param {String} generic type name of the generic type
+ * @param {Object} specializedValue an object to use as the specialized value of the instance
+ * @param {Object} override optional object to override the generic spec properties
+ */
+	_registerSpecializedType(type,generic,specializedValue,override){
+		const spec = this.getTypeSpec(generic);
+		assume(spec,`Specialized type '${type}' does not have a generic defined`);
+		const sSpec = Object.create(spec);
+		sSpec.$specialized = specializedValue;
+		sSpec.$generic = generic
+
+		//calculate title, pattern and description values
+		sSpec.title = calcTemplate(spec.title,specializedValue);
+		sSpec.description = calcTemplate(spec.description,specializedValue);
+		sSpec.pattern = calcTemplate(spec.pattern,specializedValue);
+		
+		Object.assign(sSpec,override);
+		this._registerType(type,sSpec);
+	}
+
+	_registerValueType(valueType,type){
+		if(!valueType){
+			return;
+		}
+		if(this.valueTypeRepo[valueType] === undefined){
+			this.valueTypeRepo[valueType] = []
+		}
+		this.valueTypeRepo[valueType].push(type);
+}
+
+	/**
+	 * Register an isa relationship
+	 * @param {String} type
+	 * @param {String} parent type of the parent
+	 */
 	_registerIsa(type,parent){
 		if(!Array.isArray(this.isaRepo[parent])){
 			this.isaRepo[parent] = [];
@@ -403,7 +446,9 @@ export default class Dictionary{
 		this.isaRepo[parent].push(type);
 	}
 	_registerInstanceType(instanceType,type){
-		this.instanceTypes[instanceType] = type;
+		if(instanceType){
+			this.instanceTypes[instanceType] = type;
+		}
 	}
 	_loadPackage(pckg){
 		assume(entityType(pckg) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");
@@ -421,4 +466,7 @@ function unique(arr){
 	return arr.filter(function(value, index, self) {
 		return self.indexOf(value) === index;
 	})
+}
+function isGenericType(spec){
+	return Array.isArray(spec.typeProperties) && !spec.$specialized;
 }

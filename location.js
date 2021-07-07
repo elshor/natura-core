@@ -439,12 +439,12 @@ function locationExpectedSpec(location){
 	if(Type(specType(parentSpec),location).isCollection){
 		//its parent is an array
 		const childSpec = parentSpec.childSpec || {};
-		childSpec.type = childSpec.type || itemType(specType(parentSpec));
+		childSpec.type = childSpec.type || Type(specType(parentSpec),location).singular;
 		childSpec.placeholder = childSpec.placeholder || parentSpec.placeholder;
 		childSpec.description = childSpec.description || parentSpec.description;
 		return mergeSpec(
 			childSpec,
-			location.dictionary.getTypeSpec(Type(itemType(specType(parentSpec)),this))
+			location.dictionary.getTypeSpec(Type(specType(parentSpec),location).singular)
 		);
 	}else if(parentSpec.hashSpec){
 		return mergeSpec(
@@ -463,10 +463,6 @@ function locationExpectedSpec(location){
 			return {type:'any'};
 		}
 	}
-}
-
-function itemType(type){
-	return type.match(/^(.+)\*$/)[1];
 }
 
 function isNumber(n){

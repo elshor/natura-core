@@ -4,7 +4,7 @@
  */
 import { assume } from "./error.js"
 
-export default function reference(label,valueType,path,description){
+export default function reference(label,valueType,path,description,value){
 	assume(label,'label of reference must be specified');
 	assume(valueType,'value type for reference must be specified');
 	return {
@@ -12,6 +12,7 @@ export default function reference(label,valueType,path,description){
 		label,
 		valueType,
 		path,
-		description
+		description,
+		value
 	}
 };
