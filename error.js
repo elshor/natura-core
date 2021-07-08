@@ -9,7 +9,11 @@ export function assume(condition,...message){
 	}
 }
 
+export function depracated(){
+	console.error('This code is depracated');
+	throw new Error('Depracated');
 
+}
 
 export const LoadError = 'load-error';
 export const ParamValue = 'param-value';
