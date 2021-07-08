@@ -153,12 +153,15 @@ export default class Dictionary{
 		return this.isaRepo[type]||[];
 	}
 
-	getExpressionsByValueType(type){
+	getExpressionsByValueType(type,allowCalc=true){
 		return unique(
 			Object.keys(this.valueTypeRepo)
 			.filter(key=>this.isa(key,type))
 			.map(key=>this.valueTypeRepo[key])
 			.flat()
+			//if allowCal is false then only allow if role is not calc
+			.filter(({role})=>allowCalc || role !== 'calc')
+			.map(({type})=>type)
 		);
 	}
 
@@ -395,7 +398,7 @@ export default class Dictionary{
 
 		if(!isGenericType(spec)){
 			//for generic types we do not register isa and valueType - only for their specializations
-			this._registerValueType(spec.valueType,type);
+			this._registerValueType(spec.valueType,type,spec.role);
 			this._registerInstanceType(spec.instanceType,type);
 		}
 		this._registerFunction(type,spec.fn);
@@ -424,14 +427,14 @@ export default class Dictionary{
 		this._registerType(type,sSpec);
 	}
 
-	_registerValueType(valueType,type){
+	_registerValueType(valueType,type,role){
 		if(!valueType){
 			return;
 		}
 		if(this.valueTypeRepo[valueType] === undefined){
 			this.valueTypeRepo[valueType] = []
 		}
-		this.valueTypeRepo[valueType].push(type);
+		this.valueTypeRepo[valueType].push({type,role});
 }
 
 	/**

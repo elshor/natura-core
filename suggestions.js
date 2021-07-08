@@ -117,8 +117,8 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	}
 
 	//dictionary expressions
-	if(expectedType && allowExpressions){
-		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec);
+	if(expectedType){
+		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions);
 	}
 
 	filterSuggestions(ret,filter);
@@ -132,8 +132,8 @@ function filterSuggestions(suggestions,filter){
 	);
 }
 
-function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpectedSpec){
-const types = dictionary.getExpressionsByValueType(expectedType);
+function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpectedSpec,allowExpressions){
+const types = dictionary.getExpressionsByValueType(expectedType,allowExpressions);
 types.forEach(type=>{
 	const value = generateNewElement(type,null,dictionary);
 	suggestions.list.push({

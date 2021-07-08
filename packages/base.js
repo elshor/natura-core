@@ -87,7 +87,13 @@ const entities = 	[
 	},
 	{
 		name:'entity definition',
-		placeholder:'Click to choose the type of entity you want to create'
+		placeholder:'Click to choose the type of entity you want to create',
+		properties:{
+			role:{
+				options:['calc','access'],
+				description:'mark the role of this entity. Expressions that are defined as role=calc are not displayed in suggestions unless filter starts with ='
+			}
+		}
 	},
 	{
 		name:'calculated expression',
