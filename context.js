@@ -2,7 +2,7 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
-import { assume } from './error.js';
+import { assume, depracated } from './error.js';
 import {calcTemplate} from './template.js'
 import Type from './type.js'
 import Reference from './reference.js'
@@ -40,14 +40,37 @@ export function contextSearch(location,iterator,type,name,scope='',visitIt){
 	}
 }
 
-
+/**
+ * Visit a location in search for context entries. This function searches context entries in the location spec and property spec (the value in spec.properties). It also searches current scope
+ * @param {Location} location location to visit
+ * @param {contextIterator} iterator 
+ * @param {String} type type to search for
+ * @param {String} name name to search for
+ * @param {String} scope current scope. the reference access will be a join of scope and current access
+ * @param {Function} visitIt a callback function used mostly for debug purposes
+ * @returns 
+ */
 function visit(location,iterator,type,name,scope,visitIt){
 	const referenced = location.referenced;
 	if(referenced.isEmpty){
 		return true;//continue search
 	}
+
 	visitIt?visitIt('location',referenced):null;
 	const currentSpec = referenced.spec;
+
+	//iterate property spec context
+	const parent = referenced.parent;
+	if(parent && parent.spec.properties){
+		const parentProperties = referenced.parent.spec.properties;
+		const propertyEntries = (parentProperties[referenced.property]||{}).context || [];
+		for(let i=0;i<propertyEntries.length;++i){
+			const b = visitEntry(referenced, propertyEntries[i],iterator,type,name,scope,visitIt);
+			if(b === false){
+				return false;//end search
+			}
+		}
+	}
 
 	//iterate context
 	const entries = currentSpec.context || [];
@@ -108,6 +131,7 @@ function visitScopeEntry(referenced,entry,iterator,type,name,scope='',visitIt=un
 
 function emitComponent(referenced,entry,it,type,name){
 	//TODO this is a hack. Need to find a way to define scopeSearch in package
+	depracated()
 	const ref = referenced.child('ref').value;
 	if(ref && match(
 		referenced.dictionary,
@@ -148,7 +172,7 @@ function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 			$type:'reference',
 			label:emitName,
 			valueType:entry.type,
-			path: scope + ">" + access
+			access: scope + ">" + access
 		},
 		entry.description,
 		referenced.path + '/' + entry.property
@@ -156,6 +180,7 @@ function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 		return false;
 	}
 	if(entry.useScope){
+		//also emit the scope of the emited type.
 		return scopeSearch(referenced,entry.type,iterator,type,name,scope + ">" + entry.access,visitIt);
 	}else{
 		return true;
@@ -193,7 +218,12 @@ function emitHash(location,entry,iterator,type,name,scope=''){
 			name,
 			instanceType,
 			children[i].property,
-			Reference(children[i].property,instanceType,scope+'>'+children[i].property)
+			{
+				$type:'reference',
+				label:children[i].property,
+				valueType:instanceType,
+				access:scope+'>'+chilren[i].property
+			}
 		) === false){
 			return false;
 		}
