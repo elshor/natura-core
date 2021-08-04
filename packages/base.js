@@ -203,8 +203,48 @@ const entities = 	[
 					if(!valueType){
 						return 'none';
 					}
-					const type = $location.dictionary.typeOfInstance(valueType) || valueType;
-					return 'trait.' + type;
+					return 'trait.' + valueType;
+				}
+			}
+		}
+	},
+	{
+		name:'conditional value item',
+		pattern:'when <<condition>> the value is <<value>>',
+		properties:{
+			condition:{
+				type:'condition',
+				description:'specify the condition when true the value of the expression is <value>'
+			},
+			value:{
+				description:'The value of the expression when the condition is true',
+				type(context){
+					return context.$location.parent.parent.parent.expectedType;
+				}
+			}
+		}
+	},
+	{
+		name:'conditional value',
+		title:'conditional value',
+		description:'Specify the value of an expression that depends on one or more conditions',
+		template:'conditional value ...',
+		expanded:true,
+		show:['items','default'],
+		role:'calc',
+		valueType:'?',
+		properties:{
+			items:{
+				type:'conditional value item*',
+				expanded:true,
+				displayInline:false,
+				hideName:true
+			},
+			default:{
+				placeholder:'default value',
+				description:'Default value when no condition is true',
+				type(context){
+					return context.$location.parent.expectedType;
 				}
 			}
 		}
