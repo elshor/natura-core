@@ -407,6 +407,10 @@ const entities = 	[
 			displayInline:{
 				type:'boolen',
 				description:'Determine if this property should display inline. If set to true then the inline value is displayed (even if hideName is set to true). If value is set to false then the inline value will not be displayed'
+			},
+			context:{
+				type:'context entry*',
+				description:'Define context for this property. This can be used for adding event argument in event handlers'
 			}
 		}
 	},
