@@ -24,7 +24,11 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		//apparently there is no expected spec. This can be because we are in an editor of property name. just return an empty list
 		return ret;
 	}
-	const expectedType = calcValue(itsExpectedSpec.type,location.context);
+	const [expectedType,role] = function(itsExpectedSpec,location){
+		const type = calcValue(itsExpectedSpec.type,location.context);
+		let parsed = type.match(/^(artifact)\.(.*)$/);
+		return parsed? [parsed[2],parsed[1]] : [type];
+	}(itsExpectedSpec,location);
 
 	//options suggestions
 	let options=[];
@@ -55,7 +59,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	}
 
 	//category types suggestions
-	if(dictionary.isClass(expectedType)){
+	if(dictionary.isClass(expectedType) && role !== 'artifact'){
 		dictionary.getClassMembers(expectedType).forEach(type=>{
 			if(expectedType===type){
 				//ignore the class itself
@@ -72,7 +76,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	}
 
 	//dictionary instances
-	const entries = dictionary.getInstancesByType(expectedType);
+	const entries = dictionary.getInstancesByType(expectedType,role);
 	//TODO check scope
 	//TODO should only work for instance types
 	entries.forEach(entry=>{
@@ -121,6 +125,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions);
 	}
 
+	//post-process the suggestions
 	filterSuggestions(ret,filter);
 	sortSuggestions(ret,filter);
 	return ret;

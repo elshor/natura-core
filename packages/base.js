@@ -90,7 +90,7 @@ const entities = 	[
 		placeholder:'Click to choose the type of entity you want to create',
 		properties:{
 			role:{
-				options:['calc','access'],
+				options:['calc','artifact','value'],
 				description:'mark the role of this entity. Expressions that are defined as role=calc are not displayed in suggestions unless filter starts with ='
 			}
 		}
@@ -191,11 +191,13 @@ const entities = 	[
 		pattern:'<<subject>> <<trait>>',
 		properties:{
 			subject:{
-				type:'application instance',
-				placeholder:'subject to test'
+				type:'artifact.application type',
+				description:'Specify the entity you want to test',
+				placeholder:'entity to test'
 			},
 			trait:{
-				placeholder:'subject trait',
+				placeholder:'entity trait',
+				descsription:'Specify the trait of the entity you want to test for. Example, for a text entity, the trait can be "starts with ______" or "longer than _____ characters"',
 				type:function({$location}){
 					const valueType = $location.parent.child('subject').valueType;
 					if(!valueType){

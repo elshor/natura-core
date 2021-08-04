@@ -57,6 +57,9 @@ export default class Dictionary{
 		if(className === 'any'){
 			return true;
 		}
+		if(type === '?'){
+			return true;
+		}
 		if(this.isaRepo[className]){
 			return this.isaRepo[className].includes(type)
 		}
@@ -154,15 +157,18 @@ export default class Dictionary{
 	}
 
 	getExpressionsByValueType(type,allowCalc=true){
-		return unique(
-			Object.keys(this.valueTypeRepo)
-			.filter(key=>this.isa(key,type))
-			.map(key=>this.valueTypeRepo[key])
-			.flat()
-			//if allowCal is false then only allow if role is not calc
-			.filter(({role})=>allowCalc || role !== 'calc')
-			.map(({type})=>type)
-		);
+		//get all valueTypes
+		let current = Object.keys(this.valueTypeRepo);
+		//only keep valueTypes where valueType isa type
+		current = current.filter(key=>this.isa(key,type));
+		//get list of all entities that their valueType is in current
+		current = current.map(key=>this.valueTypeRepo[key])
+		//flatten the list
+		current = current.flat();
+		//if allowCal is false then only allow if role is not calc
+		current = current.filter(({role})=>allowCalc || role !== 'calc')
+		current = current.map(({type})=>type);
+		return unique(current);
 	}
 
 	isClass(type){
@@ -199,14 +205,15 @@ export default class Dictionary{
 	 * @param {*} value value of instance
 	 * @param {String} label the name used to display the instance
 	 * @param {String} description description of the instance. This can be used in suggestions for additional info
+	 * @param {"artifact"|"value"} role the role of the instance
 	 * @returns {Reference} a reference to the instance
 	 */
-	_registerInstance(id, type, value,label,description){
+	_registerInstance(id, type, value,label,description,role){
 		if(type){
 			if(!this.instancesByType[type]){
 				this.instancesByType[type] = [];
 			}
-			this.instancesByType[type].push({id,type,value,label,description});
+			this.instancesByType[type].push({id,type,value,label,description,role});
 			this.instances[id] = value;
 			return reference(
 				label||id,
@@ -254,20 +261,26 @@ export default class Dictionary{
 	/**
 	 * Get a list of references to instances stored in the dictionary.
 	 * @param {Type} type type of instances to search for
+	 * @param {"artifact"|"value"} role
 	 * @returns Reference[]
 	 */
-	getInstancesByType(type){
-		return Object.keys(this.instancesByType)
-			.filter(key=>this.isa(key,type))
-			.map(key=>this.instancesByType[key])
-			.flat()
-			.map(entry=>reference(
-				entry.label||entry.id,
-				entry.type,
-				undefined,//don't use path - instead use inline value
-				entry.description,
-				entry.value
-			));
+	getInstancesByType(type,role){
+		//TODO there is a potential bug because we do not check for uniqueness (like in valueTypeRepo)
+		let current = Object.keys(this.instancesByType);
+		current = current.filter(key=>this.isa(key,type));
+		current = current.map(key=>this.instancesByType[key]);
+		current = current.flat();
+		if(role){
+			current = current.filter(entry=>entry.role===role);
+		}
+		current = current.map(entry=>reference(
+			entry.label||entry.id,
+			entry.type,
+			undefined,//don't use path - instead use inline value
+			entry.description,
+			entry.value
+		));
+		return current;
 	}
 
 	/**
