@@ -36,8 +36,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		//options are explicitly set - just use it
 		options = itsExpectedSpec.options;
 	}else{
-		const optionsType = dictionary.isInstance(expectedType)?
-			dictionary.typeOfInstance(expectedType) : expectedType;
+		const optionsType = expectedType;
 		options = dictionary.getTypeSpec(optionsType).options;
 	}
 	const calculatedOptions = calcValue(options,location.context);

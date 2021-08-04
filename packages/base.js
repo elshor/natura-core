@@ -720,7 +720,6 @@ const entities = 	[
 
 			//tag object type
 			dictionary._registerIsa(spec.objectType,'object.' + name);
-			dictionary._registerInstanceType('an object.' + name,'object.'+name);
 		}
 	},
 	{

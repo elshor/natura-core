@@ -23,7 +23,6 @@ export default class Dictionary{
 		//clear old data
 		this.initiated = true;
 		this.repo = {};
-		this.instanceTypes = {};
 		this.isaRepo = {};
 		this.valueTypeRepo = {};
 		this.collectionRepo = [];
@@ -38,8 +37,6 @@ export default class Dictionary{
 		this._registerIsa('definition group','event definition group')
 		this._registerIsa('definition group','expression definition group')
 		this._registerIsa('definition group','action definition group')
-		this._registerInstanceType('any instance','any');
-		this._registerInstanceType('application instance','application type');
 	}
 
 	isInitiated(){
@@ -62,25 +59,6 @@ export default class Dictionary{
 		}
 		if(this.isaRepo[className]){
 			return this.isaRepo[className].includes(type)
-		}
-		if(this.isInstance(type) && this.isInstance(className)){
-			const instanceOf = this.typeOfInstance(type);
-			const classType = this.typeOfInstance(className);
-			return this.isa(instanceOf,classType);
-		}
-
-		return false;
-	}
-	isInstance(type){
-		if(typeof type !== 'string'){
-			return false;
-		}
-		if(this.instanceTypes[type]){
-			return true;
-		};
-		if(type.match(/^(a|an)\s/)){
-			//guessing this is an instance
-			return true;
 		}
 		return false;
 	}
@@ -124,9 +102,6 @@ export default class Dictionary{
 	getTypeSpec(type){
 		if(!type){
 			return {};
-		}
-		if(this.isInstance(type)){
-			type = this.typeOfInstance(type);
 		}
 		return this.repo[type.toString()] || {};
 	}
@@ -283,36 +258,6 @@ export default class Dictionary{
 		return current;
 	}
 
-	/**
-	 * Given a type, find its instance type. E.g. for type 'string' the return value will be 'a string'
-	 * @param {Type} type
-	 * @returns {String} the instance type
-	 */
-	instanceType(type){
-		const spec = this.getTypeSpec(type);
-		if(!spec){
-			return 'any instance';
-		}
-		return spec.instanceType || 'any instance';
-	}
-
-	typeOfInstance(instanceType){
-		if(this.instanceTypes[instanceType]){
-			return this.instanceTypes[instanceType];
-		};
-		const parsed = instanceType.match(/^[a|an]\s(.+)$/);
-		if(parsed){
-			return parsed[1];
-		}else{
-			return null;
-		}
-	}
-
-	getInstanceType(type){
-		//TODO handle an
-		return this.getTypeSpec(type).instanceType || 'a '+type;
-	}
-
 	getInstanceByID(ID){
 		return this.instances[ID];
 	}
@@ -412,7 +357,6 @@ export default class Dictionary{
 		if(!isGenericType(spec)){
 			//for generic types we do not register isa and valueType - only for their specializations
 			this._registerValueType(spec.valueType,type,spec.role);
-			this._registerInstanceType(spec.instanceType,type);
 		}
 		this._registerFunction(type,spec.fn);
 	}
@@ -460,11 +404,6 @@ export default class Dictionary{
 			this.isaRepo[parent] = [];
 		}
 		this.isaRepo[parent].push(type);
-	}
-	_registerInstanceType(instanceType,type){
-		if(instanceType){
-			this.instanceTypes[instanceType] = type;
-		}
 	}
 	_loadPackage(pckg){
 		assume(entityType(pckg) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");

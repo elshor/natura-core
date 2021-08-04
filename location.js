@@ -77,9 +77,6 @@ class Location{
 	 */
 	get valueSpec(){
 		let type = this.type;
-		if(this.dictionary.isInstance(type)){
-			type = this.dictionary.typeOfInstance(type);
-		}
 		return this.dictionary.getTypeSpec(type);
 	}
 

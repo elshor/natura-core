@@ -210,18 +210,18 @@ function emitHash(location,entry,iterator,type,name,scope=''){
 	const children = location.child(entry.property).children;
 	for(let i=0;i<children.length;++i){
 		const itemType = children[i].type;
-		const instanceType = dictionary.isInstance(itemType)? itemType : dictionary.getTypeSpec(itemType).instanceType || 'a ' + itemType;
+		//NOTE there was some editing done removing instanceType - not sure how this affects execution
 		if(match(
 			dictionary,
 			iterator,
 			type,
 			name,
-			instanceType,
+			itemType,
 			children[i].property,
 			{
 				$type:'reference',
 				label:children[i].property,
-				valueType:instanceType,
+				valueType:itemType,
 				access:scope+'>'+chilren[i].property
 			}
 		) === false){
@@ -230,16 +230,6 @@ function emitHash(location,entry,iterator,type,name,scope=''){
 		if(entry.proxyFor){
 			const proxy = children[i].child(entry.proxyFor);
 			const itemType = proxy.type;
-			let instanceType;
-			if(dictionary.isInstance(itemType)){
-				instanceType = itemType;
-			}else if(proxy.isReference){
-				instanceType = proxy.value.valueType;
-			}else if(dictionary.isa(itemType,'expression')){
-				 instanceType = proxy.spec.valueType;
-			}else{
-				 instanceType = dictionary.getInstanceType(itemType);
-			}
 			if(match(
 				dictionary,
 				iterator,
@@ -249,7 +239,7 @@ function emitHash(location,entry,iterator,type,name,scope=''){
 				children[i].property,
 				proxy.isReference? proxy.value : Reference(
 					children[i].property,
-					instanceType,
+					itemType,
 					scope+'>'+children[i].property
 				)
 			) === false){
