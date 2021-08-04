@@ -64,6 +64,8 @@ class Location{
 		}else if(parent.spec.hashSpec){
 			//this is a hashSpec
 			return parent.spec.hashSpec.type;
+		}else if(parent.spec.properties && parent.spec.properties[this.property]){
+			return Type(parent.spec.properties[this.property].type,this).toString();
 		}else{
 			//no type information - return any
 			return 'any'
