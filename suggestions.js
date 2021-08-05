@@ -60,8 +60,9 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	//category types suggestions
 	if(dictionary.isClass(expectedType) && role !== 'artifact'){
 		dictionary.getClassMembers(expectedType).forEach(type=>{
-			if(expectedType===type){
-				//ignore the class itself
+			const spec = dictionary.getTypeSpec(type);
+			if(spec.role==='type'){
+				//ignore types
 				return;
 			}
 			const value = generateNewElement(type,null,dictionary);
