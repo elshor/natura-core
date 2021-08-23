@@ -6,14 +6,13 @@ import {JsonPointer} from 'json-ptr'
 import { specType, mergeSpec, specProperties } from './spec.js';
 import {assume} from './error.js'
 import calc, { isExpression, calcValue } from './calc.js';
-import {entityType,entityValue} from './entity.js'
+import {entityType,entityValue,cloneEntity} from './entity.js'
 import {patternText} from './pattern.js'
 import {locationContext} from './context.js'
 import Type from './type.js'
 import langLib from './lang.js'
 import { isValid } from './validate.js';
 import Dictionary from './dictionary.js'
-
 export function createLocation(data,dictionary=new Dictionary(),path=''){
 	return new Location(data,dictionary,uriHash(path),null,uriResource(path));
 }
@@ -417,9 +416,9 @@ function locationValue(location){
 	const spec = location.expectedSpec;
 	if(spec.default !== undefined){
 		if(isExpression(spec.default)){
-			return calc(spec.default, location.context);;
+			return cloneEntity(calc(spec.default, location.context));;
 		}else{
-			return spec.default;
+			return cloneEntity(spec.default);
 		}
 	}
 }

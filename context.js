@@ -48,7 +48,6 @@ export function contextSearch(location,iterator,type,name,scope='',visitIt){
  * @param {String} name name to search for
  * @param {String} scope current scope. the reference access will be a join of scope and current access
  * @param {Function} visitIt a callback function used mostly for debug purposes
- * @returns 
  */
 function visit(location,iterator,type,name,scope,visitIt){
 	const referenced = location.referenced;

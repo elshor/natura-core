@@ -9,6 +9,7 @@ import {calcTemplate} from './template.js'
 import { calcValue } from "./calc.js";
 import {contextEntries} from './context.js'
 import clone from 'clone'
+import { cloneEntity } from "./entity.js";
 
 
 export function getSuggestions(location,filter='',spec,allowExpressions,externalContext){
@@ -44,7 +45,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		//the spec has an array options property (or other object that supports forEach function)
 		calculatedOptions.forEach(option=>
 			ret.list.push({
-				value:clone(option),
+				value:cloneEntity(option),
 				text: suggestionText(option,itsExpectedSpec,dictionary),
 				source:'option'
 			})
@@ -81,7 +82,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	//TODO should only work for instance types
 	entries.forEach(entry=>{
 		ret.list.push({
-			value: clone(entry),
+			value: cloneEntity(entry),
 			text:entry.label,
 			source:'instance',
 			description:entry.description
@@ -93,7 +94,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		externalContext.forEach(entry=>{
 			if(dictionary.isa(entry.valueType,expectedType)){
 				ret.list.push({
-					value: clone(entry.value),
+					value: cloneEntity(entry.value),
 					source:'context',
 					text:entry.label,
 					path:entry.path,
@@ -111,7 +112,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 				return;
 			}
 			ret.list.push({
-				value: clone(entry.value||entry.name),//if value not specified then treat the name as value
+				value: cloneEntity(entry.value||entry.name),//if value not specified then treat the name as value
 				source:'context',
 				text:entry.name,
 				path:entry.path,

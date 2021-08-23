@@ -56,7 +56,7 @@ export function generateNewEntity(type,context={},dictionary){
 		if(spec.properties){
 			Object.keys(spec.properties).forEach(prop=>{
 				if(spec.properties[prop].init !== undefined){
-					ret[prop] = clone(calc(spec.properties[prop].init,context));
+					ret[prop] = cloneEntity(calc(spec.properties[prop].init,context));
 				}
 			});
 		}
@@ -77,4 +77,22 @@ export function generateNewEntity(type,context={},dictionary){
 function uid(){
 	const ret = '$'+(Number(new Date()) - new Date('2020-01-01')+Math.random()).toString(36).replace('.','');
 	return ret;
+}
+
+/**
+ * Deep clone an entity and generate new $id for each object
+ * @param {Object} entity the entity to clone
+ */
+export function cloneEntity(entity){
+	const cloned = clone(entity);
+	setID(cloned);
+	return cloned;
+}
+
+function setID(entity){
+	if(entity === null || typeof entity !== 'object'){
+		return;
+	}
+	entity.$id = uid();
+	Object.values(entity).forEach(value=>setID(value));
 }
