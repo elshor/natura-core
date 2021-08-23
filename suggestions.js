@@ -111,6 +111,11 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 			if(entry.path && entry.path === location.path){
 				return;
 			}
+			
+			//if expressions are not allowed, expect role of value to be artifact
+			if(!allowExpressions && roleIsNotArtifact(entry.value)){
+				return;
+			}
 			ret.list.push({
 				value: cloneEntity(entry.value||entry.name),//if value not specified then treat the name as value
 				source:'context',
@@ -231,4 +236,15 @@ const sourceScore = {
 
 function isPrimitive(x){
 	return ['boolean','string','number'].includes(typeof x);
+}
+
+function roleIsNotArtifact(entity){
+	if(entity === null || typeof entity !== 'object'){
+		//we don't know the answer
+		return null;
+	}
+	if(typeof entity.role !== 'string'){
+		return null;
+	}
+	return entity.role !== 'artifact';
 }

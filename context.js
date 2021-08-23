@@ -171,7 +171,8 @@ function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 			$type:'reference',
 			label:emitName,
 			valueType:entry.type,
-			access: scope + ">" + access
+			access: scope + ">" + access,
+			role:entry.role || 'artifact'
 		},
 		entry.description,
 		referenced.path + '/' + entry.property
