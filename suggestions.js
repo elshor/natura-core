@@ -8,7 +8,6 @@ import { generateNewElement } from "src/components/utils.js";
 import {calcTemplate} from './template.js'
 import { calcValue } from "./calc.js";
 import {contextEntries} from './context.js'
-import clone from 'clone'
 import { cloneEntity } from "./entity.js";
 
 
@@ -25,13 +24,17 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		//apparently there is no expected spec. This can be because we are in an editor of property name. just return an empty list
 		return ret;
 	}
+
+	//extract the expected type and role if defined. When role is defined then we want the suggestions to match in role as well as expected type
 	const [expectedType,role] = function(itsExpectedSpec,location){
 		const type = calcValue(itsExpectedSpec.type,location.context);
-		let parsed = type.match(/^(artifact)\.(.*)$/);
+		let parsed = type.match(/^(artifact|type)\.(.*)$/);
 		return parsed? [parsed[2],parsed[1]] : [type];
 	}(itsExpectedSpec,location);
 
+	/////////////////////
 	//options suggestions
+	/////////////////////
 	let options=[];
 	if(itsExpectedSpec.options){
 		//options are explicitly set - just use it
@@ -58,8 +61,10 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		return ret;	
 	}
 
+	////////////////////////////
 	//category types suggestions
-	if(dictionary.isClass(expectedType) && role !== 'artifact'){
+	////////////////////////////
+	if(dictionary.isClass(expectedType) && !['artifact','value'].includes(role)){
 		dictionary.getClassMembers(expectedType).forEach(type=>{
 			const spec = dictionary.getTypeSpec(type);
 			if(spec.role==='type'){
@@ -76,7 +81,9 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		});
 	}
 
+	//////////////////////
 	//dictionary instances
+	//////////////////////
 	const entries = dictionary.getInstancesByType(expectedType,role);
 	//TODO check scope
 	//TODO should only work for instance types
@@ -89,7 +96,9 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		})
 	})
 
+	//////////////////
 	//external context
+	//////////////////
 	if(expectedType && externalContext){
 		externalContext.forEach(entry=>{
 			if(dictionary.isa(entry.valueType,expectedType)){
@@ -104,7 +113,9 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		})
 	}
 
+	///////////////////
 	//context instances
+	///////////////////
 	if(expectedType){
 		contextEntries(location,expectedType).forEach(entry=>{
 			//prevent self referencing context entity
@@ -116,6 +127,12 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 			if(!allowExpressions && roleIsNotArtifact(entry.value)){
 				return;
 			}
+
+			//make sure we are not looking for a type
+			if(role === 'type'){
+				return;
+			}
+			
 			ret.list.push({
 				value: cloneEntity(entry.value||entry.name),//if value not specified then treat the name as value
 				source:'context',
@@ -126,14 +143,19 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		});
 	}
 
+	////////////////////////
 	//dictionary expressions
-	if(expectedType){
+	////////////////////////
+	if(expectedType && role !== 'type'){
 		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions);
 	}
 
+	//////////////////////////////
 	//post-process the suggestions
+	//////////////////////////////
 	filterSuggestions(ret,filter);
 	sortSuggestions(ret,filter);
+	
 	return ret;
 }
 
@@ -247,4 +269,12 @@ function roleIsNotArtifact(entity){
 		return null;
 	}
 	return entity.role !== 'artifact';
+}
+
+function matchRole(present,required){
+	if(!required || !present){
+		return true;
+	}else{
+		return present === required;
+	}
 }
