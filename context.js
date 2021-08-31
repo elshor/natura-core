@@ -153,7 +153,7 @@ function emitComponent(referenced,entry,it,type,name){
 }
 
 function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
-	const emitName = calcTemplate(entry.name,referenced.entity);
+	const emitName = calcTemplate(entry.name,referenced.contextNoSearch);
 	if(!emitName){
 		return true;
 	}
@@ -188,21 +188,49 @@ function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 }
 
 function emitProperty(location,entry,iterator,type,name,scope){
-	const property = location.child(entry.property).value;
-	if(!property){
-		return true;
+	const property = location.child(entry.property);
+	const propertyType = Type(property.type,property);
+	const emitName = entry.name || 'the {{$location.type}}';
+	let toProcess;
+	//TODO handle dictionary types
+	if(propertyType.isCollection){
+		toProcess = property.children;
+	}else{
+		toProcess = [property];
 	}
-	return match(
-		location.dictionary,
-		iterator,
-		type,
-		name,
-		entry.type,
-		entry.name,
-		property,
-		undefined,
-		location.path + '/' + entry.property
-	);
+
+	for(let i=0;i<toProcess.length;++i){
+		const value = toProcess[i].value;
+		if(value === undefined){
+			continue;
+		}
+		try{
+			const valueName = calcTemplate(emitName,toProcess[i].contextNoSearch);
+			const access = calcTemplate(entry.access||'',toProcess[i].contextNoSearch);
+			const matched =  match(
+				location.dictionary,
+				iterator,
+				type,
+				name,
+				toProcess[i].type,
+				valueName,
+				{
+					$type:'reference',
+					label:valueName,
+					valueType:toProcess[i].type,
+					access: (scope ||'') + ">" + access,
+					role:entry.role || 'artifact'
+				},
+				undefined,
+				toProcess[i].path
+			);
+			if(matched === false){
+				return false;
+			}
+		}catch(e){
+			console.error('There was an error processing context',e);
+		}
+	}
 }
 
 function emitHash(location,entry,iterator,type,name,scope=''){
@@ -380,7 +408,7 @@ export function locationContext(location,contextLocation=location){
 				return true;
 			}
 			//check if location value has the property
-			const entity = location.referenced.entity;
+			const entity = location.referenced.value;
 			if(prop in entity){
 				return entity[prop];
 			}

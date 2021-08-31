@@ -161,6 +161,13 @@ class Location{
 	get context(){
 		return locationContext(this);
 	}
+
+	/**
+	 * ContextNoSearch is a context object used for calculation that does not search context for properties. This can be used when we want to prevent recursion when calculating context or when performance is important and there is no need for context search
+	 */
+	get contextNoSearch(){
+		return locationContext(this,{});
+	}
 		
 	get property(){
 		return JsonPointer.decode(this.path).pop();
