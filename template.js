@@ -9,6 +9,10 @@ export function calcTemplate(templateText,context){
 		//if templateText is not a string then return null
 		return null;
 	}
-	const template = HB.compile(templateText,{noEscape:true});
-	return template(context);
+	try{
+		const template = HB.compile(templateText,{noEscape:true});
+		return template(context,{allowProtoPropertiesByDefault:true});
+	}catch(e){
+		throw new Error('Error calculating template',templateText);
+	}
 }
