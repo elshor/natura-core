@@ -19,7 +19,7 @@ const Create = {
 
 const Select = {
 	name:'select dataset',
-	typeProperties:['dataType'],
+	genericProperties:['dataType'],
 	title:'{{plural}}',
 	role:'artifact',
 	fn:'select@natura/lib/datasource(driver,type,dataset,conditions)',
@@ -73,6 +73,12 @@ const Datasource = {
 	register: registerDatasource
 }
 
+const DataCollection = {
+	name:'data collection',
+	role:'type',
+	genericProperties:['dataType']
+}
+
 function registerDatasource(dictionary,_,spec){
 	assume(
 		typeof spec.driver === 'string',
@@ -99,7 +105,7 @@ function registerDatasource(dictionary,_,spec){
 			$type:'basic emit',
 			type:dataType.name,
 			name:'the ' + dataType.singular,
-			access:'+-itme'
+			access:'+-item'
 		});
 		dataType.fields.forEach(field=>{
 			context.push({
@@ -149,4 +155,4 @@ function registerDatasource(dictionary,_,spec){
 	})
 }
 
-export default [Datasource,Create,Update,Delete,Select];
+export default [Datasource,Create,Update,Delete,Select,DataCollection];
