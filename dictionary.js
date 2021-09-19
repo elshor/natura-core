@@ -57,6 +57,9 @@ export default class Dictionary{
 		if(type === '?'){
 			return true;
 		}
+		
+		this._ensureSpecializedIsRegistered(type);
+
 		if(this.isaRepo[className]){
 			return this.isaRepo[className].includes(type)
 		}
@@ -103,6 +106,7 @@ export default class Dictionary{
 		if(!type){
 			return {};
 		}
+		this._ensureSpecializedIsRegistered(type);
 		return this.repo[type.toString()] || {};
 	}
 	/**
@@ -120,6 +124,7 @@ export default class Dictionary{
 	}
 
 	typeHasSpec(type){
+		this._ensureSpecializedIsRegistered(type);
 		return this.repo[type] !== undefined;
 	}
 
@@ -185,6 +190,7 @@ export default class Dictionary{
 	 */
 	_registerInstance(id, type, value,label,description,role){
 		if(type){
+			this._ensureSpecializedIsRegistered(type);
 			if(!this.instancesByType[type]){
 				this.instancesByType[type] = [];
 			}
@@ -379,7 +385,10 @@ export default class Dictionary{
 		sSpec.title = calcTemplate(spec.title,specializedValue);
 		sSpec.description = calcTemplate(spec.description,specializedValue);
 		sSpec.pattern = calcTemplate(spec.pattern,specializedValue);
-		
+	
+		//inherit isa from generic and add generic to list
+		sSpec.isa = [...spec.isa,generic];
+
 		Object.assign(sSpec,override);
 		this._registerType(type,sSpec);
 	}
@@ -388,6 +397,7 @@ export default class Dictionary{
 		if(!valueType){
 			return;
 		}
+		this._ensureSpecializedIsRegistered(valueType);
 		if(this.valueTypeRepo[valueType] === undefined){
 			this.valueTypeRepo[valueType] = []
 		}
@@ -411,6 +421,33 @@ export default class Dictionary{
 		//convert the raw package object to entity so we can use value functions defined in the specs
 		return deepCopy(pckg);
 	}
+	/**
+	 * Check if `type` is a specialized type like `todo item.<collection>`. If it is a specialized type that is not registered then register it. Currently only single generic property is supported
+	 * @param {Type} type type to test
+	 */
+	_ensureSpecializedIsRegistered(type){
+		const matched = type.toString().match(/^(.+)\.\<(.+)\>$/);
+		if(!matched){
+			//this is not a specialized generic
+			return;
+		}
+		if(this.repo[type.toString()]){
+			//this is already registered
+			return;
+		}
+		const generic = this.getTypeSpec(matched[1]);
+		if(!generic){
+			throw new Error('Trying to use a generic that is not defined: '+type.toString());
+		}
+		if(!Array.isArray(generic.genericProperties)|| generic.genericProperties.length < 1){
+			throw new Error('Trying to use a non-generic as a generic: '+type.toString());
+		}
+		this._registerSpecializedType(
+			type.toString(),
+			matched[1],
+			{[generic.genericProperties[0]]:matched[2]}
+		)
+	}
 }
 
 function deepCopy(source){
@@ -423,5 +460,5 @@ function unique(arr){
 	})
 }
 function isGenericType(spec){
-	return Array.isArray(spec.typeProperties) && !spec.$specialized;
+	return Array.isArray(spec.genericProperties) && !spec.$specialized;
 }
