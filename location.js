@@ -76,7 +76,13 @@ class Location{
 	 */
 	get valueSpec(){
 		let type = this.type;
-		return this.dictionary.getTypeSpec(type);
+		const spec =  this.dictionary.getTypeSpec(type);
+		if(spec.valueType){
+			//this spec is probably an expression, the valueSpec is the spec of its valueType
+			return this.dictionary.getTypeSpec(spec.valueType)
+		}else{
+			return spec;
+		}
 	}
 
 	get expectedSpec(){
@@ -244,6 +250,17 @@ class Location{
 		}
 		return Object.keys(val).map(key=>this.child(key));
 	}
+	
+	get properties(){
+		const val = this.value;
+		if(val === null || typeof val !== 'object'){
+			return [];
+		}
+		const ret = {};
+		Object.keys(val).forEach(key=>ret[key] = this.child(key));
+		return ret;
+	}
+
 	/**
 	 * Returns an array of locations of prop. If prop is an array then returns an array of locations of all its items. If value of property is not an array then returns an array with only that location
 	 * @param {String} prop
