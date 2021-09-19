@@ -13,5 +13,15 @@ const en = {
 	},
 	plural(type){
 		return pluralize(type);
-	}
+	},
+	theType(type){
+		return 'the ' + type;
+	},
+	of(property,object){
+		if(!object){
+			return property;
+		}else{
+			return `${property} of ${object}`;
+		}
+	},
 }

@@ -10,6 +10,10 @@ export function specType(spec){
 	return spec? (spec.name || spec.type || specComputedPattern(spec)) : 'any';
 }
 
+export function specContextType(spec){
+	return spec? (spec.contextType || spec.name || spec.type || specComputedPattern(spec)) : 'any';
+}
+
 export function specIsa(spec,className){
 	return (spec.isa || []).includes(className);
 }
