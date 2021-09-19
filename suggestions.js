@@ -9,7 +9,7 @@ import {calcTemplate} from './template.js'
 import { calcValue } from "./calc.js";
 import {contextEntries} from './context.js'
 import { cloneEntity } from "./entity.js";
-
+import {Role,matchRole} from './role.js'
 
 export function getSuggestions(location,filter='',spec,allowExpressions,externalContext){
 	const dictionary = location.dictionary;
@@ -28,7 +28,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	//extract the expected type and role if defined. When role is defined then we want the suggestions to match in role as well as expected type
 	const [expectedType,role] = function(itsExpectedSpec,location){
 		const type = calcValue(itsExpectedSpec.type,location.context);
-		let parsed = type.match(/^(artifact|type)\.(.*)$/);
+		let parsed = type.match(/^(artifact|type|instance)\.(.*)$/);
 		return parsed? [parsed[2],parsed[1]] : [type];
 	}(itsExpectedSpec,location);
 
@@ -64,10 +64,10 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	////////////////////////////
 	//category types suggestions
 	////////////////////////////
-	if(dictionary.isClass(expectedType) && !['artifact','value'].includes(role)){
+	if(dictionary.isClass(expectedType) && ![Role.artifact,Role.value].includes(role)){
 		dictionary.getClassMembers(expectedType).forEach(type=>{
 			const spec = dictionary.getTypeSpec(type);
-			if(spec.role==='type'){
+			if(matchRole(spec.role,Role.type)){
 				//ignore types
 				return;
 			}
@@ -129,7 +129,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 			}
 
 			//make sure we are not looking for a type
-			if(role === 'type'){
+			if(role && matchRole(role,Role.type)){
 				return;
 			}
 			
@@ -146,7 +146,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	////////////////////////
 	//dictionary expressions
 	////////////////////////
-	if(expectedType && role !== 'type'){
+	if(expectedType && !matchRole(role,Role.type)){
 		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions);
 	}
 
@@ -268,13 +268,6 @@ function roleIsNotArtifact(entity){
 	if(typeof entity.role !== 'string'){
 		return null;
 	}
-	return entity.role !== 'artifact';
+	return !matchRole(entity.role,Role.artifact);
 }
 
-function matchRole(present,required){
-	if(!required || !present){
-		return true;
-	}else{
-		return present === required;
-	}
-}
