@@ -67,8 +67,8 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	if(dictionary.isClass(expectedType) && ![Role.artifact,Role.value].includes(role)){
 		dictionary.getClassMembers(expectedType).forEach(type=>{
 			const spec = dictionary.getTypeSpec(type);
-			if(matchRole(spec.role,Role.type)){
-				//ignore types
+			if(matchRole(spec.role,Role.type) && !matchRole(role,Role.type)){
+				//ignore types unless specifically requested
 				return;
 			}
 			const value = generateNewElement(type,null,dictionary);
