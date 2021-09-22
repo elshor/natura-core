@@ -302,7 +302,7 @@ class Location{
 	}
 
 	/**
-	 * set the value at the location. If the path to the location does not exist then create it. If the location property has format `#key` then assume the parent is an array (if doesn't exist) and create a new object with key set
+	 * set the value at the location. If the path to the location does not exist then create it. If the location property has format `#key` then assume the parent is an array (if doesn't exist) and create a new object with key set. If the property is a number then assume it is a position within an array. If the property is -1 then insert a new item to the array
 	 * @param {*} value value to set
 	 * @param {Function} setter a function to be used to set the property value of an object. This should be used in situations like Vue reactive data where setting needs to make sure the object is reactive
 	 */
@@ -310,9 +310,10 @@ class Location{
 		const property = this.property;
 		const isHash =  (property.charAt(0) === '#');
 		const parent = this.parent;
+		const asInteger = Number.parseInt(property,10);
 		if(!parent.value){
 			//first set the value of parent
-			if(isHash || !Number.isNaN(Number.parseInt(property,10))){
+			if(isHash || !Number.isNaN(asInteger)){
 				//if the property is a hash or number then assuming the parent is an array
 				this.parent.set([],setter);
 			}else{
@@ -348,6 +349,10 @@ class Location{
 			const created = this.parent.child(index);
 			const keyProperty = created.spec.key || "$key";
 			setter(created.value,keyProperty, hashKey);;
+		}else if(asInteger === -1 && Array.isArray(this.parent.value)){
+			//insert a new item into array
+			console.log('inserting a new item to path',this.path);
+			this.parent.value.push(value);
 		}else{
 			setter(parent.value,property,value);
 		}
