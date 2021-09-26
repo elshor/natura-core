@@ -146,7 +146,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	////////////////////////
 	//dictionary expressions
 	////////////////////////
-	if(expectedType && !matchRole(role,Role.type)){
+	if(expectedType && !(role && matchRole(role,Role.type))){
 		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions);
 	}
 
