@@ -193,7 +193,7 @@ const entities = 	[
 		pattern:'<<subject>> <<trait>>',
 		properties:{
 			subject:{
-				type:'artifact.application type',
+				type:'instance.application type',
 				description:'Specify the entity you want to test',
 				placeholder:'entity to test'
 			},
