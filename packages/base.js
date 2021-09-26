@@ -7,6 +7,7 @@ import {JsonPointer} from 'json-ptr'
 import { validators } from "../validate.js";
 import actions from './actions.js'
 import dataSource from "./data-source.js";
+import { Role } from "../role.js";
 
 const entities = 	[
 	...dataSource,
@@ -715,7 +716,7 @@ const entities = 	[
 		title:'join text',
 		fn:'join@natura/lib/base(elements)',
 		isa:'expression',
-		valueType:'a string',
+		valueType:'string',
 		pattern:'join <<elements>>',
 		properties:{
 			elements:{
@@ -745,8 +746,9 @@ const entities = 	[
 		},
 		register(dictionary,_,spec){
 			//get the pattern
-			const pattern = spec.pattern || `${spec.name} of <<object>>`;
+			const pattern = `${spec.name} of <<object>>`;
 			const name = 'property.' + pattern;
+			const title = spec.name + ' of ...';
 
 			//add the pattern if does not exist
 			//TODO need to fix this. valuetype should be'value.'+name and it shoule be a subtupe of valueType
@@ -754,11 +756,13 @@ const entities = 	[
 				dictionary._registerType(name,{
 					name,
 					pattern,
-					isa:['expression','property accessor'],
+					title,
+					isa:['expression','property accessor','application type'],
 					valueType:spec.valueType,
+					role:Role.calc,
 					description:spec.description,
 					properties:{
-						object:{type:'an object.'+name,placeholder:'the object'},
+						object:{type:'object.'+name,placeholder:'the object'},
 						access:{init:spec.access}
 					}
 				});
