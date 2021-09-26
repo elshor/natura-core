@@ -32,6 +32,12 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		return parsed? [parsed[2],parsed[1]] : [type];
 	}(itsExpectedSpec,location);
 
+	//if filter starts with  '=' then remove it from filter and set allowExpressions to true
+	if(filter[0] === '='){
+		filter = filter.substr(1);
+		allowExpressions = true;
+	}
+	
 	/////////////////////
 	//options suggestions
 	/////////////////////
