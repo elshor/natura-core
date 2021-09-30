@@ -215,6 +215,12 @@ const entities = 	[
 				type:'condition',
 				description:'specify the condition when true the value of the expression is <value>'
 			},
+			additionals:{
+				type:'additional condition*',
+				placeholder:'additional condition',
+				description:'add an additional condition that must be true (and) or an alternative condition (or)',
+				firstNewItemCollapsed: true
+			},
 			value:{
 				description:'The value of the expression when the condition is true',
 				type(context){
