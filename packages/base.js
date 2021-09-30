@@ -419,6 +419,10 @@ const entities = 	[
 			context:{
 				type:'context entry*',
 				description:'Define context for this property. This can be used for adding event argument in event handlers'
+			},
+			firstNewItemCollapsed:{
+				type:'boolean',
+				description:'Set true if when the property is an array and it appears inline, the first item when not initialized should be collapsed using the ^ sign. The default is for it to be expanded i.e. showing an empty item rather than a ^ sign.'
 			}
 		}
 	},
