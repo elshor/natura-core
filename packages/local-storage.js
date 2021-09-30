@@ -38,7 +38,6 @@ const entities = [
 	{
 		name:'record type',
 		pattern:'<<name>>',
-		instanceType:'a record type',
 		show:['fields'],
 		additional:['plural'],
 		properties:{
@@ -58,7 +57,6 @@ const entities = [
 	},
 	{
 		name: 'local storage type',
-		instanceType:'a local storage type',
 		options:[
 			'string',
 			'number',

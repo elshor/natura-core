@@ -115,7 +115,7 @@ const entities = 	[
 		title:'Object Entity (has properties)',
 		pattern: "<<name>>",
 		show:['pattern','name','title','description','isa','properties','show'],
-		additional:['expanded','context','emitOrder','scope','traitType','instanceType','actions','inlineDetails'],
+		additional:['expanded','context','emitOrder','scope','traitType','actions','inlineDetails'],
 		properties:{
 			name:{
 				type:'name',
@@ -145,10 +145,6 @@ const entities = 	[
 			},
 			inlineDetails:{
 				options:['collapsed','expanded','none']
-			},
-			instanceType:{
-				type:'string',
-				default: defaultInstanceType
 			},
 			properties:{
 				hashSpec:{type:'property spec'},
@@ -599,14 +595,8 @@ const entities = 	[
 		name:'atom',
 		isa:['property definition'],
 		pattern:'<<name>>',
-		show:['instanceType'],
 		properties:{
-			name:{type:'name',placeholder:'Atom name'},
-			instanceType:{
-				type:'name',
-				title:'instance type',
-				default:defaultInstanceType
-			}
+			name:{type:'name',placeholder:'Atom name'}
 		},
 		title:'Atom'
 	},
@@ -910,16 +900,6 @@ function defaultDefinitionModel(context){
 		return {$type:'definition model'} ;
 	}
 	return {$type:'definition model',isa:[location.lang.singular(name)]};
-}
-
-function defaultInstanceType({$location}){
-	const spec = $location? $location.parent.value : {};
-	if(spec && typeof spec === 'object' && (spec.name || spec.type)){
-		const name = spec.name || spec.type;
-		//TODO need to use linguistic library for this
-		const useAn = ['a','i','o','u','h'].includes(name[0]);
-		return (useAn?'an ':'a ') + name;
-	}
 }
 
 function calcPath(context,path){
