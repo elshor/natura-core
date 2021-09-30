@@ -51,5 +51,28 @@ export const validators = [
 				return `should be between ${this.min} and ${this.max}`;
 			};
 		}
+	},
+	{
+		name: 'regex validator',
+		isa:['validator'],
+		pattern:'matches regex <<pattern>>',
+		properties:{
+			pattern:{type:'string'}
+		},
+		calc(context){
+			console.log('regex validator',context);
+			const value = context.value;
+			const pattern = context.pattern;
+			const message = context.message;
+
+			if(typeof value !== 'string'){
+				return 'Value should be a string'
+			}
+			const matched = value.match(new RegExp(pattern));
+			if(!matched){
+				return message || 'text does not match required pattern';
+			}
+			return true;
+		}
 	}
 ]
