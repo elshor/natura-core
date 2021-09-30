@@ -153,7 +153,7 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	//dictionary expressions
 	////////////////////////
 	if(expectedType && !(role && matchRole(role,Role.type))){
-		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions);
+		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions,role);
 	}
 
 	//////////////////////////////
@@ -171,7 +171,7 @@ function filterSuggestions(suggestions,filter){
 	);
 }
 
-function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpectedSpec,allowExpressions){
+function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpectedSpec,allowExpressions,role){
 const types = dictionary.getExpressionsByValueType(expectedType,allowExpressions);
 types.forEach(type=>{
 	const value = generateNewElement(type,null,dictionary);
