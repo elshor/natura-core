@@ -57,6 +57,14 @@ class Location{
 		if(!parent){
 			//no parent - return any
 			return 'any'
+		}else if(typeof this.value === 'string'){
+			//TODO handle situations where expected type is a typedef of string
+			return 'string';
+		}else if(typeof this.value === 'number'){
+			//TODO handle situations where expected type is a typedef of number
+			return 'number';
+		}else if(typeof this.value === 'boolean'){
+			return 'boolean';
 		}else if(Type(parent.type,location).isCollection){
 			//this is a list type
 			return Type(parent.type,location).singular;
