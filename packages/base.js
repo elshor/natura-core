@@ -179,7 +179,8 @@ const entities = 	[
 	},
 	{
 		name:'id',
-		isa:['string','property type']
+		isa:['string','property type'],
+		textEditor:true
 	},
 	{
 		name:'trait assertion',
@@ -308,6 +309,7 @@ const entities = 	[
 	{
 		name:'text',
 		isa:['string','property type','data type'],
+		textEditor:true,
 		placeholder:'Enter the text'
 	},
 	{
@@ -316,6 +318,7 @@ const entities = 	[
 	{
 		name:'pattern',
 		isa:['string','property type'],
+		textEditor:true
 	},
 	{
 		name:'basic emit',

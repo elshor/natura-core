@@ -6,11 +6,13 @@ export default [
 	{
 		name:'string',
 		isa:['application type'],
+		textEditor:true,
 		placeholder:'text'
 	},
 	{
 		name:'number',
 		isa:['application type'],
+		numberEditor:true,
 		placeholder:'number'
 	},
 	{
