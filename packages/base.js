@@ -197,7 +197,7 @@ const entities = 	[
 			},
 			trait:{
 				placeholder:'entity trait',
-				descsription:'Specify the trait of the entity you want to test for. Example, for a text entity, the trait can be "starts with ______" or "longer than _____ characters"',
+				description:'Specify the trait of the entity you want to test for. Example, for a text entity, the trait can be "starts with ______" or "longer than _____ characters"',
 				type:function({$location}){
 					const valueType = $location.parent.child('subject').valueType;
 					if(!valueType){
@@ -209,8 +209,26 @@ const entities = 	[
 		}
 	},
 	{
+		name:'and condition',
+		title:'and',
+		pattern:'and <<condition>>',
+		isa:['additional condition'],
+		properties:{
+			condition:{type:'condition'}
+		}
+	},
+	{
+		name:'or condition',
+		title:'or',
+		pattern:'or <<condition>>',
+		isa:['additional condition'],
+		properties:{
+			condition:{type:'condition'}
+		}
+	},
+	{
 		name:'conditional value item',
-		pattern:'when <<condition>> the value is <<value>>',
+		pattern:'when <<condition>> <<additionals>> the value is <<value>>',
 		properties:{
 			condition:{
 				type:'condition',
