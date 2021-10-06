@@ -264,7 +264,7 @@ function scopeSearch(location,scopeType,iterator,type,name,scope,scopeName,visit
  * use the context of a property. It goes over context entries of property spec
  */
 function useContext(referenced,entry,iterator,type,name,scope,visitIt){
-	const property = referenced.child(entry.property).referenced;
+	const property = followLocation(referenced,entry.property).referenced;
 	if(property.isEmpty){
 		return true;//continue search
 	}
@@ -398,4 +398,17 @@ export function locationContext(location,contextLocation=location){
 			}
 		}
 	})
+}
+
+function followLocation(location,path){
+	const parts = path.split('/');
+	let current = location;
+	parts.forEach(part=>{
+		if(part === '..'){
+			current = current.parent;
+		}else{
+			current = current.child(part);
+		}
+	})
+	return current;
 }
