@@ -359,7 +359,6 @@ class Location{
 			setter(created.value,keyProperty, hashKey);;
 		}else if(asInteger === -1 && Array.isArray(this.parent.value)){
 			//insert a new item into array
-			console.log('inserting a new item to path',this.path);
 			this.parent.value.push(value);
 		}else{
 			setter(parent.value,property,value);

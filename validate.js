@@ -60,7 +60,6 @@ export const validators = [
 			pattern:{type:'string'}
 		},
 		calc(context){
-			console.log('regex validator',context);
 			const value = context.value;
 			const pattern = context.pattern;
 			const message = context.message;
