@@ -741,7 +741,7 @@ const entities = 	[
 		pattern:'join <<elements>>',
 		properties:{
 			elements:{
-				type:'a string*',
+				type:'string*',
 				placeholder:'text to join'
 			}
 		}
