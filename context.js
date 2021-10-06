@@ -309,7 +309,7 @@ function previousContextLocation(location){
 			return location.parent;
 		}
 	}
-	return location.previous || location.parent;
+	return location.parent;
 }
 
 function match(dictionary, it, queryType,queryName, type,name,value,description,path){
