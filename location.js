@@ -207,6 +207,15 @@ class Location{
 		const value = this.value;
 		return value === undefined || value === null;
 	}
+
+	/**
+	 * Value is true if this type is an array (collection type) or hashType
+	 * @returns {Boolean}
+	 */
+	get isCollection(){
+		return Type(this.type,this).isCollection || this.spec.hashSpec;
+	}
+	
 	/**
 	 * If the valut at this location is a reference then return the location object for the entity referenced. Otherwise, just return this
 	 * @returns {Location}
