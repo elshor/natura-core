@@ -2,7 +2,6 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
-import { assume } from './error.js';
 import calc,{ isExpression } from './calc.js';
 const DefaultPlaceholder = 'Enter value here';
 
