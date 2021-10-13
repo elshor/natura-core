@@ -2,10 +2,9 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
-import { assume, depracated } from './error.js';
+import { assume } from './error.js';
 import {calcTemplate} from './template.js'
 import Type from './type.js'
-import Reference from './reference.js'
 import {createLocation} from './location.js'
 import { specContextType } from './spec.js';
 import {Role,matchRole} from './role.js'
@@ -104,7 +103,7 @@ function visitEntry(referenced,entry,iterator,type,name,scope='',visitIt){
 		case 'use context':
 			return useContext(referenced,entry,iterator,type,name,scope,visitIt);
 		case 'emit property':
-			return emitProperty(referenced,entry,iterator,type,name);
+			return emitProperty(referenced,entry,iterator,type,name,scope,visitIt);
 		default:
 			assume(false,'expected known context entry. Got',entry.$type);
 		}
@@ -140,7 +139,7 @@ function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt)
 			$type:'reference',
 			label:emitName,
 			valueType:entryType,
-			access: scope + ">" + (entry.access||entry.name),
+			access: scope + "." + (entry.access||entry.name),
 			role:entry.role || 'artifact'
 		},
 		entry.description,
@@ -151,7 +150,7 @@ function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt)
 	const entityIsCollection = true;//db need to calculate this
 	if(entry.useScope || entityIsCollection){
 		//also emit the scope of the emited type.
-		return scopeSearch(referenced,entryType,iterator,type,name,scope + ">" + entry.access,emitName, visitIt);
+		return scopeSearch(referenced,entryType,iterator,type,name,scope + "." + entry.access,emitName, visitIt);
 	}else{
 		return true;
 	}
@@ -182,7 +181,7 @@ function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 			$type:'reference',
 			label:emitName,
 			valueType:entryType,
-			access: scope + ">" + access,
+			access: scope + "." + access,
 			role:entry.role || 'artifact'
 		},
 		entry.description,
@@ -193,13 +192,13 @@ function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 	const entityIsCollection = true;//db need to calculate this
 	if(entry.useScope || entityIsCollection){
 		//also emit the scope of the emited type.
-		return scopeSearch(referenced,entryType,iterator,type,name,scope + ">" + entry.access, emitName, visitIt);
+		return scopeSearch(referenced,entryType,iterator,type,name,scope + "." + entry.access, emitName, visitIt);
 	}else{
 		return true;
 	}
 }
 
-function emitProperty(location,entry,iterator,type,name,scope){
+function emitProperty(location,entry,iterator,type,name,scope,visitIt){
 	const property = location.child(entry.property);
 	const propertyType = Type(property.type,property);
 	const emitName = entry.name || 'the {{$location.type}}';
@@ -211,42 +210,69 @@ function emitProperty(location,entry,iterator,type,name,scope){
 		toProcess = [property];
 	}
 
+	//iterate over array of locations
 	for(let i=0;i<toProcess.length;++i){
-		const value = toProcess[i].value;
+		const child = toProcess[i].referenced;
+		const value = child.value;
 		if(value === undefined){
 			continue;
 		}
-		try{
-			const valueName = calcTemplate(emitName,toProcess[i].contextNoSearch);
-			const access = calcTemplate(entry.access||'',toProcess[i].contextNoSearch);
-			const matched =  match(
-				location.dictionary,
+		const valueName = calcTemplate(emitName,child.contextNoSearch);
+		const access = calcTemplate(entry.access||'',child.contextNoSearch);
+		const matched =  match(
+			child.dictionary,
+			iterator,
+			type,
+			name,
+			child.type,
+			valueName,
+			{
+				$type:'reference',
+				label:valueName,
+				valueType:child.type,
+				access: (scope ||'') + "." + access,
+				role:entry.role || 'artifact'
+			},
+			undefined,
+			child.path
+		);
+		if(matched === false){
+			return false;
+		}
+		if(entry.useScope){
+			//also emit the scope of the emited type.
+			const sMatched =  scopeSearch(
+				child,
+				child.type,
 				iterator,
 				type,
 				name,
-				toProcess[i].type,
-				valueName,
-				{
-					$type:'reference',
-					label:valueName,
-					valueType:toProcess[i].type,
-					access: (scope ||'') + ">" + access,
-					role:entry.role || 'artifact'
-				},
-				undefined,
-				toProcess[i].path
+				(scope ||'') + "." + access,
+				valueName, 
+				visitIt
 			);
-			if(matched === false){
+			if(sMatched === false){
 				return false;
 			}
-		}catch(e){
-			console.error('There was an error processing context',e);
 		}
 	}
 }
 
+/**
+ * 
+ * @param {Location} location location to search its scope
+ * @param {String} scopeType 
+ * @param {contextIterator} iterator 
+ * @param {String} type type to search for
+ * @param {String} name name to search for
+ * @param {String} scope current scope
+ * @param {*} scopeName 
+ * @param {*} visitIt 
+ * @returns 
+ */
 function scopeSearch(location,scopeType,iterator,type,name,scope,scopeName,visitIt){
 	const currentSpec = location.dictionary.getTypeSpec(scopeType);
+	visitIt?visitIt('scope-search',location):null;
 	if(typeof currentSpec.scopeSearch === 'function'){
 		return currentSpec.scopeSearch(location,iterator,type,name,scope,scopeName,visitIt) !== false;
 	}
@@ -268,7 +294,11 @@ function useContext(referenced,entry,iterator,type,name,scope,visitIt){
 	if(property.isEmpty){
 		return true;//continue search
 	}
-	return visit(property,iterator,type,name,scope,visitIt);
+	if(property.isCollection){
+		return iterateArray(property.children,iterator,type,name,scope,visitIt);
+	}else{
+		return visit(property,iterator,type,name,scope,visitIt);
+	}
 }
 
 function useScope(referenced,entry,iterator,type,name,scope,scopeName, visitIt){
@@ -276,7 +306,7 @@ function useScope(referenced,entry,iterator,type,name,scope,scopeName, visitIt){
 	if(property.isEmpty){
 		return true;//continue search
 	}
-	scope = entry.access? scope+'>' + entry.access : scope;
+	scope = entry.access? scope+'.' + entry.access : scope;
 	return scopeSearch(
 		property,
 		property.type,
@@ -411,4 +441,14 @@ function followLocation(location,path){
 		}
 	})
 	return current;
+}
+
+function iterateArray(locations,iterator,type,name,scope,visitIt){
+	for(let location of locations){
+		const b = visit(location,iterator,type,name,scope,visitIt);
+		if(b===false){
+			return false;
+		}
+	}
+	return true;
 }
