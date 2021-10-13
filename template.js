@@ -3,6 +3,7 @@
  *   All rights reserved.
  */
 import HB from 'handlebars';
+import { specContextType } from './spec';
 
 export function calcTemplate(templateText,context){
 	if(typeof templateText !== 'string'){
@@ -16,3 +17,9 @@ export function calcTemplate(templateText,context){
 		throw new Error('Error calculating template',templateText);
 	}
 }
+
+//register template functions
+HB.registerHelper('the',function(type){
+	const dictionary = this.$dictionary;
+	return 'the ' + (dictionary? specContextType(dictionary.getTypeSpec(type)) : type)
+})
