@@ -18,7 +18,6 @@ export function createLocation(data,dictionary=new Dictionary(),path=''){
 
 class Location{
 	constructor(data,dictionary,path,lang,uri){
-		increment('location');
 		this.data = data;
 		this.uri = uri
 		this.dictionary = dictionary;
@@ -27,7 +26,6 @@ class Location{
 		this._children = {};
 	}
 	get value(){
-		increment('value');
 		return locationValue(this);
 	}
 
@@ -41,7 +39,6 @@ class Location{
 	}
 	
 	get contextSpec(){
-		increment('contextSpec');
 		const parent = this.parent;
 		let ret;
 		if(!parent){
@@ -171,7 +168,6 @@ class Location{
 		if(this._parent !== undefined){
 			return this._parent;
 		}
-		increment('get parent location');
 		const segments = JsonPointer.decode(this.path);
 		if(segments.length > 0){
 			segments.pop();
@@ -548,13 +544,11 @@ function asNumber(n){
 
 class LocationChild extends Location{
 	constructor(parent,property){
-		increment('locationChild');
 		super(parent.data,parent.dictionary,parent.path+'/'+property,parent.lang,parent.uri);
 		this._parent = parent;
 		this._property = property;
 	}
 	get parent(){
-		increment('get parent locationChild');
 		return this._parent;
 	}
 	get property(){
