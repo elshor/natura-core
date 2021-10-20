@@ -10,8 +10,17 @@ import { calcValue } from "./calc.js";
 import {contextEntries} from './context.js'
 import { cloneEntity } from "./entity.js";
 import {Role,matchRole} from './role.js'
+export function getSuggestions(location,filter='',allowExpressions,externalContext){
+	if(filter.startsWith('=')){
+		filter = filter.substr(1);
+		allowExpressions=true;
+	}
+	const ret = getUnfilteredSuggestions(location,allowExpressions,externalContext);
+	filterAndSortSuggestions(ret,filter);
+	return ret;
+}
 
-export function getSuggestions(location,filter='',spec,allowExpressions,externalContext){
+export function getUnfilteredSuggestions(location,allowExpressions,externalContext){
 	const dictionary = location.dictionary;
 	const ret = {
 		state: 'loaded',
@@ -19,24 +28,24 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	};
 	//generate suggestions
 	assume(location);
-	const itsExpectedSpec = spec || location.expectedSpec;
+	const itsExpectedSpec = location.expectedSpec;
 	if(!itsExpectedSpec){
 		//apparently there is no expected spec. This can be because we are in an editor of property name. just return an empty list
 		return ret;
 	}
 
 	//extract the expected type and role if defined. When role is defined then we want the suggestions to match in role as well as expected type
-	const [expectedType,role] = function(itsExpectedSpec,location){
-		const type = calcValue(itsExpectedSpec.type,location.context);
-		let parsed = type.match(/^(artifact|type|instance)\.(.*)$/);
-		return parsed? [parsed[2],parsed[1]] : [type];
-	}(itsExpectedSpec,location);
-
-	//if filter starts with  '=' then remove it from filter and set allowExpressions to true
-	if(filter[0] === '='){
-		filter = filter.substr(1);
-		allowExpressions = true;
-	}
+	const [expectedType,role] = function(location){
+		const expectedType = location.expectedType;
+		if(typeof expectedType === 'string'){
+			const type = calcValue(expectedType,location.context);
+			let parsed = type.match(/^(artifact|type|instance)\.(.*)$/);
+			return parsed? [parsed[2],parsed[1]] : [type];
+		}else{
+			//assume type is a type object
+			return [expectedType.typeString,expectedType.role];
+		}
+	}(location);
 	
 	/////////////////////
 	//options suggestions
@@ -62,15 +71,13 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 	}
 	if(itsExpectedSpec.options){
 		//if options are specified then ignore any other suggestion types
-		filterSuggestions(ret,filter);
-		sortSuggestions(ret,filter);
 		return ret;	
 	}
 
 	////////////////////////////
 	//category types suggestions
 	////////////////////////////
-	if(dictionary.isClass(expectedType) && ![Role.artifact,Role.value].includes(role)){
+	if(dictionary.isClass(expectedType) && role === Role.type){
 		dictionary.getClassMembers(expectedType).forEach(type=>{
 			const spec = dictionary.getTypeSpec(type);
 			if(matchRole(spec.role,Role.type) && !matchRole(role,Role.type)){
@@ -156,19 +163,18 @@ export function getSuggestions(location,filter='',spec,allowExpressions,external
 		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions,role);
 	}
 
-	//////////////////////////////
-	//post-process the suggestions
-	//////////////////////////////
-	filterSuggestions(ret,filter);
-	sortSuggestions(ret,filter);
-	
 	return ret;
 }
 
-function filterSuggestions(suggestions,filter){
-	suggestions.list = suggestions.list.filter(item=>
-		item.text.toLowerCase().includes(filter.toLowerCase())
-	);
+export function filterAndSortSuggestions(suggestions,filter){
+	const ret = {
+		list:suggestions.list.filter(item=>
+			item.text.toLowerCase().includes(filter.toLowerCase())
+		)
+	}
+	ret.list.forEach(item=>scoreSuggestion(item,filter));
+	ret.list.sort(comp);
+	return ret;
 }
 
 function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpectedSpec,allowExpressions,role){
@@ -185,16 +191,11 @@ types.forEach(type=>{
 }
 
 export function hasExpressionSuggestions(location){
-	const itsExpectedSpec = location.expectedSpec;
-	const expectedType = calcValue(itsExpectedSpec.type,location.context);
+	const expectedType = calcValue(location.expectedType,location.context);
 	const types = location.dictionary.getExpressionsByValueType(expectedType);
 	return types.length > 0;
 }
 
-function sortSuggestions(suggestions,filter){
-	suggestions.list.forEach(item=>scoreSuggestion(item,filter));
-	suggestions.list.sort(comp)	
-}
 
 
 export function hasSuggestions(location, filter){

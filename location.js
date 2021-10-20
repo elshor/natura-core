@@ -3,10 +3,9 @@
  *   All rights reserved.
  */
 import {JsonPointer} from 'json-ptr'
-import { specType, mergeSpec, specProperties } from './spec.js';
-import {assume} from './error.js'
+import { mergeSpec, specProperties } from './spec.js';
 import calc, { isExpression, calcValue } from './calc.js';
-import {entityType,entityValue,cloneEntity} from './entity.js'
+import {entityValue,cloneEntity} from './entity.js'
 import {patternText} from './pattern.js'
 import {locationContext} from './context.js'
 import Type from './type.js'
@@ -19,6 +18,7 @@ export function createLocation(data,dictionary=new Dictionary(),path=''){
 
 class Location{
 	constructor(data,dictionary,path,lang,uri){
+		increment('location');
 		this.data = data;
 		this.uri = uri
 		this.dictionary = dictionary;
@@ -27,6 +27,7 @@ class Location{
 		this._children = {};
 	}
 	get value(){
+		increment('value');
 		return locationValue(this);
 	}
 
@@ -34,48 +35,97 @@ class Location{
 	 * @returns {Spec}
 	 */
 	get spec(){
-		return locationSpec(this);
+		const typeSpec = this.dictionary.getTypeSpec(this.type);
+		const contextSpec = this.contextSpec;
+		return mergeSpec(contextSpec,typeSpec);
 	}
 	
+	get contextSpec(){
+		increment('contextSpec');
+		const parent = this.parent;
+		let ret;
+		if(!parent){
+			//top level - we have no information regarding the spec
+			return null;
+		}
+		const parentType = parent.type;
+		if(this._parentType === parentType.toString() && this._contextSpec){
+			//parent did not change and can use cache
+			return this._contextSpec;
+		}
+		if(parentType.isCollection){
+			//its parent is an array
+			const parentSpec = parent.contextSpec;
+			const childSpec = parentSpec.childSpec || 
+				Object.assign({},parentSpec,{type:Type(parentSpec.type,this).singular});
+			ret = childSpec;
+		}else{
+			const parentSpec = parent.contextSpec;
+			if(parentSpec && typeof parentSpec === 'object' && parentSpec.hashSpec){
+				ret = parentSpec.hashSpec;
+			}else{
+				const parentTypeSpec = this.dictionary.getTypeSpec(parentType);
+				ret = specProperties(parentTypeSpec)[this.property];
+			}
+		}
+
+		//store cache
+		this._parentType = parentType.toString();
+		this._contextSpec = ret;
+
+		return ret;
+	}
+
 	get valueType(){
 		if(this.dictionary.isa(this.type,'expression')){
-			return this.spec.valueType;
+			return Type(this.spec.valueType);
 		}else{
 			return this.type;
 		}
 	}
 
 	get type(){
-		if(this.isReference){
+		const thisValue = this.value;
+		if(this._isReference(thisValue)){
 			//type is stored in the reference object
-			return this.value.valueType;
-		}else if(this.value && typeof this.value ==='object' && this.value.$type){
+			return Type(thisValue.valueType);
+		}else if(thisValue && typeof thisValue ==='object' && thisValue.$type){
 			//value is set with an object that has explicit type
-			return this.value.$type;
+			return Type(thisValue.$type);
 		}
 		const parent = this.parent;
 		if(!parent){
 			//no parent - return any
-			return 'any'
-		}else if(typeof this.value === 'string'){
+			return Type('any');
+		}else if(typeof thisValue === 'string'){
 			//TODO handle situations where expected type is a typedef of string
-			return 'string';
-		}else if(typeof this.value === 'number'){
+			return Type('string');
+		}else if(typeof thisValue === 'number'){
 			//TODO handle situations where expected type is a typedef of number
-			return 'number';
-		}else if(typeof this.value === 'boolean'){
-			return 'boolean';
-		}else if(Type(parent.type,location).isCollection){
+			return Type('number');
+		}else if(typeof thisValue === 'boolean'){
+			return Type('boolean');
+		}
+		
+		if(this._parentType === undefined){
+			this._parentType = parent.type;
+		}
+		if(Type(this._parentType,location).isCollection){
 			//this is a list type
-			return Type(parent.type,location).singular;
-		}else if(parent.spec.hashSpec){
+			return Type(this._parentType,location).singular;
+		}
+
+		if(this._parentSpec === undefined){
+			this._parentSpec = parent.spec;
+		}
+		if(this._parentSpec.hashSpec){
 			//this is a hashSpec
-			return parent.spec.hashSpec.type;
-		}else if(parent.spec.properties && parent.spec.properties[this.property]){
-			return Type(parent.spec.properties[this.property].type,this).toString();
+			return Type(this._parentSpec.hashSpec.type);
+		}else if(this._parentSpec.properties && this._parentSpec.properties[this.property]){
+			return Type(this._parentSpec.properties[this.property].type,this);
 		}else{
 			//no type information - return any
-			return 'any'
+			return Type('any');
 		}
 	}
 
@@ -83,33 +133,53 @@ class Location{
 	 * Get the spec of the entity type. If the type is an instance then return type of instance
 	 */
 	get valueSpec(){
-		let type = this.type;
-		const spec =  this.dictionary.getTypeSpec(type);
+		const spec = this.spec;
 		if(spec.valueType){
 			//this spec is probably an expression, the valueSpec is the spec of its valueType
-			return this.dictionary.getTypeSpec(spec.valueType)
+			return this.dictionary.getTypeSpec(Type(spec.valueType))
 		}else{
 			return spec;
 		}
 	}
 
 	get expectedSpec(){
-		if(this._expectedSpec){
-			return this._expectedSpec;
-		}
-		this._expectedSpec = locationExpectedSpec(this);
-		return this._expectedSpec;
+		const typeSpec = this.dictionary.getTypeSpec(this.expectedType);
+		const contextSpec = this.contextSpec;
+		return mergeSpec(contextSpec,typeSpec);
 	}
+
 	get expectedType(){
-		return calcValue(this.expectedSpec.type,this.context);
+		const parent = this.parent;
+		if(!parent){
+			//no parent - return any
+			return Type('any',this)
+		}else if(parent.type.isCollection){
+			//this is a list type
+			return parent.type.singular;
+		}else if(parent.spec.hashSpec){
+			//this is a hashSpec
+			return Type(parent.spec.hashSpec.type,THIS);
+		}else if(parent.spec.properties && parent.spec.properties[this.property]){
+			return Type(parent.spec.properties[this.property].type,this);
+		}else{
+			//no type information - return any
+			return Type('any',this);
+		}
 	}
+
 	get parent(){
+		if(this._parent !== undefined){
+			return this._parent;
+		}
+		increment('get parent location');
 		const segments = JsonPointer.decode(this.path);
 		if(segments.length > 0){
 			segments.pop();
 			const newPath = JsonPointer.create(segments).toString();
-			return new Location(this.data,this.dictionary,newPath,this.lang);
+			this._parent =  new Location(this.data,this.dictionary,newPath,this.lang);
+			return this._parent;
 		}else{
+			this._parent = null;
 			return null;
 		}
 	}
@@ -184,7 +254,10 @@ class Location{
 	}
 		
 	get property(){
-		return JsonPointer.decode(this.path).pop();
+		if(this._property === undefined){
+			this._property = JsonPointer.decode(this.path).pop();
+		}
+		return this._property;
 	}
 	
 	get patternText(){
@@ -192,12 +265,20 @@ class Location{
 	}
 
 	get isReference(){
+		return this._isReference();
+	}
+
+	_isReference(currentValue = undefined){
 		function isSelfReference(location){
 			//self reference is a reference to itself. This should not be considered a reference because it will cause endless recursion
 			return (!location.data.path || location.data.path === '') && 
 				location.data.$type === 'reference'
 		}
-		return specType(this.spec) === 'reference' && !isSelfReference(this);
+		if(isSelfReference(this)){
+			return false;
+		}
+		const value = (currentValue === undefined? this.value : currentValue);
+		return value && typeof value === 'object' && value.$type==='reference';
 	}
 
 	/**
@@ -238,6 +319,7 @@ class Location{
 	 * @returns {Location}
 	 */
 	child(prop){
+		//TODO what happens when value changes - need to invalidate (unless vue reactivity takes care of that - need to test)
 		if(this._children[prop]){
 			return this._children[prop];
 		}
@@ -396,35 +478,6 @@ class Location{
 	}
 }
 
-
-/**
- * Find the spec associated with a specific location. The spec is calculated as follows:
- * If the location has a $type property, then merge it with expected spec, otherwise  return expectedSpec
- * @param {Location} location
- */
-function locationSpec(location){
-	assume(location);
-	const expectedSpec = location.expectedSpec;
-	let actualSpec = {};
-	let value = undefined;
-	value = location.value;
-	if(entityType(value) ==='object' && value !== null && value.$type){
-		//use explicit type
-		actualSpec = location.dictionary.getTypeSpec(Type(value.$type,location));
-	}else if(specType(expectedSpec) === 'any' && value !== undefined){
-		//there is no expected spec - try to deduce it from actual value
-		const type = entityType(value);
-		if(type === 'string'){
-			actualSpec = {type:'string'};
-		}else if(type === 'number'){
-			actualSpec = {type:'number'};
-		}else if(type === 'boolean'){
-			actualSpec = {type:'boolean'};
-		}
-	}
-	return mergeSpec(expectedSpec,actualSpec);
-}
-
 /**
  * returns the value pointed by the location. This function checks the spec if there are any properties that have a `value` or `default` property and generates property if needed. For properties with `value` defined it always generates the property value and for properties with `default` defined it only generates a property value if the property value is `undefined`
  * @param {Location} location
@@ -437,7 +490,10 @@ function locationValue(location){
 	if(!parent){
 		return undefined;
 	}
-	const parentValue = location.parent.value;
+	if(location._parentValue === undefined){
+		location._parentValue = location.parent.value;
+	}
+	const parentValue = location._parentValue;
 	if(!parentValue){
 		return undefined;
 	}
@@ -457,55 +513,22 @@ function locationValue(location){
 	if(value !== undefined){
 		return value;
 	}
-	//check for default value
+
+	//by now we rely on calculated value based on spec. Check cache first
+	if(location._hasCachedValue){
+		return location._value;
+	}
+	location._hasCachedValue = true;
+	
 	const spec = location.expectedSpec;
 	if(spec.default !== undefined){
 		if(isExpression(spec.default)){
-			return cloneEntity(calc(spec.default, location.context));;
+			location._value = cloneEntity(calc(spec.default, location.context));;
 		}else{
-			return cloneEntity(spec.default);
+			location._value = cloneEntity(spec.default);
 		}
 	}
-}
-
-/**
- * returns the location spec as defined in its parent spec.
- * @param {Location} location
- */
-function locationExpectedSpec(location){
-	const parent = location.parent;
-	if(!parent){
-		//top level - we have no information regarding the spec
-		return {type:'any'};
-	}
-	const parentSpec = locationSpec(parent) || {type:'any'};
-	if(Type(specType(parentSpec),location).isCollection){
-		//its parent is an array
-		const childSpec = parentSpec.childSpec || {};
-		childSpec.type = childSpec.type || Type(specType(parentSpec),location).singular;
-		childSpec.placeholder = childSpec.placeholder || parentSpec.placeholder;
-		childSpec.description = childSpec.description || parentSpec.description;
-		return mergeSpec(
-			childSpec,
-			location.dictionary.getTypeSpec(Type(specType(parentSpec),location).singular)
-		);
-	}else if(parentSpec.hashSpec){
-		return mergeSpec(
-			parentSpec.hashSpec,
-			location.dictionary.getTypeSpec(Type(parentSpec.hashSpec.type,location))
-		);
-	}else{
-		const pathSegments = JsonPointer.decode(location.path);
-		const propertyName = pathSegments.pop();
-		const parentProperties = specProperties(parentSpec,location.dictionary);
-		if(parentProperties && parentProperties[propertyName]){
-			const propertySpec = parentProperties[propertyName] || {};
-			const typeSpec = location.dictionary.getTypeSpec(Type(propertySpec.type,location));
-			return mergeSpec(typeSpec,propertySpec);
-		}else{
-			return {type:'any'};
-		}
-	}
+	return location._value;
 }
 
 function isNumber(n){
@@ -525,11 +548,13 @@ function asNumber(n){
 
 class LocationChild extends Location{
 	constructor(parent,property){
+		increment('locationChild');
 		super(parent.data,parent.dictionary,parent.path+'/'+property,parent.lang,parent.uri);
 		this._parent = parent;
 		this._property = property;
 	}
 	get parent(){
+		increment('get parent locationChild');
 		return this._parent;
 	}
 	get property(){

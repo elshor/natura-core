@@ -47,9 +47,24 @@ export function placeholder(spec,propertyName){
 		specType(spec) ||
 		DefaultPlaceholder
 }
+const DEFAULT_SPEC = [{$type:'use context',path:'..'}];
+/**
+ * Merge a context spec, determined by the property definition, and the type spec of a certain location
+ * @param {Spec} contextSpec the spec determined by the context of the location, as defined in the properties spec
+ * @param {Spec} typeSpec the spec stored in the dictionary retrieved using getTypeSpec
+ * @returns {Spec}
+ */
+export function mergeSpec(contextSpec, typeSpec){
+	contextSpec = contextSpec || {};
+	typeSpec = typeSpec || {};
+	const ret = Object.assign({},typeSpec||{},contextSpec||{});
+	//context is only defined in property spec
+	ret.context = [...(typeSpec.context||[]),...(contextSpec.context || DEFAULT_SPEC)];
+	//scope is only defined in type spec
+	ret.scope = typeSpec.scope; 
+	
+	return ret;
 
-export function mergeSpec(localSpec, typeSpec){
-	return Object.assign({},localSpec,typeSpec);
 }
 
 export function computeSpecProperty(spec,location, name,defaultValue){

@@ -107,7 +107,7 @@ export default class Dictionary{
 			return {};
 		}
 		this._ensureSpecializedIsRegistered(type);
-		return this.repo[type.toString()] || {};
+		return this.repo[searchString(type)] || {};
 	}
 	/**
 	 * returns the singular form of a plural type. E.g. getSingular('element*') should return 'element'
@@ -426,24 +426,24 @@ export default class Dictionary{
 	 * @param {Type} type type to test
 	 */
 	_ensureSpecializedIsRegistered(type){
-		const matched = type.toString().match(/^(.+)\.\<(.+)\>$/);
+		const matched = (searchString(type)).match(/^(.+)\.\<(.+)\>$/);
 		if(!matched){
 			//this is not a specialized generic
 			return;
 		}
-		if(this.repo[type.toString()]){
+		if(this.repo[searchString(type)]){
 			//this is already registered
 			return;
 		}
 		const generic = this.getTypeSpec(matched[1]);
 		if(!generic){
-			throw new Error('Trying to use a generic that is not defined: '+type.toString());
+			throw new Error('Trying to use a generic that is not defined: '+searchString(type));
 		}
 		if(!Array.isArray(generic.genericProperties)|| generic.genericProperties.length < 1){
-			throw new Error('Trying to use a non-generic as a generic: '+type.toString());
+			throw new Error('Trying to use a non-generic as a generic: '+searchString(type));
 		}
 		this._registerSpecializedType(
-			type.toString(),
+			searchString(type),
 			matched[1],
 			{[generic.genericProperties[0]]:matched[2]}
 		)
@@ -461,4 +461,8 @@ function unique(arr){
 }
 function isGenericType(spec){
 	return Array.isArray(spec.genericProperties) && !spec.$specialized;
+}
+
+function searchString(string){
+	return string.searchString || string.toString();
 }

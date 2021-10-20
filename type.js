@@ -5,7 +5,6 @@
 import { JsonPointer } from 'json-ptr';
 import {IllegalType} from './error.js'
 import calc from "./calc.js";
-import { encodePointerSegments } from 'json-ptr';
 
 export default function Type(type,location){
 	if(typeof type === 'string'){
@@ -17,15 +16,19 @@ export default function Type(type,location){
 	if(type === undefined || type === null){
 		return new BaseType(undefined);
 	}
-	if(type instanceof BaseType){
+	if(type.isTypeObject){
 		return type;
 	}else if(type !== null && typeof type === 'object'){
 		switch(type.$type){
 			//use a type specified in a path (like property) from this object
 			case 'copy type':
-				const path = new JsonPointer('/' + (type.path||'').replace(/\./g,'/'));
-				const result = path.get(location.contextNoSearch);
+				const pathText = '/' + (type.path||'').replace(/\./g,'/');
+				const path = new JsonPointer(pathText);
+				//HACK not sure why json pointer not working here
+				const result = follow(location.contextNoSearch,path.path);
 				return new BaseType(result);
+			case 'role type':
+				return new RoleType(type.type,type.role);
 			default:
 				throw new Error(IllegalType);
 		}
@@ -34,24 +37,81 @@ export default function Type(type,location){
 
 class BaseType{
 	constructor(type){
-		this.type = type;
+		this.type = type || 'any';
+	}
+	get isTypeObject(){
+		return true;
 	}
 	toString(){
-		return this.type? this.type.toString() : 'any';
+		return this.typeString;
 	}
-	
+
+	get typeString(){
+		return this.type;
+	}
+	get searchString(){
+		return this.isCollection? this.singular.typeString : this.typeString;
+	}
+
 	get isCollection(){
-		const str = this.toString();
+		const str = this.typeString;
 		return str? str.match(/\*$/) !== null : false;
+	}
+
+	get isArray(){
+		return this.isCollection;
 	}
 
 	get singular(){
 		if(this.isCollection){
-			return this.toString().substr(0,this.toString().length-1);
+			return Type(this.typeString.substr(0,this.typeString.length-1));
 		}else{
-			return this.toString();
+			return this;
 		}
 	}
 
 }
 
+class RoleType{
+	constructor(type,role){
+		this.type = Type(type);
+		this.role = role;
+	}
+	
+	toString(){
+		return this.role + '.' + this.type.toString();
+	}
+	get isTypeObject(){
+		return true;
+	}
+	get typeString(){
+		return this.type.typeString;
+	}
+
+	get searchString(){
+		return this.type.searchString;
+	}
+	
+	get singular(){
+		return new RoleType(this.type.singular.typeString,this.role);
+	}
+
+	get isCollection(){
+		return this.type.isCollection;
+	}
+
+	get isArray(){
+		return this.type.isArray;
+	}
+}
+
+function follow(source,path){
+	let current = source;
+	for(let i=0;i<path.length;++i){
+		if(current === null || current === undefined){
+			return undefined;
+		}
+		current = current[path[i]];
+	}
+	return current;
+}

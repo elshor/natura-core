@@ -14,7 +14,7 @@ export function calcTemplate(templateText,context){
 		const template = HB.compile(templateText,{noEscape:true});
 		return template(context,{allowProtoPropertiesByDefault:true});
 	}catch(e){
-		throw new Error('Error calculating template',templateText);
+		console.error('Error parsing template',JSON.stringify(templateText),'for',context);
 	}
 }
 

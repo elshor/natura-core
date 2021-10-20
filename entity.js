@@ -34,7 +34,7 @@ export function entityValue(entity){
 
 export function generateNewEntity(type,context={},dictionary){
 	assume(dictionary,MissingParam,'dictionary');
-	switch(type){
+	switch(type.searchString || type){
 	case 'string':
 	case 'calc':
 		return '';
@@ -46,7 +46,7 @@ export function generateNewEntity(type,context={},dictionary){
 		return '';//default new entity is text
 	default:
 		const ret = {
-			$type:type,
+			$type:type.searchString || type,
 			$id: uid()
 		};
 

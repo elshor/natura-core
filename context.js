@@ -33,7 +33,7 @@ import {Role,matchRole} from './role.js'
  * @param {String} scope the current scope. Each time a use scope is followed, the new scope is added to the scope with a preceding > symbol
  */
 export function contextSearch(location,iterator,type,name,scope='',visitIt){
-	let current = previousContextLocation(location);//skip current
+	let current = location;
 	let cont = true;
 	while(current && cont !== false){
 		cont = visit(current,iterator,type,name,scope,visitIt);
@@ -51,26 +51,15 @@ export function contextSearch(location,iterator,type,name,scope='',visitIt){
  * @param {Function} visitIt a callback function used mostly for debug purposes
  */
 function visit(location,iterator,type,name,scope,visitIt){
-	const referenced = location.referenced;
-	if(referenced.isEmpty){
-		return true;//continue search
+	if(!location){
+		return true;
 	}
-
+	const referenced = location.referenced;
+	if(alreadyVisited(location,iterator)){
+		return true;
+	}
 	visitIt?visitIt('location',referenced):null;
 	const currentSpec = referenced.spec;
-
-	//iterate property spec context
-	const parent = referenced.parent;
-	if(parent && parent.spec.properties){
-		const parentProperties = referenced.parent.spec.properties;
-		const propertyEntries = (parentProperties[referenced.property]||{}).context || [];
-		for(let i=0;i<propertyEntries.length;++i){
-			const b = visitEntry(referenced, propertyEntries[i],iterator,type,name,scope,visitIt);
-			if(b === false){
-				return false;//end search
-			}
-		}
-	}
 
 	//iterate context
 	const entries = currentSpec.context || [];
@@ -81,12 +70,6 @@ function visit(location,iterator,type,name,scope,visitIt){
 		}
 	}
 
-	//search scope
-	if(scopeSearch(referenced,referenced.type,iterator,type,name,scope,null,visitIt) === false){
-		return false;
-	}
-
-	//continue search
 	return true;//continue
 }
 
@@ -102,8 +85,6 @@ function visitEntry(referenced,entry,iterator,type,name,scope='',visitIt){
 			return useScope(referenced,entry,iterator,type,name,scope,null,visitIt);
 		case 'use context':
 			return useContext(referenced,entry,iterator,type,name,scope,visitIt);
-		case 'emit property':
-			return emitProperty(referenced,entry,iterator,type,name,scope,visitIt);
 		default:
 			assume(false,'expected known context entry. Got',entry.$type);
 		}
@@ -118,7 +99,7 @@ function visitScopeEntry(referenced,entry,iterator,type,name,scope='',scopeName,
 	return scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt);
 }
 
-function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt){
+function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName){
 	//calculate the type
 	const entryType = Type(entry.type,referenced).toString();
 	const spec = referenced.dictionary.getTypeSpec(entryType);
@@ -147,18 +128,37 @@ function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt)
 	)===false){
 		return false;
 	}
-	const entityIsCollection = true;//db need to calculate this
-	if(entry.useScope || entityIsCollection){
-		//also emit the scope of the emited type.
-		return scopeSearch(referenced,entryType,iterator,type,name,scope + "." + entry.access,emitName, visitIt);
-	}else{
-		return true;
-	}
+	return true;
 }
-function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
-	//calculate the type
-	const entryType = Type(entry.type,referenced).toString();
+
+/**
+ * 
+ * @param {Location} original 
+ * @param {String} entry.path 
+ * @param {String} entry.scope
+ * @param {String} entry.type
+ * @param {String} entry.name
+ * @param {String} entry.access
+ * @param {String} entry.description
+ * @param {*} iterator 
+ * @param {*} type 
+ * @param {*} name 
+ * @param {*} scope 
+ * @param {*} visitIt 
+ * @returns 
+ */
+function basicEmit(original,entry,iterator,type,name,scope='',visitIt){
+	const locations = relativeLocations(original,entry.path||'');
+	scope = entry.scope? 
+		(scope + entry.scope + '.') : 
+		scope;
 	
+	for(let i=0;i<locations.length;++i){
+		const referenced = locations[i].referenced;	
+		
+		//calculate the type
+		const entryType = Type(entry.type||location.type,referenced).toString();
+		
 		//calculate emit name
 		const emitName = entry.name? 
 		calcTemplate(entry.name,referenced.contextNoSearch) : 
@@ -167,93 +167,37 @@ function basicEmit(referenced,entry,iterator,type,name,scope,visitIt){
 			return referenced.lang.theType(specContextType(spec));
 		}(entryType);
 
-	//if access starts with + then replace + with location $id
-	const access = typeof entry.access === 'string' && entry.access.charAt(0)==='+'?
-		referenced.child('$id').value + entry.access.substr(1) : (entry.access||'')
-	if(match(
-		referenced.dictionary,
-		iterator,
-		type,
-		name,
-		entryType,
-		emitName,
-		{
-			$type:'reference',
-			label:emitName,
-			valueType:entryType,
-			access: scope + "." + access,
-			role:entry.role || 'artifact'
-		},
-		entry.description,
-		referenced.path + (entry.path? '/' + entry.path : '')
-	)===false){
-		return false;
-	}
-	const entityIsCollection = true;//db need to calculate this
-	if(entry.useScope || entityIsCollection){
-		//also emit the scope of the emited type.
-		return scopeSearch(referenced,entryType,iterator,type,name,scope + "." + entry.access, emitName, visitIt);
-	}else{
-		return true;
-	}
-}
-
-function emitProperty(location,entry,iterator,type,name,scope,visitIt){
-	const property = location.child(entry.property);
-	const propertyType = Type(property.type,property);
-	const emitName = entry.name || 'the {{$location.type}}';
-	let toProcess;
-	//TODO handle dictionary types
-	if(propertyType.isCollection){
-		toProcess = property.children;
-	}else{
-		toProcess = [property];
-	}
-
-	//iterate over array of locations
-	for(let i=0;i<toProcess.length;++i){
-		const child = toProcess[i].referenced;
-		const value = child.value;
-		if(value === undefined){
-			continue;
+		//calculate access
+		const access = calcTemplate(entry.access||entry.name,referenced.contextNoSearch);
+		if(access===''){
+			//access is empty - this means we need to disregard this entry
+			return true;
 		}
-		const valueName = calcTemplate(emitName,child.contextNoSearch);
-		const access = calcTemplate(entry.access||'',child.contextNoSearch);
-		const matched =  match(
-			child.dictionary,
+		
+		if(match(
+			referenced.dictionary,
 			iterator,
 			type,
 			name,
-			child.type,
-			valueName,
+			entryType,
+			emitName,
 			{
 				$type:'reference',
-				label:valueName,
-				valueType:child.type,
-				access: (scope ||'') + "." + access,
+				label:emitName,
+				valueType:entryType,
+				access: scope + access,
 				role:entry.role || 'artifact'
 			},
-			undefined,
-			child.path
-		);
-		if(matched === false){
+			entry.description,
+			referenced.path
+		)===false){
 			return false;
 		}
 		if(entry.useScope){
 			//also emit the scope of the emited type.
-			const sMatched =  scopeSearch(
-				child,
-				child.type,
-				iterator,
-				type,
-				name,
-				(scope ||'') + "." + access,
-				valueName, 
-				visitIt
-			);
-			if(sMatched === false){
-				return false;
-			}
+			return scopeSearch(referenced,entryType,iterator,type,name,scope + access, emitName, visitIt);
+		}else{
+			return true;
 		}
 	}
 }
@@ -273,9 +217,6 @@ function emitProperty(location,entry,iterator,type,name,scope,visitIt){
 function scopeSearch(location,scopeType,iterator,type,name,scope,scopeName,visitIt){
 	const currentSpec = location.dictionary.getTypeSpec(scopeType);
 	visitIt?visitIt('scope-search',location):null;
-	if(typeof currentSpec.scopeSearch === 'function'){
-		return currentSpec.scopeSearch(location,iterator,type,name,scope,scopeName,visitIt) !== false;
-	}
 	const entries = currentSpec.scope || [];
 	for(let i=0;i<entries.length;++i){
 		const b = visitScopeEntry(location, entries[i],iterator,type,name,scope,scopeName,visitIt);
@@ -288,28 +229,31 @@ function scopeSearch(location,scopeType,iterator,type,name,scope,scopeName,visit
 
 /**
  * use the context of a property. It goes over context entries of property spec
+ * @param {Location} referenced
+ * @param {String} entry.path
+ * @param {String} entry.scope
  */
 function useContext(referenced,entry,iterator,type,name,scope,visitIt){
-	const property = followLocation(referenced,entry.property).referenced;
-	if(property.isEmpty){
-		return true;//continue search
-	}
-	if(property.isCollection){
-		return iterateArray(property.children,iterator,type,name,scope,visitIt);
-	}else{
-		return visit(property,iterator,type,name,scope,visitIt);
-	}
+	const locations = relativeLocations(referenced,entry.path);
+	return iterateArray(
+		locations,
+		iterator,
+		type,
+		name,
+		entry.scope? (scope + entry.scope + '.') : scope,
+		visitIt
+		);
 }
 
 function useScope(referenced,entry,iterator,type,name,scope,scopeName, visitIt){
-	const property = referenced.child(entry.property).referenced;
-	if(property.isEmpty){
+	const location = relativeLocations(referenced,entry.path).referenced;
+	if(location.isEmpty){
 		return true;//continue search
 	}
 	scope = entry.access? scope+'.' + entry.access : scope;
 	return scopeSearch(
-		property,
-		property.type,
+		location,
+		location.type,
 		iterator,
 		type,
 		name,
@@ -335,11 +279,9 @@ function previousContextLocation(location){
 		const pos = emitOrder.indexOf(location.property);
 		if(pos > 0){
 			return location.sibling(emitOrder[pos-1]);
-		}else{
-			return location.parent;
 		}
 	}
-	return location.parent;
+	return null;
 }
 
 function match(dictionary, it, queryType,queryName, type,name,value,description,path){
@@ -408,8 +350,9 @@ export function locationContext(location,contextLocation=location){
 
 			//check if location value has the property
 			const entity = location.referenced.value;
-			if(prop in entity){
-				return entity[prop];
+			const propValue = entity[prop];
+			if(propValue !== undefined){
+				return propValue;
 			}
 
 			//search context
@@ -430,15 +373,27 @@ export function locationContext(location,contextLocation=location){
 	})
 }
 
-function followLocation(location,path){
-	const parts = path.split('/');
-	let current = location;
-	parts.forEach(part=>{
-		if(part === '..'){
-			current = current.parent;
-		}else{
-			current = current.child(part);
+function relativeLocations(location,path){
+	function follow(location,part,current){
+		switch(part){
+			case '':
+				current.push(location);
+			case '..':
+				current.push(location.parent);
+				break;
+			case  '*':
+				current.push(...location.children);
+				break;
+			default:
+				current.push(location.child(part));
 		}
+	}
+	let current = [location];
+	const parts = path.split('/');
+	parts.forEach(part=>{
+		const now = [];
+		current.forEach(l=>follow(l,part,now));
+		current = now;
 	})
 	return current;
 }
@@ -451,4 +406,22 @@ function iterateArray(locations,iterator,type,name,scope,visitIt){
 		}
 	}
 	return true;
+}
+
+function alreadyVisited(location,iterator){
+	if(!iterator.state){
+		iterator.state = IteratorState();
+	}
+	if(iterator.state.visited.has(location.path)){
+		return true;
+	}else{
+		iterator.state.visited.add(location.path);
+		return false;
+	}
+}
+
+function IteratorState(){
+	return {
+		visited: new Set()
+	}
 }

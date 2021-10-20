@@ -318,10 +318,10 @@ const entities = 	[
 		},
 		emitOrder:['event','action'],
 		scope:[
-			{$type:'use scope',property:'event'}
+			{$type:'use scope',path:'event'}
 		],
 		context:[
-			{$type:'use context',property:'event'}
+			{$type:'use context',path:'event'}
 		]
 	},
 	{
@@ -379,11 +379,11 @@ const entities = 	[
 	{
 		name:'use scope',
 		description:'use a scope of property where property is a type',
-		pattern:'use scope of <<property>> accessed as <<access>>',
+		pattern:'use scope of <<path>> accessed as <<access>>',
 		isa:['scope entry','context entry'],
 		properties:{
 			access:{type:'text',placeholder:'access to entity from scope'},
-			property:{type:'name',placeholder:'name of property'}
+			path:{type:'name',placeholder:'path'}
 		}
 	},
 	{
@@ -414,7 +414,7 @@ const entities = 	[
 			default:{
 				description:'default value of the property in case no value was explicitly set. Default can be an expression that is recalculated dynamically when the property value is checked for',
 				placeholder:'Default value of the property',
-				type: {$type:'copy type',property:'type'}
+				type: {$type:'copy type',path:'type'}
 			},
 			init:{description:'value to initialize the property with. The init value is only set at initialization of the object'},
 			description:{type:'richtext',placeholder:'Description fo the property'},
@@ -732,20 +732,6 @@ const entities = 	[
 		},
 		show:['members'],
 		additional:['model']
-	},
-	{
-		name:'join text',
-		title:'join text',
-		fn:'join@natura/lib/base(elements)',
-		isa:'expression',
-		valueType:'string',
-		pattern:'join <<elements>>',
-		properties:{
-			elements:{
-				type:'string*',
-				placeholder:'text to join'
-			}
-		}
 	},
 	{
 		name:'path options',
