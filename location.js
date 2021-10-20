@@ -12,8 +12,26 @@ import Type from './type.js'
 import langLib from './lang.js'
 import { isValid } from './validate.js';
 import Dictionary from './dictionary.js'
+
+const locationMap = new Map();
+
 export function createLocation(data,dictionary=new Dictionary(),path=''){
-	return new Location(data,dictionary,uriHash(path),null,uriResource(path));
+	const segments = JsonPointer.decode(uriHash(path));
+	let top;
+	if(locationMap.has(data)){
+		//if a location was already generated for this data then return it. We want to make sure, each data has only a single location so we don't get into situation where two location represetns a single data point, one location is updated and the other doesn't know about it
+		//we assume for a single data object there can only be one URI and one dictionary
+		top = locationMap.get(data);
+	}else{
+		top = new Location(data,dictionary,'',null,uriResource(path));
+		locationMap.set(data,top);
+	}
+
+	let current = top;
+	for(let i=0;i<segments.length;++i){
+		current = current.child(segments[i]);
+	}
+	return current;
 }
 
 class Location{
@@ -23,7 +41,13 @@ class Location{
 		this.dictionary = dictionary;
 		this.path = path;
 		this.lang = lang || langLib();
-		this._children = {};
+		this._cache = {children:{}};
+	}
+	_invalidateCache(){
+		Object.values(this._cache.children).forEach(
+			child=>child._invalidateCache()
+		)
+		this._cache = {children:{}};
 	}
 	get value(){
 		return locationValue(this);
@@ -46,9 +70,12 @@ class Location{
 			return null;
 		}
 		const parentType = parent.type;
-		if(this._parentType === parentType.toString() && this._contextSpec){
+		if(
+			this._cache.parentType === parentType.toString() && 
+			this._cache.contextSpec
+		){
 			//parent did not change and can use cache
-			return this._contextSpec;
+			return this._cache.contextSpec;
 		}
 		if(parentType.isCollection){
 			//its parent is an array
@@ -67,8 +94,8 @@ class Location{
 		}
 
 		//store cache
-		this._parentType = parentType.toString();
-		this._contextSpec = ret;
+		this._cache.parentType = parentType.toString();
+		this._cache.contextSpec = ret;
 
 		return ret;
 	}
@@ -104,22 +131,25 @@ class Location{
 			return Type('boolean');
 		}
 		
-		if(this._parentType === undefined){
-			this._parentType = parent.type;
+		if(this._cache.parentType === undefined){
+			this._cache.parentType = parent.type;
 		}
-		if(Type(this._parentType,location).isCollection){
+		if(Type(this._cache.parentType,location).isCollection){
 			//this is a list type
-			return Type(this._parentType,location).singular;
+			return Type(this._cache.parentType,location).singular;
 		}
 
-		if(this._parentSpec === undefined){
-			this._parentSpec = parent.spec;
+		if(this._cache.parentSpec === undefined){
+			this._cache.parentSpec = parent.spec;
 		}
-		if(this._parentSpec.hashSpec){
+		if(this._cache.parentSpec.hashSpec){
 			//this is a hashSpec
-			return Type(this._parentSpec.hashSpec.type);
-		}else if(this._parentSpec.properties && this._parentSpec.properties[this.property]){
-			return Type(this._parentSpec.properties[this.property].type,this);
+			return Type(this._cache.parentSpec.hashSpec.type);
+		}else if(
+			this._cache.parentSpec.properties && 
+			this._cache.parentSpec.properties[this.property]
+		){
+			return Type(this._cache.parentSpec.properties[this.property].type,this);
 		}else{
 			//no type information - return any
 			return Type('any');
@@ -316,11 +346,11 @@ class Location{
 	 */
 	child(prop){
 		//TODO what happens when value changes - need to invalidate (unless vue reactivity takes care of that - need to test)
-		if(this._children[prop]){
-			return this._children[prop];
+		if(this._cache.children[prop]){
+			return this._cache.children[prop];
 		}
 		const child = new LocationChild(this,prop);
-		this._children[prop] = child;
+		this._cache.children[prop] = child;
 		return child;
 	}
 
@@ -406,6 +436,9 @@ class Location{
 		const isHash =  (property.charAt(0) === '#');
 		const parent = this.parent;
 		const asInteger = Number.parseInt(property,10);
+
+		this._invalidateCache();
+
 		if(!parent.value){
 			//first set the value of parent
 			if(isHash || !Number.isNaN(asInteger)){
@@ -486,10 +519,10 @@ function locationValue(location){
 	if(!parent){
 		return undefined;
 	}
-	if(location._parentValue === undefined){
-		location._parentValue = location.parent.value;
+	if(location._cache.parentValue === undefined){
+		location._cache.parentValue = location.parent.value;
 	}
-	const parentValue = location._parentValue;
+	const parentValue = location._cache.parentValue;
 	if(!parentValue){
 		return undefined;
 	}
@@ -511,20 +544,20 @@ function locationValue(location){
 	}
 
 	//by now we rely on calculated value based on spec. Check cache first
-	if(location._hasCachedValue){
-		return location._value;
+	if(location._cache.hasCachedValue){
+		return location._cache.value;
 	}
-	location._hasCachedValue = true;
+	location._cache.hasCachedValue = true;
 	
 	const spec = location.expectedSpec;
 	if(spec.default !== undefined){
 		if(isExpression(spec.default)){
-			location._value = cloneEntity(calc(spec.default, location.context));;
+			location._cache.value = cloneEntity(calc(spec.default, location.context));;
 		}else{
-			location._value = cloneEntity(spec.default);
+			location._cache.value = cloneEntity(spec.default);
 		}
 	}
-	return location._value;
+	return location._cache.value;
 }
 
 function isNumber(n){
