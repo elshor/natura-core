@@ -14,7 +14,6 @@ import { isValid } from './validate.js';
 import Dictionary from './dictionary.js'
 
 const locationMap = new Map();
-
 export function createLocation(data,dictionary=new Dictionary(),path=''){
 	const segments = JsonPointer.decode(uriHash(path));
 	let top;
@@ -41,13 +40,14 @@ class Location{
 		this.dictionary = dictionary;
 		this.path = path;
 		this.lang = lang || langLib();
-		this._cache = {children:{}};
+		this._cache = {};
+		this._children = {};
 	}
 	_invalidateCache(){
-		Object.values(this._cache.children).forEach(
+		Object.values(this._children).forEach(
 			child=>child._invalidateCache()
 		)
-		this._cache = {children:{}};
+		this._cache = {};
 	}
 	get value(){
 		return locationValue(this);
@@ -109,34 +109,38 @@ class Location{
 	}
 
 	get type(){
+		if(this._cache.type){
+			return this._cache.type;
+		}
+
 		const thisValue = this.value;
 		if(this._isReference(thisValue)){
 			//type is stored in the reference object
-			return Type(thisValue.valueType);
+			return (this._cache.type = Type(thisValue.valueType));
 		}else if(thisValue && typeof thisValue ==='object' && thisValue.$type){
 			//value is set with an object that has explicit type
-			return Type(thisValue.$type);
+			return (this._cache.type = Type(thisValue.$type));
 		}
 		const parent = this.parent;
-		if(!parent){
-			//no parent - return any
-			return Type('any');
-		}else if(typeof thisValue === 'string'){
+
+		if(typeof thisValue === 'string'){
 			//TODO handle situations where expected type is a typedef of string
-			return Type('string');
+			return (this._cache.type = Type('string'));
 		}else if(typeof thisValue === 'number'){
 			//TODO handle situations where expected type is a typedef of number
-			return Type('number');
+			return (this._cache.type = Type('number'));
 		}else if(typeof thisValue === 'boolean'){
-			return Type('boolean');
+			return (this._cache.type = Type('boolean'));
 		}
-		
+
+				
 		if(this._cache.parentType === undefined){
 			this._cache.parentType = parent.type;
 		}
+
 		if(Type(this._cache.parentType,location).isCollection){
 			//this is a list type
-			return Type(this._cache.parentType,location).singular;
+			return (this._cache.type = Type(this._cache.parentType,location).singular);
 		}
 
 		if(this._cache.parentSpec === undefined){
@@ -144,15 +148,15 @@ class Location{
 		}
 		if(this._cache.parentSpec.hashSpec){
 			//this is a hashSpec
-			return Type(this._cache.parentSpec.hashSpec.type);
+			return (this._cache.type = Type(this._cache.parentSpec.hashSpec.type));
 		}else if(
 			this._cache.parentSpec.properties && 
 			this._cache.parentSpec.properties[this.property]
 		){
-			return Type(this._cache.parentSpec.properties[this.property].type,this);
+			return (this._cache.type = Type(this._cache.parentSpec.properties[this.property].type,this));
 		}else{
 			//no type information - return any
-			return Type('any');
+			return (this._cache.type = Type('any'));
 		}
 	}
 
@@ -346,11 +350,11 @@ class Location{
 	 */
 	child(prop){
 		//TODO what happens when value changes - need to invalidate (unless vue reactivity takes care of that - need to test)
-		if(this._cache.children[prop]){
-			return this._cache.children[prop];
+		if(this._children[prop]){
+			return this._children[prop];
 		}
 		const child = new LocationChild(this,prop);
-		this._cache.children[prop] = child;
+		this._children[prop] = child;
 		return child;
 	}
 
