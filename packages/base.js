@@ -191,7 +191,11 @@ const entities = 	[
 		pattern:'<<subject>> <<trait>>',
 		properties:{
 			subject:{
-				type:'instance.application type',
+				type:{
+					$type:'role type',
+					type:'application type',
+					role:'instance'
+				},
 				description:'Specify the entity you want to test',
 				placeholder:'entity to test'
 			},
@@ -203,7 +207,11 @@ const entities = 	[
 					if(!valueType){
 						return 'none';
 					}
-					return 'trait.' + valueType;
+					return {
+						$type:'role type',
+						type:'trait.' + valueType.searchString,
+						role:'type'
+					}
 				}
 			}
 		}
