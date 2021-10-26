@@ -332,7 +332,7 @@ class Location{
 	 * @returns {Location}
 	 */
 	get referenced(){
-		if(this.isReference){
+		if(this.isReference && this.value.path !== undefined){
 			const ret = createLocation(
 				getResource(this.value.path||'',this,this.data),
 				this.dictionary,
