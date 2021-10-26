@@ -93,7 +93,6 @@ export default class Dictionary{
 		});
 	}catch(e){
 		console.error('Exception',e);
-		debugger
 	}
 		this.resetVersion();
 	}
