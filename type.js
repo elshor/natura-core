@@ -11,7 +11,7 @@ export default function Type(type,location){
 		return new BaseType(type);
 	}
 	if(typeof type === 'function'){
-		return new BaseType(calc(type,location.context));
+		return Type(calc(type,location.context),location);
 	}
 	if(type === undefined || type === null){
 		return new BaseType(undefined);
@@ -20,17 +20,18 @@ export default function Type(type,location){
 		return type;
 	}else if(type !== null && typeof type === 'object'){
 		switch(type.$type){
-			//use a type specified in a path (like property) from this object
-			case 'copy type':
-				const pathText = '/' + (type.path||'').replace(/\./g,'/');
-				const path = new JsonPointer(pathText);
-				//HACK not sure why json pointer not working here
-				const result = follow(location.contextNoSearch,path.path);
-				return new BaseType(result);
-			case 'role type':
-				return new RoleType(type.type,type.role);
-			default:
-				throw new Error(IllegalType);
+		//use a type specified in a path (like property) from this object
+		case 'copy type':
+			const pathText = '/' + (type.path||'').replace(/\./g,'/');
+			const path = new JsonPointer(pathText);
+			//HACK not sure why json pointer not working here
+			const result = follow(location.contextNoSearch,path.path);
+			const baseType = typeof result === 'string'? result : Type(result,location);
+			return new BaseType(baseType);
+		case 'role type':
+			return new RoleType(Type(type.type,location),type.role);
+		default:
+			throw new Error(IllegalType);
 		}
 	}
 }
@@ -47,7 +48,7 @@ class BaseType{
 	}
 
 	get typeString(){
-		return this.type;
+		return this.type.typeString || this.type.toString();
 	}
 	get searchString(){
 		return this.isCollection? this.singular.typeString : this.typeString;
