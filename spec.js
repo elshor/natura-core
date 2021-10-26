@@ -59,7 +59,10 @@ export function mergeSpec(contextSpec, typeSpec){
 	typeSpec = typeSpec || {};
 	const ret = Object.assign({},typeSpec||{},contextSpec||{});
 	//context is only defined in property spec
-	ret.context = [...(typeSpec.context||[]),...(contextSpec.context || DEFAULT_SPEC)];
+	ret.context = [
+		...(typeSpec.context||[]),
+		...(contextSpec.context || DEFAULT_SPEC)
+	];
 	//scope is only defined in type spec
 	ret.scope = typeSpec.scope; 
 	

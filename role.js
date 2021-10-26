@@ -16,9 +16,15 @@ export const Role = {
 export function matchRole(present,required){
 	if(!required || !present){
 		return true;
-	}else if(required=== Role.type && [Role.model,Role.group,Role,Role.type].includes(present)){
+	}else if(
+		required=== Role.type && 
+		[Role.model,Role.group,Role,Role.type].includes(present)
+	){
 		return true;
-	}else if(required === Role.instance && [Role.artifact,Role.calc].includes(present)){
+	}else if(
+		required === Role.instance && 
+		[Role.artifact,Role.calc].includes(present)
+	){
 		return true;
 	}else{
 		return present === required;

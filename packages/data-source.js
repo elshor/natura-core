@@ -28,7 +28,7 @@ const Select = {
 	properties:{
 		dataType:'record type',
 		conditions:{
-			type:(context)=>{
+			type:()=>{
 				return 'condition*';
 			}
 		}
@@ -87,7 +87,7 @@ function registerDatasource(dictionary,_,spec){
 	assume(spec.name,'data source must have a name specified');
 	
 	//register data source
-	const datasource = dictionary._registerInstance(
+	dictionary._registerInstance(
 		spec.name,
 		'data source',
 		spec,
@@ -116,7 +116,7 @@ function registerDatasource(dictionary,_,spec){
 			})
 		});
 		
-+		//dataType.fields.forEach(field=>{
+		//dataType.fields.forEach(field=>{
 		
 		//create dataset expression
 		dictionary._registerSpecializedType(
