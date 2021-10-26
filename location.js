@@ -189,7 +189,7 @@ class Location{
 			return parent.type.singular;
 		}else if(parent.spec.hashSpec){
 			//this is a hashSpec
-			return Type(parent.spec.hashSpec.type,THIS);
+			return Type(parent.spec.hashSpec.type,this);
 		}else if(parent.spec.properties && parent.spec.properties[this.property]){
 			return Type(parent.spec.properties[this.property].type,this);
 		}else{
