@@ -285,7 +285,10 @@ function previousContextLocation(location){
 }
 
 function match(dictionary, it, queryType,queryName, type,name,value,description,path){
-	const matchType = !queryType || dictionary.isa(type,queryType);
+	function searchString(type){
+		return type.searchString || type.toString();
+	}
+	const matchType = !queryType || dictionary.isa(searchString(type),searchString(queryType));
 	const matchName = !queryName || queryName === name;
 	if(matchType && matchName){
 		return it({type,name,value,description,path});
