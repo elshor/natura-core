@@ -269,8 +269,10 @@ const entities = 	[
 			items:{
 				type:'conditional value item*',
 				expanded:true,
-				displayInline:false,
-				hideName:true
+				hideName:true,
+				childSpec:{
+					displayInline:true
+				}
 			},
 			default:{
 				placeholder:'default value',
