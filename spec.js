@@ -44,7 +44,7 @@ export function placeholder(spec,propertyName){
 	return spec.placeholder ||
 		spec.title ||
 		propertyName ||
-		specType(spec) ||
+		specType(spec).searchString ||
 		DefaultPlaceholder
 }
 const DEFAULT_SPEC = [{$type:'use context',path:'..'}];
