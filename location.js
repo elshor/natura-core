@@ -301,7 +301,7 @@ class Location{
 	_isReference(currentValue = undefined){
 		function isSelfReference(location){
 			//self reference is a reference to itself. This should not be considered a reference because it will cause endless recursion
-			return (!location.data.path || location.data.path === '') && 
+			return (!location.data || !location.data.path || location.data.path === '') && 
 				location.data.$type === 'reference'
 		}
 		if(isSelfReference(this)){
