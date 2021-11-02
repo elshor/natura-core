@@ -3,7 +3,7 @@
  *   All rights reserved.
  */
 import HB from 'handlebars';
-import { specContextType } from './spec';
+import { specContextType } from './spec.js';
 
 export function calcTemplate(templateText,context){
 	if(typeof templateText !== 'string'){
