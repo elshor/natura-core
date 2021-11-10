@@ -169,7 +169,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 export function filterAndSortSuggestions(suggestions,filter){
 	const ret = {
 		list:suggestions.list.filter(item=>
-			item.text.toLowerCase().includes(filter.toLowerCase())
+			typeof item.text === 'string' && item.text.toLowerCase().includes(filter.toLowerCase())
 		)
 	}
 	ret.list.forEach(item=>scoreSuggestion(item,filter));
