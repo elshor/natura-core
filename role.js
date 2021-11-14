@@ -2,7 +2,9 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
-
+/**
+ * See explanation of the different roles in natura-pkg readme file
+ */
 export const Role = {
 	artifact:'artifact',
 	value:'value',
