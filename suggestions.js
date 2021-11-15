@@ -2,7 +2,7 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
-import { specComputedPattern} from "./spec.js";
+import { specComputedPattern, specIsGeneric} from "./spec.js";
 import { assume } from "./error.js";
 import { generateNewElement } from "src/components/utils.js";
 import {calcTemplate} from './template.js'
@@ -42,7 +42,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 			let parsed = type.match(/^(artifact|type|instance)\.(.*)$/);
 			return parsed? [parsed[2],parsed[1]] : [type];
 		}else{
-			//assume type is a type object
+			//if type is an object with role specified, then use it. Otherwise ignore role (it will be undefined)
 			return [expectedType.typeString,expectedType.role];
 		}
 	}(location);
@@ -82,6 +82,10 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 			const spec = dictionary.getTypeSpec(type);
 			if(matchRole(spec.role,Role.type) && !matchRole(role,Role.type)){
 				//ignore types unless specifically requested
+				return;
+			}
+			if(specIsGeneric(spec)){
+				//ignore generic types
 				return;
 			}
 			const value = generateNewElement(type,null,dictionary);
