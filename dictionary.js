@@ -425,7 +425,7 @@ export default class Dictionary{
 	 * @param {Type} type type to test
 	 */
 	_ensureSpecializedIsRegistered(type){
-		const matched = (searchString(type)).match(/^(.+)\.\<(.+)\>$/);
+		const matched = (searchString(type)).match(/^([^\.\<\>]+)\.?\<(.+)\>$/);
 		if(!matched){
 			//this is not a specialized generic
 			return;
