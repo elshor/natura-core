@@ -30,6 +30,14 @@ export default function Type(type,location){
 			return new BaseType(baseType);
 		case 'role type':
 			return new RoleType(Type(type.type,location),type.role);
+		case 'template type':
+			return new BaseType(
+				`${
+					Type(type.generic,location).toString()
+				}<${
+					specializedValue(type.specialized,location)
+				}>${type.collection?'*' : ''}`
+			);
 		default:
 			throw new Error(IllegalType);
 		}
@@ -115,4 +123,8 @@ function follow(source,path){
 		current = current[path[i]];
 	}
 	return current;
+}
+function specializedValue(val,location){
+	//currently only type specialized values are supported (not values)
+	return Type(val,location).toString();
 }
