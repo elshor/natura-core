@@ -3,7 +3,7 @@
  *   All rights reserved.
  */
 import { LoadError, assume, ParamValue } from "./error.js";
-import { specType } from "./spec.js";
+import { specType,specIsGeneric } from "./spec.js";
 import { parsePattern } from "./pattern.js";
 import {entityType,entityIsArray} from './entity.js'
 import deepmerge from "deepmerge";
@@ -359,7 +359,7 @@ export default class Dictionary{
 		});
 		this.repo[type]=spec;
 
-		if(!isGenericType(spec)){
+		if(!specIsGeneric(spec)){
 			//for generic types we do not register isa and valueType - only for their specializations
 			this._registerValueType(spec.valueType,type,spec.role);
 		}
