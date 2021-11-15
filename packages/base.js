@@ -16,6 +16,10 @@ const entities = 	[
 		isa:['property type']
 	},
 	{
+		name:'action',
+		role:'type'
+	},
+	{
 		name:'copy type',
 		description:'A type derived from the value of a property value. This can be used to derive the type of default value based on the type defined in the property spec',
 		properties:{

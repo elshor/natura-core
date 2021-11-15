@@ -9,6 +9,8 @@ export default [
 		description:'Test if a condition is true. If it is true then execution action. Otherwise eecute the alternate action if exists.',
 		title:'condition statement',
 		isa:['action'],
+		role:'type',
+		valueType:'action',
 		properties:{
 			'condition':{type:'condition'},
 			'action':{type:'action',placeholder:'action to perform', description:"Specify here the action to perform when the condition is true."},
@@ -23,6 +25,8 @@ export default [
 		name: 'action sequence to perform',
 		displayPattern:'do the following actions',
 		inlineDetails:'expanded',
+		valueType:'action',
+		role:'type',
 		isa:['action'],
 		show:['sequence'],
 		expanded:true,
@@ -41,6 +45,8 @@ export default [
 		name:'set',
 		title:'set property',
 		isa:'action',
+		valueType:'action',
+		role:'type',
 		description:'set a property value of an object.',
 		pattern:'set <<prop>> to <<value>>',
 		properties:{
