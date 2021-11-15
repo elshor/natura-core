@@ -90,3 +90,7 @@ export function specProperties(spec){
 export function specIsSelection(spec){
 	return spec.options !== undefined && spec.options !== null;
 }
+
+export function specIsGeneric(spec){
+	return Array.isArray(spec.genericProperties) && !spec.$specialized;
+}
