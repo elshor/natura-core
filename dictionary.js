@@ -5,6 +5,7 @@
 import { LoadError, assume, ParamValue } from "./error.js";
 import { specType,specIsGeneric } from "./spec.js";
 import { parsePattern } from "./pattern.js";
+import Type from './type.js';
 import {entityType,entityIsArray} from './entity.js'
 import deepmerge from "deepmerge";
 import base from './packages/base.js'
@@ -396,6 +397,7 @@ export default class Dictionary{
 		if(!valueType){
 			return;
 		}
+		valueType = Type(valueType).toString();//turn type objects into strings
 		this._ensureSpecializedIsRegistered(valueType);
 		if(this.valueTypeRepo[valueType] === undefined){
 			this.valueTypeRepo[valueType] = []
