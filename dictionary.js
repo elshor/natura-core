@@ -45,6 +45,9 @@ export default class Dictionary{
 	}
 
 	isa(type,className){
+		type = searchString(type);
+		className = searchString(className);
+
 		if(type === className){
 			//a class is always itself - e.g. an action is an action
 			return true;
@@ -464,6 +467,6 @@ function isGenericType(spec){
 	return Array.isArray(spec.genericProperties) && !spec.$specialized;
 }
 
-function searchString(string){
-	return string.searchString || string.toString();
+function searchString(str){
+	return str? (str.searchString || str.toString()) : 'any';
 }
