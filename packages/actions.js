@@ -24,7 +24,7 @@ export default [
 	{
 		name: 'action sequence to perform',
 		displayPattern:'do the following actions',
-		inlineDetails:'expanded',
+		expanded:true,
 		valueType:'action',
 		role:'type',
 		isa:['action'],
