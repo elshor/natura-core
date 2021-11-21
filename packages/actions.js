@@ -62,4 +62,35 @@ export default [
 			}}
 		}
 	},
+	{
+		name:'repeat for each',
+		pattern:'for each item in <<collection>> do <<actions>>',
+		description:'Repeat a sequence of actions for each item in a collection. The current item can be referenced from the action script as "the item"',
+		role:'type',
+		isa:['action'],
+		valueType:'action',
+		title:'repeat for each',
+		context:[{
+			$type:'basic emit',
+			type:{
+				$type:'copy type',
+				path:'$location.properties.collection.valueSpec.$specialized.dataType',
+			},
+			name:'{{the $location.properties.collection.valueSpec.$specialized.dataType}}',
+			access:'{{$id}}-item',
+			useScope:false,
+			description:'the current item'
+		}],
+		properties:{
+			collection:{
+				type:'data collection',
+				placeholder:'collection of items',
+				description:'Select a collection of items you would like to repeat the action for',
+			},
+			actions:{
+				type:'action*',
+				placeholder:'actions to perform',
+			}
+		}
+	}
 ]
