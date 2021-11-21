@@ -381,11 +381,15 @@ function relativeLocations(location,path){
 		switch(part){
 			case '':
 				current.push(location);
+				break;
 			case '..':
 				current.push(location.parent);
 				break;
 			case  '*':
 				current.push(...location.children);
+				break;
+			case '$previous':
+				current.push(location.previous);
 				break;
 			default:
 				current.push(location.child(part));
