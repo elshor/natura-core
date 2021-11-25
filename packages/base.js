@@ -774,18 +774,25 @@ const entities = 	[
 
 			//add the pattern if does not exist
 			//TODO need to fix this. valuetype should be'value.'+name and it shoule be a subtupe of valueType
-			if(!dictionary.typeHasSpec(name)){
+			const existingSpec = dictionary.getTypeSpec(name);
+			if(existingSpec.access){
+				//getter already exists - add access of this spec
+				existingSpec.access[spec.objectType.searchString||spec.objectType.toString()] = spec.access;
+			}else{
 				dictionary._registerType(name,{
 					name,
+					$generic:'get',
 					pattern,
 					title,
 					isa:['expression','property accessor','application type'],
 					valueType:spec.valueType,
 					role:Role.calc,
 					description:spec.description,
+					access:{
+						[spec.objectType.searchString||spec.objectType.toString()]:spec.access
+					},
 					properties:{
 						object:{type:'object.'+name,placeholder:'the object'},
-						access:{init:spec.access}
 					}
 				});
 			}
