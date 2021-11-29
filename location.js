@@ -71,7 +71,8 @@ class Location{
 		}
 		const parentType = parent.type;
 		if(
-			this._cache.parentType === parentType.toString() && 
+			this._cache.parentType &&
+			this._cache.parentType.toString() === parentType.toString() && 
 			this._cache.contextSpec
 		){
 			//parent did not change and can use cache
@@ -94,7 +95,7 @@ class Location{
 		}
 
 		//store cache
-		this._cache.parentType = parentType.toString();
+		this._cache.parentType = parentType;
 		this._cache.contextSpec = ret;
 
 		return ret;
@@ -442,6 +443,11 @@ class Location{
 		const asInteger = Number.parseInt(property,10);
 
 		this._invalidateCache();
+
+		if(asInteger === -1 && Array.isArray(this.parent.value)){
+			//need to invalidate the location at the expected insert position
+			this.parent.child(this.parent.value.length)._invalidateCache();
+		}
 
 		if(!parent.value){
 			//first set the value of parent
