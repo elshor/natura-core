@@ -166,7 +166,11 @@ function basicEmit(original,entry,iterator,type,name,scope='',visitIt){
 			const spec = referenced.dictionary.getTypeSpec(type);
 			return referenced.lang.theType(specContextType(spec));
 		}(entryType);
-
+		if(emitName===''){
+			//emit name is empty - disregard this entry - cannot display it
+			return true;
+		}
+		
 		//calculate access
 		const access = calcTemplate(entry.access||entry.name,referenced.contextNoSearch);
 		if(access===''){
