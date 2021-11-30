@@ -56,7 +56,7 @@ export function generateNewEntity(type,context={},dictionary){
 		if(spec.properties){
 			Object.keys(spec.properties).forEach(prop=>{
 				if(spec.properties[prop].init !== undefined){
-					ret[prop] = cloneEntity(calc(spec.properties[prop].init,context));
+					ret[prop] = cloneEntity(spec.properties[prop].init);
 				}
 			});
 		}
