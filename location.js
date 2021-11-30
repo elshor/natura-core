@@ -12,6 +12,7 @@ import Type from './type.js'
 import langLib from './lang.js'
 import { isValid } from './validate.js';
 import Dictionary from './dictionary.js'
+import { calcTemplate } from './template.js';
 
 const locationMap = new Map();
 export function createLocation(data,dictionary=new Dictionary(),path=''){
@@ -172,6 +173,21 @@ class Location{
 		}else{
 			return spec;
 		}
+	}
+
+	get inlineTitle(){
+		const spec = this.spec;
+		if(spec.template){
+			return calcTemplate(this.spec.template,this.contextNoSearch);
+		}
+		const patternText = this.patternText;
+		if(patternText){
+			return patternText;
+		}
+		if(spec.title){
+			return calcTemplate(spec.title,this.contextNoSearch);
+		}
+		return spec.name || spec.type.toString();
 	}
 
 	get expectedSpec(){
