@@ -236,6 +236,13 @@ class Location{
 		const last = pathSegments.pop();
 		if(isNumber(last) && asNumber(last) > 0){
 			return this.parent.child(Number(asNumber(last)-1).toString());
+		}else if(asNumber(last) === -1){
+			const parentValue = this.parent.value;
+			if(Array.isArray(parentValue) && parentValue.length > 0){
+				return this.parent.child(parentValue.length-1);
+			}else{
+				return null;
+			}
 		}else{
 			return null;
 		}
