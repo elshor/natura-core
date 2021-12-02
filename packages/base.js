@@ -460,6 +460,10 @@ const entities = 	[
 			noSuggestions:{
 				type:'boolean',
 				description:'If set then do not show suggestions for this property'
+			},
+			suggestExpressions:{
+				type:'boolean',
+				description:'by default show expressions in suggestions menu, without requiring user to type "="'
 			}
 		}
 	},
