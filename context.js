@@ -108,7 +108,8 @@ function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName){
 	const emitProperty = entry.name? 
 		calcTemplate(entry.name,referenced.contextNoSearch) : 
 		referenced.lang.theType(specContextType(spec));
-	const emitName = referenced.lang.of(emitProperty,matchRole(spec.role,Role.model)?scopeName:null);
+		const useOf = matchRole(spec.role,Role.model)||matchRole(spec.role,Role.type);
+	const emitName = referenced.lang.of(emitProperty,useOf?scopeName:null);
 	if(match(
 		referenced.dictionary,
 		iterator,
