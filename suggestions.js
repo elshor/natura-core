@@ -2,6 +2,7 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
+import { relativeLocations } from "./location.js";
 import { specComputedPattern, specIsGeneric} from "./spec.js";
 import { assume } from "./error.js";
 import { generateNewElement } from "src/components/utils.js";
@@ -50,28 +51,9 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 	/////////////////////
 	//options suggestions
 	/////////////////////
-	let options=[];
 	if(itsExpectedSpec.options){
-		//options are explicitly set - just use it
-		options = itsExpectedSpec.options;
-	}else{
-		const optionsType = expectedType;
-		options = dictionary.getTypeSpec(optionsType).options;
-	}
-	const calculatedOptions = calcValue(options,location.context);
-	if(hasFunction(calculatedOptions,'forEach')){
-		//the spec has an array options property (or other object that supports forEach function)
-		calculatedOptions.forEach(option=>
-			ret.list.push({
-				value:cloneEntity(option),
-				text: suggestionText(option,itsExpectedSpec,dictionary),
-				source:'option'
-			})
-		);
-	}
-	if(itsExpectedSpec.options){
-		//if options are specified then ignore any other suggestion types
-		return ret;	
+		getOptionSuggestions(ret,location,itsExpectedSpec);
+		return ret;//when options are set then no need to look further
 	}
 
 	////////////////////////////
@@ -140,8 +122,8 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				return;
 			}
 			
-			//if expressions are not allowed, expect role of value to be artifact
-			if(!allowExpressions && roleIsNotArtifact(entry.value)){
+			//if role is specified then make sure it matches
+			if(role && !matchRole(entry.role,role)){
 				return;
 			}
 
@@ -182,7 +164,7 @@ export function filterAndSortSuggestions(suggestions,filter){
 }
 
 function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpectedSpec,allowExpressions,role){
-const types = dictionary.getExpressionsByValueType(expectedType,allowExpressions);
+const types = dictionary.getExpressionsByValueType(expectedType,allowExpressions,role);
 types.forEach(type=>{
 	const value = generateNewElement(type,null,dictionary);
 	suggestions.list.push({
@@ -271,14 +253,35 @@ function isPrimitive(x){
 	return ['boolean','string','number'].includes(typeof x);
 }
 
-function roleIsNotArtifact(entity){
-	if(entity === null || typeof entity !== 'object'){
-		//we don't know the answer
-		return null;
+function getOptionSuggestions(ret,location,spec){
+	if(!spec.options || typeof spec.options !== 'object'){
+		console.error('Error in options format - expected object',spec.options);
+		return;
 	}
-	if(typeof entity.role !== 'string'){
-		return null;
+	if(spec.options.$type === 'path options'){
+		const locations = relativeLocations(location,spec.options.path);
+		locations.forEach(option=>{
+			const value = option.value;
+			if(value === undefined || value === null){
+				//value does not exist, cannot do anything with it
+				return;
+			}
+			const label = value.name||value.label||value.toString()
+			ret.list.push({
+				value: {
+					$type:'reference',
+					label,
+					valueType:value.$type,
+					description:value.description,
+					path:option.path,
+					role:'instance'
+				},
+				description: value.description,
+				source:'option',
+				text: label
+			})
+		})
+	}else{
+		console.error('Unknown options definition',spec.options);
 	}
-	return !matchRole(entity.role,Role.artifact);
 }
-

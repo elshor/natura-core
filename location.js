@@ -672,3 +672,33 @@ function plainSetter(obj,key,value){
 function plainInserter(arr,pos,value){
 	arr.splice(pos,0,value);
 }
+export function relativeLocations(location,path){
+	function follow(location,part,current){
+		location = location.referenced;
+		switch(part){
+			case '':
+			case '.':
+				current.push(location);
+				break;
+			case '..':
+				current.push(location.parent);
+				break;
+			case  '*':
+				current.push(...location.children);
+				break;
+			case '$previous':
+				current.push(location.previous);
+				break;
+			default:
+				current.push(location.child(part));
+		}
+	}
+	let current = [location];
+	const parts = path.split('/');
+	parts.forEach(part=>{
+		const now = [];
+		current.forEach(l=>follow(l,part,now));
+		current = now;
+	})
+	return current;
+}

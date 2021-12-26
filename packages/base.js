@@ -756,12 +756,6 @@ const entities = 	[
 		additional:['model']
 	},
 	{
-		name:'path options',
-		calc:function(context){
-			return calcPath(context,this.path);
-		}
-	},
-	{
 		name:'property',
 		description:'a property of an object. This is used to define setters and getters',
 		pattern:'<<name>> of <<objectType>> (<<valueType>>)',

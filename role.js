@@ -12,7 +12,8 @@ export const Role = {
 	type:'type',
 	instance:'instance',
 	model:'model',
-	group:'group'
+	group:'group',
+	entity:'entity'//a document entity
 }
 
 export function matchRole(present,required){

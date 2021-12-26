@@ -20,6 +20,8 @@ export default function Type(type,location){
 		return type;
 	}else if(type !== null && typeof type === 'object'){
 		switch(type.$type){
+		case 'base type':
+			return new BaseType(type.type);
 		//use a type specified in a path (like property) from this object
 		case 'copy type':
 			const pathText = '/' + (type.path||'').replace(/\./g,'/');
@@ -46,6 +48,7 @@ export default function Type(type,location){
 
 class BaseType{
 	constructor(type){
+		this.$type='base type',
 		this.type = type || 'any';
 	}
 	get isTypeObject(){
@@ -83,6 +86,7 @@ class BaseType{
 
 class RoleType{
 	constructor(type,role){
+		this.$type="role type",
 		this.type = Type(type);
 		this.role = role;
 	}

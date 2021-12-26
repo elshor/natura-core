@@ -11,6 +11,7 @@ import deepmerge from "deepmerge";
 import base from './packages/base.js'
 import reference from "./reference.js";
 import { calcTemplate } from "./template.js";
+import { matchRole } from "./role.js";
 
 export default class Dictionary{
 	constructor(packages=[base]){
@@ -139,7 +140,7 @@ export default class Dictionary{
 		return this.isaRepo[type]||[];
 	}
 
-	getExpressionsByValueType(type,allowCalc=true){
+	getExpressionsByValueType(type,allowCalc=true,expectedRole){
 		//get all valueTypes
 		let current = Object.keys(this.valueTypeRepo);
 		//only keep valueTypes where valueType isa type
@@ -149,7 +150,12 @@ export default class Dictionary{
 		//flatten the list
 		current = current.flat();
 		//if allowCal is false then only allow if role is not calc
-		current = current.filter(({role})=>allowCalc || role !== 'calc')
+		current = current.filter(({role})=>{
+			if(expectedRole){
+				return matchRole(role,expectedRole);
+			}
+			return allowCalc || role !== 'calc';
+		});
 		current = current.map(({type})=>type);
 		return unique(current);
 	}

@@ -5,7 +5,7 @@
 import { assume } from './error.js';
 import {calcTemplate} from './template.js'
 import Type from './type.js'
-import {createLocation} from './location.js'
+import {createLocation,relativeLocations} from './location.js'
 import { specContextType } from './spec.js';
 import {Role,matchRole} from './role.js'
 
@@ -55,7 +55,7 @@ function visit(location,iterator,type,name,scope,visitIt){
 		return true;
 	}
 	const referenced = location.referenced;
-	if(alreadyVisited(location,iterator)){
+	if(alreadyVisited(scope,location,iterator)){
 		return true;
 	}
 	visitIt?visitIt('location',referenced):null;
@@ -81,16 +81,20 @@ function visitEntry(referenced,entry,iterator,type,name,scope='',visitIt){
 	switch(entry.$type){
 		case 'basic emit':
 			return basicEmit(referenced,entry,iterator,type,name,scope);
+		case 'emit value':
+			return emitValue(referenced,entry,iterator,type,name,scope);
+		case 'emit entity':
+			return emitEntity(referenced,entry,iterator,type,name,scope);
 		case 'use scope':
 			return useScope(referenced,entry,iterator,type,name,scope,null,visitIt);
 		case 'use context':
 			return useContext(referenced,entry,iterator,type,name,scope,visitIt);
 		default:
-			assume(false,'expected known context entry. Got',entry.$type);
+			assume(false,'In context array, got unknown context entry type',entry.$type);
 		}
 }
 
-function visitScopeEntry(referenced,entry,iterator,type,name,scope='',scopeName,visitIt=undefined){
+function visitScopeEntry(referenced,entry,iterator,type,name,scope='',scopeName,visitIt){
 	scope = scope || '';
 	if(!entry || typeof entry !== 'object'){
 		return true;
@@ -99,39 +103,90 @@ function visitScopeEntry(referenced,entry,iterator,type,name,scope='',scopeName,
 	return scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt);
 }
 
-function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName){
-	//calculate the type
-	const entryType = Type(entry.type,referenced).toString();
-	const spec = referenced.dictionary.getTypeSpec(entryType);
+/**
+ * 
+ * @param {String} entry.path
+ * @param {String} entry.type
+ * @param {String} entry.name
+ * @param {String} entry.access
+ * @returns 
+ */
+function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt){
+	const locations = relativeLocations(referenced,entry.path||'');
+	for(let i=0;i<locations.length;++i){
+		const location = locations[i];
+		if(entry.$type === 'scope mixin'){
+			return scopeSearch(location,entry.key,iterator,type,name,scope,scopeName,visitIt)
+		}
 	
-	//calculate emit name
-	const emitProperty = entry.name? 
-		calcTemplate(entry.name,referenced.contextNoSearch) : 
-		referenced.lang.theType(specContextType(spec));
+		//calculate the type
+		const entryType = Type(calcTemplate(entry.type,location.contextNoSearch),location).toString();
+		const spec = location.dictionary.getTypeSpec(entryType);
+		
+		//calculate emit name
+		const emitProperty = entry.name? 
+			calcTemplate(entry.name,location.contextNoSearch) : 
+			location.lang.theType(specContextType(spec));
+		const entryAccess = entry.access? calcTemplate(entry.access,location.contextNoSearch) : null;
 		const useOf = matchRole(spec.role,Role.model)||matchRole(spec.role,Role.type);
-	const emitName = referenced.lang.of(emitProperty,useOf?scopeName:null);
-	if(match(
-		referenced.dictionary,
-		iterator,
-		type,
-		name,
-		entryType,
-		emitName,
-		{
-			$type:'reference',
-			label:emitName,
-			valueType:entryType,
-			access: scope + "." + (entry.access||entry.name),
-			role:entry.role || 'artifact'
-		},
-		entry.description,
-		referenced.path + (entry.path? '/' + entry.path : '')
-	)===false){
-		return false;
+		const emitName = location.lang.of(emitProperty,useOf?scopeName:null);
+		const description = calcTemplate(entry.description||'',location.contextNoSearch);
+		if(match(
+			referenced.dictionary,
+			iterator,
+			type,
+			name,
+			entryType,
+			emitName,
+			{
+				$type:'reference',
+				label:emitName,
+				valueType:entryType,
+				access: scope + "." + (entryAccess||entry.name),
+				role:entry.role || 'artifact',
+				description
+			},
+			description,
+			location.path
+		)===false){
+			return false;
+		}
 	}
 	return true;
 }
 
+/** emit an entity in the document. This emit references an existing a location in the document from another location */
+function emitEntity(location,entry,iterator,type,name,scope='',visitIt){
+	const emitName = entry.name?
+		calcTemplate(entry.name,location.contextNoSearch,true):location.value?
+			location.value.name : undefined;
+	const emitType = location.type;
+	if(!emitName){
+		//if there is no name defiend then cannot emit it
+		return true;
+	}
+	if(match(
+		location.dictionary,
+		iterator,
+		type,
+		name,
+		emitType,
+		emitName,
+		{
+			$type:'reference',
+			label:emitName,
+			valueType:emitType,
+			path:location.path,
+			role:entry.role || 'artifact'
+		},
+		entry.description,
+		location.path
+	)===false){
+		return false;
+	}else{
+		return true;
+	}
+}
 /**
  * 
  * @param {Location} original 
@@ -148,7 +203,7 @@ function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName){
  * @param {*} visitIt 
  * @returns 
  */
-function basicEmit(original,entry,iterator,type,name,scope='',visitIt){
+function basicEmit(original,entry,iterator,type,name,scope=''){
 	const locations = relativeLocations(original,entry.path||'');
 	scope = entry.scope? 
 		(scope + entry.scope + '.') : 
@@ -158,7 +213,19 @@ function basicEmit(original,entry,iterator,type,name,scope='',visitIt){
 		const referenced = locations[i].referenced;	
 		
 		//calculate the type
-		const entryType = Type(entry.type||location.type,referenced).toString();
+		let entryType;
+		if(typeof entry.type === 'string'){
+			entryType = calcTemplate(entry.type,referenced.contextNoSearch);
+			if(!entryType){
+				//the calculation failed - do not emit
+				return true;
+			}
+		 }else if(typeof entry.type === 'object'){
+			 //entry.type is a type object
+			 entryType = Type(entry.type,referenced).toString();
+		 }else{
+			 entryType = location.type;
+		 }
 		
 		//calculate emit name
 		const emitName = entry.name? 
@@ -198,13 +265,42 @@ function basicEmit(original,entry,iterator,type,name,scope='',visitIt){
 		)===false){
 			return false;
 		}
-		if(entry.useScope){
-			//also emit the scope of the emited type.
-			return scopeSearch(referenced,entryType,iterator,type,name,scope + access, emitName, visitIt);
-		}else{
-			return true;
-		}
+		return true;
 	}
+}
+
+function emitValue(original,entry,iterator,type,name,scope='',visitIt){
+	const location = original.referenced;
+	const context = location.referenced.contextNoSearch;
+	const emitType = calcTemplate(entry.type,context);
+	const emitName = calcTemplate(entry.name,context);
+	if(!emitName || emitName.length===0||!emitType||emitType.length===0){
+		//if name or type are empty then don't emit
+		return true;
+	}
+	const value = calcTemplate(entry.value,context);
+	const description = calcTemplate(entry.description,context);
+	if(match(
+		location.dictionary,
+		iterator,
+		type,
+		name,
+		emitType,
+		emitName,
+		{
+			$type:'reference',
+			label:emitName,
+			valueType:emitType,
+			value,
+			description,
+			role:entry.role || 'artifact'
+		},
+		description,
+		location.path
+	)===false){
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -219,10 +315,10 @@ function basicEmit(original,entry,iterator,type,name,scope='',visitIt){
  * @param {*} visitIt 
  * @returns 
  */
-function scopeSearch(location,scopeType,iterator,type,name,scope,scopeName,visitIt){
-	const currentSpec = location.dictionary.getTypeSpec(scopeType);
+function scopeSearch(location,key,iterator,type,name,scope,scopeName,visitIt){
+	const currentSpec = location.spec;
 	visitIt?visitIt('scope-search',location):null;
-	const entries = currentSpec.scope || [];
+	const entries = currentSpec.scope?(currentSpec.scope[key] || []) : [];
 	for(let i=0;i<entries.length;++i){
 		const b = visitScopeEntry(location, entries[i],iterator,type,name,scope,scopeName,visitIt);
 		if(b === false){
@@ -240,32 +336,41 @@ function scopeSearch(location,scopeType,iterator,type,name,scope,scopeName,visit
  */
 function useContext(referenced,entry,iterator,type,name,scope,visitIt){
 	const locations = relativeLocations(referenced,entry.path);
+	const entryScope = entry.scope?calcTemplate(entry.scope,referenced.contextNoSearch):null;
 	return iterateArray(
 		locations,
 		iterator,
 		type,
 		name,
-		entry.scope? (scope + entry.scope + '.') : scope,
+		entryScope? (scope + entryScope + '.') : scope,
 		visitIt
 		);
 }
 
 function useScope(referenced,entry,iterator,type,name,scope,scopeName, visitIt){
-	const location = relativeLocations(referenced,entry.path).referenced;
-	if(location.isEmpty){
-		return true;//continue search
+	const locations = relativeLocations(referenced,entry.path);
+	for(let i=0;i<locations.length;++i){
+		const location = locations[i];
+		if(location.isEmpty){
+			continue;//continue search
+		}
+		const entryAccess = entry.access? calcTemplate(entry.access,location.contextNoSearch ): null;
+		scope = entryAccess? scope+'.' + entryAccess : scope;
+		
+		if(scopeSearch(
+			location,
+			entry.key,
+			iterator,
+			type,
+			name,
+			scope,
+			scopeName,
+			visitIt
+		) === false){
+			return false;
+		};
 	}
-	scope = entry.access? scope+'.' + entry.access : scope;
-	return scopeSearch(
-		location,
-		location.type,
-		iterator,
-		type,
-		name,
-		scope,
-		scopeName,
-		visitIt
-	) !== false;
+	return true;//continue search
 }
 
 /**
@@ -351,16 +456,27 @@ export function locationContext(location,contextLocation=location){
 				//return the value of current location (dereferenced)
 				return location.referenced.value;
 			}
+			if(prop==='$parent'){
+				return locationContext(location.parent,contextLocation);
+			}
 			if(prop==='$isProxy'){
 				//this property signals that we can use $value
 				return true;
 			}
 
 			//check if location value has the property
-			const entity = location.referenced.value;
-			const propValue = entity[prop];
-			if(propValue !== undefined){
-				return propValue;
+			const propLocation = location.referenced.child(prop);
+			const value = propLocation.value;
+			if(value && typeof value === 'object'){
+				//if this is a value reference then return the value
+				if(value.$type === 'reference' && value.value){
+					return value.value;
+				}
+				//this is an object - return a new context
+				return locationContext(propLocation,contextLocation);
+			}else if(typeof value  !== undefined){
+				//this is a non-object - return the raw value
+				return value;
 			}
 
 			//search context
@@ -381,34 +497,6 @@ export function locationContext(location,contextLocation=location){
 	})
 }
 
-function relativeLocations(location,path){
-	function follow(location,part,current){
-		switch(part){
-			case '':
-				current.push(location);
-				break;
-			case '..':
-				current.push(location.parent);
-				break;
-			case  '*':
-				current.push(...location.children);
-				break;
-			case '$previous':
-				current.push(location.previous);
-				break;
-			default:
-				current.push(location.child(part));
-		}
-	}
-	let current = [location];
-	const parts = path.split('/');
-	parts.forEach(part=>{
-		const now = [];
-		current.forEach(l=>follow(l,part,now));
-		current = now;
-	})
-	return current;
-}
 
 function iterateArray(locations,iterator,type,name,scope,visitIt){
 	for(let location of locations){
@@ -420,14 +508,16 @@ function iterateArray(locations,iterator,type,name,scope,visitIt){
 	return true;
 }
 
-function alreadyVisited(location,iterator){
+function alreadyVisited(scope,location,iterator){
+	//we need to specify scope so we always visit a location with the correct scope
+	const key = `${scope}|${location.path}`;
 	if(!iterator.state){
 		iterator.state = IteratorState();
 	}
-	if(iterator.state.visited.has(location.path)){
+	if(iterator.state.visited.has(key)){
 		return true;
 	}else{
-		iterator.state.visited.add(location.path);
+		iterator.state.visited.add(key);
 		return false;
 	}
 }
