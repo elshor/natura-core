@@ -693,6 +693,10 @@ export function relativeLocations(location,path){
 				current.push(location.child(part));
 		}
 	}
+	if(path[0]==='/'){
+		//the location is relative to top
+		location = createLocation(location.data,location.dictionary);
+	}
 	let current = [location];
 	const parts = path.split('/');
 	parts.forEach(part=>{
