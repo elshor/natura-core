@@ -31,5 +31,6 @@ export function calcTemplate(templateText,context,safe){
 //register template functions
 HB.registerHelper('the',function(type){
 	const dictionary = this.$dictionary;
-	return 'the ' + (dictionary? specContextType(dictionary.getTypeSpec(type)) : type)
+	const spec = dictionary?dictionary.getTypeSpec(type) : {};
+	return 'the ' + (spec.name? specContextType(spec) : type)
 })

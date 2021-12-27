@@ -678,6 +678,7 @@ export function relativeLocations(location,path){
 		switch(part){
 			case '':
 			case '.':
+			case '$':
 				current.push(location);
 				break;
 			case '..':

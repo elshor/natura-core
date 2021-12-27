@@ -142,8 +142,9 @@ function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt)
 				$type:'reference',
 				label:emitName,
 				valueType:entryType,
-				access: scope + "." + (entryAccess||entry.name),
+				access: scope + ((entryAccess==='this')? '' : ("." + (entryAccess||emitName))),
 				role:entry.role || 'artifact',
+				path:location.path,
 				description
 			},
 			description,
@@ -258,6 +259,7 @@ function basicEmit(original,entry,iterator,type,name,scope=''){
 				label:emitName,
 				valueType:entryType,
 				access: scope + access,
+				path:referenced.path,
 				role:entry.role || 'artifact'
 			},
 			entry.description,
@@ -446,6 +448,10 @@ export function locate(location,type,name){
 export function locationContext(location,contextLocation=location){
 	return new Proxy(location,{
 		get(location,prop){
+			if(prop === '$'){
+				//$ just returns itself. This is done so we can start any path with $. (used in natura-pkg)
+				return locationContext(location,contextLocation);
+			}
 			if(prop === '$location'){
 				return location;
 			}
