@@ -143,7 +143,7 @@ class Location{
 
 				
 		if(this._cache.parentType === undefined){
-			this._cache.parentType = parent.type;
+			this._cache.parentType = parent? parent.type : 'any';
 		}
 
 		if(Type(this._cache.parentType,location).isCollection){
@@ -152,7 +152,7 @@ class Location{
 		}
 
 		if(this._cache.parentSpec === undefined){
-			this._cache.parentSpec = parent.spec;
+			this._cache.parentSpec = parent? parent.spec : {};
 		}
 		if(this._cache.parentSpec.hashSpec){
 			//this is a hashSpec
@@ -331,8 +331,8 @@ class Location{
 	_isReference(currentValue = undefined){
 		function isSelfReference(location){
 			//self reference is a reference to itself. This should not be considered a reference because it will cause endless recursion
-			return (!location.data || !location.data.path || location.data.path === '') && 
-				location.data.$type === 'reference'
+			return location && location.data && location.data.$type === 'reference' &&
+			(!location.data.path || location.data.path === '')
 		}
 		if(isSelfReference(this)){
 			return false;
@@ -458,6 +458,7 @@ class Location{
 		}else{
 			delete parentValue[this.property];
 		}
+		this.parent._invalidateCache();
 	}
 
 	/**
@@ -468,7 +469,7 @@ class Location{
 	 */
 	set(value,setter=plainSetter){
 		const property = this.property;
-		const isHash =  (property.charAt(0) === '#');
+		const isHash =  (typeof property === 'string' && property.charAt(0) === '#');
 		const parent = this.parent;
 		const asInteger = Number.parseInt(property,10);
 
@@ -536,10 +537,22 @@ class Location{
 	 * @param {Function} inserter inserter function to use. This should be used when special insert handling is required such as handling reactivity in Vue
 	 */
 	insert(value,setter=plainSetter,inserter=plainInserter){
-		const parent = this.parent.value;
-		const key = this.property
+		let parent = this.parent.value;
+		const key = this.property;
+		const pos = (typeof key === 'number')? key : Number.parseInt(key,10);
+
+		if(parent === undefined){
+			//need to generate parent
+			if(Number.isNaN(pos) && pos[0] !== '#'){
+				//parent is a regular object
+				this.parent.set({});
+			}else{
+				this.parent.set([]);
+			}
+			parent = this.parent.value;
+		}
+		
 		if(Array.isArray(parent)){
-			const pos = typeof key === 'number'? key : Number.parseInt(key,10);
 			if(Number.isNaN(pos)){
 				setter(parent,key,value)
 			}else{
@@ -547,7 +560,8 @@ class Location{
 			}
 		}else{
 			setter(parent,key,value)
-		}	
+		}
+		this.parent._invalidateCache();	
 	}
 }
 
