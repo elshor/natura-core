@@ -120,13 +120,20 @@ function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt)
 		}
 	
 		//calculate the type
-		const entryType = Type(calcTemplate(entry.type,location.contextNoSearch),location).toString();
+		const entryType = (typeof entry.type === 'string'?
+			Type(calcTemplate(entry.type,location.contextNoSearch),location).toString() :
+			Type(entry.type)
+		);
 		const spec = location.dictionary.getTypeSpec(entryType);
 		
 		//calculate emit name
 		const emitProperty = entry.name? 
 			calcTemplate(entry.name,location.contextNoSearch) : 
 			location.lang.theType(specContextType(spec));
+		if(!emitProperty || emitProperty.length === 0){
+			//if entry does not have a calculated name then do not emit it
+			continue;
+		}
 		const entryAccess = entry.access? calcTemplate(entry.access,location.contextNoSearch) : null;
 		const useOf = matchRole(spec.role,Role.model)||matchRole(spec.role,Role.type);
 		const emitName = location.lang.of(emitProperty,useOf?scopeName:null);
