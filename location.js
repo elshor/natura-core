@@ -43,8 +43,10 @@ class Location{
 		this.lang = lang || langLib();
 		this._cache = {};
 		this._children = {};
+		this._version = 0;
 	}
 	_invalidateCache(){
+		this._version++;//update version
 		Object.values(this._children).forEach(
 			child=>child._invalidateCache()
 		)
@@ -52,6 +54,10 @@ class Location{
 	}
 	get value(){
 		return locationValue(this);
+	}
+
+	get version(){
+		return this._version;
 	}
 
 	/**
