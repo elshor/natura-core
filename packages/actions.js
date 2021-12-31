@@ -42,22 +42,27 @@ export default [
 		}
 	},
 	{
+		name:'lvalue',
+		description:'A generic type for variables that can be set',
+		genericProperties:['type'],
+	},
+	{
 		name:'set',
-		title:'set property',
+		title:'set value',
 		isa:'action',
 		valueType:'action',
 		role:'type',
-		description:'set a property value of an object.',
-		pattern:'set <<prop>> to <<value>>',
+		description:'set a value of a property or variable',
+		pattern:'set <<lvalue>> to <<value>>',
 		properties:{
-			prop:{type:'property accessor',placeholder:'property to set'},
+			lvalue:{type:'lvalue',placeholder:'property or variable to set'},
 			value:{placeholder:'value to set',type:function({$location}){
-				const prop = $location.sibling('prop');
-				if(!prop){
+				const prop = $location.sibling('lvalue');
+				if(!prop || !prop.value){
 					//property not set, return any
 					return 'any instance';
 				}
-				const valueType = prop.spec.valueType;
+				const valueType = prop.spec.$specialized.type;
 				return valueType || 'any instance';
 			}}
 		}
