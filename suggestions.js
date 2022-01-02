@@ -281,6 +281,16 @@ function getOptionSuggestions(ret,location,spec){
 				text: label
 			})
 		})
+	}else if(Array.isArray(spec.options)){
+		spec.options.forEach(option=>{
+			ret.list.push({
+				value:option,
+				label:option,
+				valueType:'string',
+				path:location.path,
+				role:'value'
+			})
+		})
 	}else{
 		console.error('Unknown options definition',spec.options);
 	}
