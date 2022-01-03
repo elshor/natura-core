@@ -473,8 +473,6 @@ class Location{
 		const parent = this.parent;
 		const asInteger = Number.parseInt(property,10);
 
-		this._invalidateCache();
-
 		if(asInteger === -1 && Array.isArray(this.parent.value)){
 			//need to invalidate the location at the expected insert position
 			this.parent.child(this.parent.value.length)._invalidateCache();
@@ -518,14 +516,17 @@ class Location{
 			const created = this.parent.child(index);
 			const keyProperty = created.spec.key || "$key";
 			setter(created.value,keyProperty, hashKey);
+			this._invalidateCache();
 			return created;
 		}else if(asInteger === -1 && Array.isArray(this.parent.value)){
 			//insert a new item into array
 			const parentValue = this.parent.value;
 			parentValue.push(value);
+			this._invalidateCache();
 			return this.parent.child((parentValue.length-1).toString());
 		}else{
 			setter(parent.value,property,value);
+			this._invalidateCache();
 			return this;
 		}
 	}
