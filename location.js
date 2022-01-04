@@ -5,7 +5,7 @@
 import {JsonPointer} from 'json-ptr'
 import { mergeSpec, specProperties } from './spec.js';
 import calc, { isExpression, calcValue } from './calc.js';
-import {entityValue,cloneEntity} from './entity.js'
+import {entityValue,cloneEntity, generateNewEntity} from './entity.js'
 import {patternText} from './pattern.js'
 import {locationContext} from './context.js'
 import Type from './type.js'
@@ -43,21 +43,34 @@ class Location{
 		this.lang = lang || langLib();
 		this._cache = {};
 		this._children = {};
-		this._version = 0;
+		this._listeners=[];
+		this._sversion = 0;//structure version - used to invalidate nodes that changed
+	}
+	addEventListener(listener){
+		this._listeners.push(listener);
+	}
+	removeEventListener(listener){
+		const index = this._listeners.indexOf(listener);
+		if(index >=0){
+			this._listeners.splice(index,1);
+		}
+	}
+	emitChange(){
+		this._listeners.forEach(l=>l());
 	}
 	_invalidateCache(){
-		this._version++;//update version
+		if(this._cache.hasCachedValue &&
+			this.parent.value[this.property]!== this._cache.value){
+			//value changed
+			this.emitChange();
+		}
 		Object.values(this._children).forEach(
-			child=>child._invalidateCache()
+			child=>child._invalidateCache({self:true})
 		)
 		this._cache = {};
 	}
 	get value(){
 		return locationValue(this);
-	}
-
-	get version(){
-		return this._version;
 	}
 
 	/**
@@ -115,40 +128,40 @@ class Location{
 			return this.type;
 		}
 	}
-
 	get type(){
-		if(this._cache.type){
-			return this._cache.type;
+		if(!this._cache.type){
+			this._cache.type = this.calcType();			
 		}
-
+		return this._cache.type;
+	}
+	calcType(){
 		const thisValue = this.value;
 		if(this._isReference(thisValue)){
 			//type is stored in the reference object
-			return (this._cache.type = Type(thisValue.valueType));
+			return Type(thisValue.valueType);
 		}else if(thisValue && typeof thisValue ==='object' && thisValue.$type){
 			//value is set with an object that has explicit type
-			return (this._cache.type = Type(thisValue.$type));
+			return Type(thisValue.$type);
 		}
 		const parent = this.parent;
 
 		if(typeof thisValue === 'string'){
 			//TODO handle situations where expected type is a typedef of string
-			return (this._cache.type = Type('string'));
+			return Type('string');
 		}else if(typeof thisValue === 'number'){
 			//TODO handle situations where expected type is a typedef of number
-			return (this._cache.type = Type('number'));
+			return Type('number');
 		}else if(typeof thisValue === 'boolean'){
-			return (this._cache.type = Type('boolean'));
+			return Type('boolean');
 		}
 
-				
 		if(this._cache.parentType === undefined){
 			this._cache.parentType = parent? parent.type : 'any';
 		}
 
 		if(Type(this._cache.parentType,location).isCollection){
 			//this is a list type
-			return (this._cache.type = Type(this._cache.parentType,location).singular);
+			return Type(this._cache.parentType,location).singular;
 		}
 
 		if(this._cache.parentSpec === undefined){
@@ -156,15 +169,15 @@ class Location{
 		}
 		if(this._cache.parentSpec.hashSpec){
 			//this is a hashSpec
-			return (this._cache.type = Type(this._cache.parentSpec.hashSpec.type));
+			return Type(this._cache.parentSpec.hashSpec.type);
 		}else if(
 			this._cache.parentSpec.properties && 
 			this._cache.parentSpec.properties[this.property]
 		){
-			return (this._cache.type = Type(this._cache.parentSpec.properties[this.property].type,this));
+			return Type(this._cache.parentSpec.properties[this.property].type,this);
 		}else{
 			//no type information - return any
-			return (this._cache.type = Type('any'));
+			return Type('any');
 		}
 	}
 
@@ -455,10 +468,12 @@ class Location{
 				throw new TypeError('Array index should be a positive integer');
 			}
 			parentValue.splice(pos,1);
+			this.parent._invalidateCache({fron:pos});
 		}else{
 			delete parentValue[this.property];
+			this._invalidateCache({self:true})
 		}
-		this.parent._invalidateCache();
+		this.parent.emitChange();
 	}
 
 	/**
@@ -472,10 +487,16 @@ class Location{
 		const isHash =  (typeof property === 'string' && property.charAt(0) === '#');
 		const parent = this.parent;
 		const asInteger = Number.parseInt(property,10);
-
+		const currentValue = this.value;
+		//if value is the same then do nothing
+		if(currentValue === value){
+			return this;
+		}
+		this.emitChange();//changed this value
+		this.emitChange();//parent value changed
 		if(asInteger === -1 && Array.isArray(this.parent.value)){
 			//need to invalidate the location at the expected insert position
-			this.parent.child(this.parent.value.length)._invalidateCache();
+			this.parent.child(this.parent.value.length)._invalidateCache({self:true});
 		}
 
 		if(!parent.value){
@@ -484,13 +505,13 @@ class Location{
 				//if the property is a hash or number then assuming the parent is an array
 				this.parent.set([],setter);
 			}else{
-				this.parent.set({},setter);
+				this.parent._setNew(setter);
 			}
 		}
 		if(isHash){
 			//need to insert an object to the array. value must be an array
 			const parentValue = parent.value;
-			const hashKey = property.substr(1);
+			const hashKey = property.substring(1);
 			if(!Array.isArray(parentValue)){
 				throw new TypeError(`parent of hash value must be an array`);
 			}
@@ -502,7 +523,7 @@ class Location{
 			let index = -1;
 			for(let i=0;i<parentValue.length;++i){
 				if(this.child(i).key === hashKey){
-					this.parent.child(i).set(value,setter);
+					this.parent.child(i.toString()).set(value,setter);
 					index = i;
 				}
 			}
@@ -516,19 +537,35 @@ class Location{
 			const created = this.parent.child(index);
 			const keyProperty = created.spec.key || "$key";
 			setter(created.value,keyProperty, hashKey);
-			this._invalidateCache();
+			this._invalidateCache({self:true});
 			return created;
 		}else if(asInteger === -1 && Array.isArray(this.parent.value)){
 			//insert a new item into array
 			const parentValue = this.parent.value;
 			parentValue.push(value);
-			this._invalidateCache();
+			this._invalidateCache({self:true});
 			return this.parent.child((parentValue.length-1).toString());
 		}else{
+			//set this path
 			setter(parent.value,property,value);
+
+			//invalidate cache
 			this._invalidateCache();
+	
 			return this;
 		}
+	}
+
+	/** set a new object. If expectedType is not any then generateNewEntity of that type */
+	_setNew(setter=plainSetter){
+		const type = this.expectedType;
+		if(type.toString() === 'any'){
+			return this.set({},setter);
+		}
+		if(type.isCollection){
+			return this.set([],setter);
+		}
+		return this.set(generateNewEntity(type.toString(),null,this.dictionary),setter)
 	}
 
 	/**
@@ -546,23 +583,26 @@ class Location{
 			//need to generate parent
 			if(Number.isNaN(pos) && pos[0] !== '#'){
 				//parent is a regular object
-				this.parent.set({});
+				this.parent._setNew(setter);
 			}else{
 				this.parent.set([]);
 			}
 			parent = this.parent.value;
 		}
-		
 		if(Array.isArray(parent)){
 			if(Number.isNaN(pos)){
-				setter(parent,key,value)
+				//this is not really a pos in an array
+				throw new Error('Insert position is not an array index');
 			}else{
-				inserter(parent,pos,value)
+				inserter(parent,pos,value);
+				this.parent._invalidateCache({from:pos})
 			}
 		}else{
-			setter(parent,key,value)
+			//this is not an array pos - treat it as a property
+			setter(parent,key,value);
+			this._invalidateCache({self:true});
 		}
-		this.parent._invalidateCache();	
+		this.parent.emitChange();
 	}
 }
 
@@ -573,6 +613,9 @@ class Location{
 function locationValue(location){
 	if(location.path === undefined || location.path === ''){
 		return location.data;
+	}
+	if(location._cache.hasCachedValue){
+		return location._cache.value;
 	}
 	const parent = location.parent;
 	if(!parent){
@@ -588,7 +631,7 @@ function locationValue(location){
 	const property = location.property;
 	if(typeof property === 'string' && property.charAt(0) === '#'){
 		//this is a hash property. Look for the first child of parent that its key matches the has key
-		const hashKey = property.substr(1);
+		const hashKey = property.substring(1);
 		for(let x in parentValue){
 			if(parent.child(x).key === hashKey){
 				return parent.child(x).value;
@@ -599,13 +642,12 @@ function locationValue(location){
 
 	const value = parentValue[property];
 	if(value !== undefined){
+		location._cache.hasCachedValue = true;
+		location._cache.value = value;
 		return value;
 	}
 
-	//by now we rely on calculated value based on spec. Check cache first
-	if(location._cache.hasCachedValue){
-		return location._cache.value;
-	}
+	//by now we rely on calculated value based on spec
 	location._cache.hasCachedValue = true;
 	
 	const spec = location.expectedSpec;
