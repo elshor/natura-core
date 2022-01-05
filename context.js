@@ -122,7 +122,7 @@ function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt)
 		//calculate the type
 		const entryType = (typeof entry.type === 'string'?
 			Type(calcTemplate(entry.type,location.contextNoSearch),location).toString() :
-			Type(entry.type)
+			Type(entry.type,location)
 		);
 		const spec = location.dictionary.getTypeSpec(entryType);
 		
