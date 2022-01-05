@@ -41,6 +41,7 @@ export default function Type(type,location){
 				}>${type.collection?'*' : ''}`
 			);
 		default:
+			console.error('Using an unknown type',type.$type,type)
 			throw new Error(IllegalType);
 		}
 	}
