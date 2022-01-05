@@ -6,11 +6,9 @@ import basicTypes from "./basic-types.js"
 import {JsonPointer} from 'json-ptr'
 import { validators } from "../validate.js";
 import actions from './actions.js'
-import dataSource from "./data-source.js";
 import { Role } from "../role.js";
 
 const entities = 	[
-	...dataSource,
 	{
 		name:'any',
 		isa:['property type']
