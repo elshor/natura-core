@@ -326,7 +326,7 @@ function emitValue(original,entry,iterator,type,name,scope='',visitIt){
  */
 function scopeSearch(location,key,iterator,type,name,scope,scopeName,visitIt){
 	const currentSpec = location.spec;
-	visitIt?visitIt('scope-search',location):null;
+	visitIt?visitIt('scope-search',location,{key}):null;
 	const entries = currentSpec.scope?(currentSpec.scope[key] || []) : [];
 	for(let i=0;i<entries.length;++i){
 		const b = visitScopeEntry(location, entries[i],iterator,type,name,scope,scopeName,visitIt);
