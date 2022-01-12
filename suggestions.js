@@ -66,8 +66,8 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				//ignore types unless specifically requested
 				return;
 			}
-			if(specIsGeneric(spec)){
-				//ignore generic types
+			if(spec.role===Role.abstract){
+				//ignore abstract types
 				return;
 			}
 			const value = generateNewElement(type,null,dictionary);
