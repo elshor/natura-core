@@ -5,6 +5,7 @@
 import { JsonPointer } from 'json-ptr';
 import {IllegalType} from './error.js'
 import calc from "./calc.js";
+import { calcTemplate } from './template.js';
 
 export default function Type(type,location){
 	if(typeof type === 'string'){
@@ -26,13 +27,15 @@ export default function Type(type,location){
 		case 'copy type':
 			const pathText = '/' + (type.path||'').replace(/\./g,'/');
 			const path = new JsonPointer(pathText);
-			//HACK not sure why json pointer not working here
-			const result = follow(location.contextNoSearch,path.path);
+			const result = path.get(location.contextNoSearch);
 			const baseType = typeof result === 'string'? result : Type(result,location);
 			return new BaseType(baseType);
+		case 'template type':
+			const calculatedType = calcTemplate(type.template,location.contextNoSearch);
+			return new BaseType(calculatedType);
 		case 'role type':
 			return new RoleType(Type(type.type,location),type.role);
-		case 'template type':
+		case 'specialized type':
 			return new BaseType(
 				`${
 					Type(type.generic,location).toString()
@@ -119,16 +122,6 @@ class RoleType{
 	}
 }
 
-function follow(source,path){
-	let current = source;
-	for(let i=0;i<path.length;++i){
-		if(current === null || current === undefined){
-			return undefined;
-		}
-		current = current[path[i]];
-	}
-	return current;
-}
 function specializedValue(val,location){
 	//currently only type specialized values are supported (not values)
 	return Type(val,location).toString();
