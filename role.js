@@ -13,6 +13,7 @@ export const Role = {
 	instance:'instance',
 	model:'model',
 	group:'group',
+	abstract:'abstract',
 	entity:'entity'//a document entity
 }
 
