@@ -128,15 +128,14 @@ function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt)
 		
 		//calculate emit name
 		const emitProperty = entry.name? 
-			calcTemplate(entry.name,location.contextNoSearch) : 
+			calcTemplate(entry.name,locationContext(location,{scopeName})) : 
 			location.lang.theType(specContextType(spec));
 		if(!emitProperty || emitProperty.length === 0){
 			//if entry does not have a calculated name then do not emit it
 			continue;
 		}
 		const entryAccess = entry.access? calcTemplate(entry.access,location.contextNoSearch) : null;
-		const useOf = matchRole(spec.role,Role.model)||matchRole(spec.role,Role.type);
-		const emitName = location.lang.of(emitProperty,useOf?scopeName:null);
+		const emitName = emitProperty;
 		const description = calcTemplate(entry.description||'',location.contextNoSearch);
 		if(match(
 			referenced.dictionary,
@@ -149,7 +148,9 @@ function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt)
 				$type:'reference',
 				label:emitName,
 				valueType:entryType,
-				access: scope + ((entryAccess==='this')? '' : ("." + (entryAccess||emitName))),
+				access: entryAccess?
+					(scope + ((entryAccess==='this')? '' : ("." + (entryAccess||emitName)))):
+					undefined,
 				role:entry.role || 'artifact',
 				path:location.path,
 				description
@@ -357,15 +358,12 @@ function useContext(referenced,entry,iterator,type,name,scope,visitIt){
 }
 
 function useScope(referenced,entry,iterator,type,name,scope,scopeName, visitIt){
+	scopeName = entry.scopeName? calcTemplate(entry.scopeName,referenced.contextNoSearch) : scopeName;
 	const locations = relativeLocations(referenced,entry.path);
 	for(let i=0;i<locations.length;++i){
 		const location = locations[i];
-		if(location.isEmpty){
-			continue;//continue search
-		}
 		const entryAccess = entry.access? calcTemplate(entry.access,location.contextNoSearch ): null;
 		scope = entryAccess? scope+'.' + entryAccess : scope;
-		
 		if(scopeSearch(
 			location,
 			entry.key,
@@ -472,6 +470,12 @@ export function locationContext(location,contextLocation=location){
 			if(prop==='$parent'){
 				return locationContext(location.parent,contextLocation);
 			}
+			if(prop==='$spec'){
+				return location.spec;
+			}
+			if(prop==='$type'){
+				return location.type;
+			}
 			if(prop==='$isProxy'){
 				//this property signals that we can use $value
 				return true;
@@ -487,7 +491,7 @@ export function locationContext(location,contextLocation=location){
 				}
 				//this is an object - return a new context
 				return locationContext(propLocation,contextLocation);
-			}else if(typeof value  !== undefined){
+			}else if(typeof value  !== 'undefined'){
 				//this is a non-object - return the raw value
 				return value;
 			}
