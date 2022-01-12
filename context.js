@@ -31,12 +31,14 @@ import {Role,matchRole} from './role.js'
  * @param {String} type type to search for or null for any type
  * @param {String} name name to search for or null for any name
  * @param {String} scope the current scope. Each time a use scope is followed, the new scope is added to the scope with a preceding > symbol
+ * @param {Boolean} useExpected use expectedSpec instead of spec. This should be used for the first entry when looking for suggestions because we are looking for replacements to current value - we don't want to take current value into account
  */
-export function contextSearch(location,iterator,type,name,scope='',visitIt){
+export function contextSearch(location,iterator,type,name,scope='',visitIt,useExpected){
 	let current = location;
 	let cont = true;
+	let first = true;
 	while(current && cont !== false){
-		cont = visit(current,iterator,type,name,scope,visitIt);
+		cont = visit(current,iterator,type,name,scope,visitIt,(first && useExpected)?true : false );
 		current = previousContextLocation(current);
 	}
 }
@@ -49,17 +51,19 @@ export function contextSearch(location,iterator,type,name,scope='',visitIt){
  * @param {String} name name to search for
  * @param {String} scope current scope. the reference access will be a join of scope and current access
  * @param {Function} visitIt a callback function used mostly for debug purposes
+ * @param {Boolean} useExpected see explanation in contextSearch function
  */
-function visit(location,iterator,type,name,scope,visitIt){
+function visit(location,iterator,type,name,scope,visitIt,useExpected){
 	if(!location){
 		return true;
 	}
-	const referenced = location.referenced;
+	//if useExpected, we are at the fist entry that we want to change. We need to ignore this entry (we want to remove it)
+	const referenced = useExpected? location : location.referenced;
 	if(alreadyVisited(scope,location,iterator)){
 		return true;
 	}
 	visitIt?visitIt('location',referenced):null;
-	const currentSpec = referenced.spec;
+	const currentSpec = useExpected? referenced.expectedSpec : referenced.spec;
 
 	//iterate context
 	const entries = currentSpec.context || [];
@@ -414,17 +418,25 @@ function match(dictionary, it, queryType,queryName, type,name,value,description,
 	}
 }
 
-export function contextEntries(location,type,name){
+export function contextEntries(location,type,name,useExpected){
 	const values = {};
-	contextSearch(location,(entry)=>{
-		const id = (entry && typeof entry.value === 'object')?
-			entry.value.path||entry.name :
-			entry.value;
-		if(!values[id]){
-			values[id] = entry;
-		}
-		return true;
-	},type,name);
+	contextSearch(
+		location,
+		(entry)=>{
+			const id = (entry && typeof entry.value === 'object')?
+				entry.value.path||entry.name :
+				entry.value;
+			if(!values[id]){
+				values[id] = entry;
+			}
+			return true;
+		},
+		type,
+		name,
+		null,//scope
+		null,//visitIt
+		useExpected
+	);
 	return Object.values(values);
 }
 

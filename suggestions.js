@@ -116,7 +116,12 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 	//context instances
 	///////////////////
 	if(expectedType){
-		contextEntries(location,expectedType).forEach(entry=>{
+		contextEntries(
+			location,
+			expectedType,
+			null,//name
+			true//useExpected
+		).forEach(entry=>{
 			//prevent self referencing context entity
 			if(entry.path && entry.path === location.path){
 				return;
