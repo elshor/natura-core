@@ -59,10 +59,13 @@ class Location{
 		this._listeners.forEach(l=>l());
 	}
 	_invalidateCache(){
-		if(this._cache.hasCachedValue &&
-			this.parent.value[this.property]!== this._cache.value){
-			//value changed
-			this.emitChange();
+		if(this._cache.hasCachedValue){
+			if(!this.parent.value){
+				this.emitChange();
+			}else if(this.parent.value[this.property]!== this._cache.value){
+				//value changed
+				this.emitChange();
+			}
 		}
 		Object.values(this._children).forEach(
 			child=>child._invalidateCache({self:true})
@@ -70,7 +73,14 @@ class Location{
 		this._cache = {};
 	}
 	get value(){
-		return locationValue(this);
+		if(this._cache.hasCachedValue){
+			return this._cache.value;
+		}else{
+			const ret = locationValue(this);
+			this._cache.value = ret;
+			this._cache.hasCachedValue = true;
+			return ret;
+		}
 	}
 
 	/**
@@ -475,7 +485,15 @@ class Location{
 		}
 		this.parent.emitChange();
 	}
-
+	/** validate  value cache is correct*/
+	_dbValidate(){
+		if(this._cache.hasCachedValue && this._cache.value !== locationValue(this)){
+			console.error('failed validation',this.path,this._cache.value,locationValue(this));
+		}
+		if(this.parent){
+			this.parent.validate();
+		}
+	}
 	/**
 	 * set the value at the location. If the path to the location does not exist then create it. If the location property has format `#key` then assume the parent is an array (if doesn't exist) and create a new object with key set. If the property is a number then assume it is a position within an array. If the property is -1 then insert a new item to the array
 	 * @param {*} value value to set
@@ -614,9 +632,6 @@ function locationValue(location){
 	if(location.path === undefined || location.path === ''){
 		return location.data;
 	}
-	if(location._cache.hasCachedValue){
-		return location._cache.value;
-	}
 	const parent = location.parent;
 	if(!parent){
 		return undefined;
@@ -641,24 +656,7 @@ function locationValue(location){
 	}
 
 	const value = parentValue[property];
-	if(value !== undefined){
-		location._cache.hasCachedValue = true;
-		location._cache.value = value;
-		return value;
-	}
-
-	//by now we rely on calculated value based on spec
-	location._cache.hasCachedValue = true;
-	
-	const spec = location.expectedSpec;
-	if(spec.default !== undefined){
-		if(isExpression(spec.default)){
-			location._cache.value = cloneEntity(calc(spec.default, location.context));;
-		}else{
-			location._cache.value = cloneEntity(spec.default);
-		}
-	}
-	return location._cache.value;
+	return value;
 }
 
 function isNumber(n){
