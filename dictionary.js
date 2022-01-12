@@ -11,7 +11,7 @@ import deepmerge from "deepmerge";
 import base from './packages/base.js'
 import reference from "./reference.js";
 import { calcTemplate } from "./template.js";
-import { matchRole } from "./role.js";
+import { matchRole,Role } from "./role.js";
 
 export default class Dictionary{
 	constructor(packages=[base]){
@@ -64,7 +64,7 @@ export default class Dictionary{
 		}
 		
 		this._ensureSpecializedIsRegistered(type);
-
+		
 		if(this.isaRepo[className]){
 			return this.isaRepo[className].includes(type)
 		}
@@ -383,12 +383,15 @@ export default class Dictionary{
  * @param {Object} specializedValue an object to use as the specialized value of the instance
  * @param {Object} override optional object to override the generic spec properties
  */
-	_registerSpecializedType(type,generic,specializedValue,override){
+	_registerSpecializedType(specialized,generic,specializedValue,override){
+		const type = `${generic}<${specialized}>`
+		const specializedSpec = this.getTypeSpec(specialized);
 		const spec = this.getTypeSpec(generic);
 		assume(spec,`Specialized type '${type}' does not have a generic defined`);
 		const sSpec = Object.create(spec);
 		sSpec.$specialized = specializedValue;
-		sSpec.$generic = generic
+		sSpec.$generic = generic;
+		sSpec.role = Role.abstract;
 
 		//calculate title, pattern and description values
 		sSpec.title = calcTemplate(spec.title,specializedValue);
@@ -398,8 +401,19 @@ export default class Dictionary{
 		//inherit isa from generic and add generic to list
 		sSpec.isa = [...spec.isa,generic];
 
+		//register isa for specialized subtypes ==> if s1 isa s2 then g<s2> isa g<s1>. Notice the type-subtype is the opposite.
+		(specializedSpec.isa||[]).forEach(s=>{
+			this._registerIsa(`${generic}<${s}>`,`${generic}<${specialized}>`)
+		});
+		this._registerIsa(`${generic}<any>`,`${generic}<${specialized}>`)
+
+		//assign the override properties to this spec
 		Object.assign(sSpec,override);
+		
+		//register the type
 		this._registerType(type,sSpec);
+		
+		return sSpec;
 	}
 
 	_registerValueType(valueType,type,role){
@@ -441,9 +455,10 @@ export default class Dictionary{
 			//this is not a specialized generic
 			return;
 		}
-		if(this.repo[searchString(type)]){
+		const current = this.repo[searchString(type)];
+		if(current){
 			//this is already registered
-			return;
+			return current;
 		}
 		const generic = this.getTypeSpec(matched[1]);
 		if(!generic){
@@ -452,8 +467,8 @@ export default class Dictionary{
 		if(!Array.isArray(generic.genericProperties)|| generic.genericProperties.length < 1){
 			throw new Error('Trying to use a non-generic as a generic: '+searchString(type));
 		}
-		this._registerSpecializedType(
-			searchString(type),
+		return this._registerSpecializedType(
+			matched[2],
 			matched[1],
 			{[generic.genericProperties[0]]:matched[2]}
 		)
