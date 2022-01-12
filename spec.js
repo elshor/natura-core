@@ -63,8 +63,11 @@ export function mergeSpec(contextSpec, typeSpec){
 		...(typeSpec.context||[]),
 		...(contextSpec.context || DEFAULT_SPEC)
 	];
-	//scope is only defined in type spec
-	ret.scope = typeSpec.scope; 
+	if(typeSpec.scope && contextSpec.scope){
+		//TODO need to merge scopes
+	}else{
+		ret.scope = contextSpec.scope || typeSpec.scope;
+	}
 	
 	return ret;
 
