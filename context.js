@@ -116,6 +116,10 @@ function visitScopeEntry(referenced,entry,iterator,type,name,scope='',scopeName,
  * @returns 
  */
 function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt){
+	if(!scope){
+		scope = '';
+	}
+
 	const locations = relativeLocations(referenced,entry.path||'');
 	for(let i=0;i<locations.length;++i){
 		const location = locations[i];
@@ -349,14 +353,15 @@ function scopeSearch(location,key,iterator,type,name,scope,scopeName,visitIt){
  * @param {String} entry.scope
  */
 function useContext(referenced,entry,iterator,type,name,scope,visitIt){
+	scope = scope || '';
 	const locations = relativeLocations(referenced,entry.path);
-	const entryScope = entry.scope?calcTemplate(entry.scope,referenced.contextNoSearch):null;
+	const entryScope = entry.scope?calcTemplate(entry.scope,referenced.contextNoSearch):'';
 	return iterateArray(
 		locations,
 		iterator,
 		type,
 		name,
-		entryScope? (scope + entryScope + '.') : scope,
+		entryScope? (scope + (entryScope||'') + '.') : scope,
 		visitIt
 		);
 }
