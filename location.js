@@ -511,7 +511,7 @@ class Location{
 			return this;
 		}
 		this.emitChange();//changed this value
-		this.emitChange();//parent value changed
+		this.parent.emitChange();//parent value changed
 		if(asInteger === -1 && Array.isArray(this.parent.value)){
 			//need to invalidate the location at the expected insert position
 			this.parent.child(this.parent.value.length)._invalidateCache({self:true});
