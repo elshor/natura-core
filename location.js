@@ -735,6 +735,9 @@ function plainInserter(arr,pos,value){
 }
 export function relativeLocations(location,path){
 	function follow(location,part,current){
+		if(!location){
+			return;
+		}
 		location = location.referenced;
 		switch(part){
 			case '':
