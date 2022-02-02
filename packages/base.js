@@ -265,6 +265,7 @@ const entities = 	[
 		template:'conditional value ...',
 		expanded:true,
 		show:['items','default'],
+		inlineDetails:'expanded',
 		role:'calc',
 		valueType:'?',
 		properties:{
