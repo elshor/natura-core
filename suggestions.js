@@ -73,9 +73,10 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 			const value = generateNewElement(type,null,dictionary);
 			ret.list.push({
 				value: value,
-				description: dictionary.getTypeSpec(type).description,
+				description: spec.description,
 				source:'class',
-				text: suggestionText(value,itsExpectedSpec,dictionary,true)
+				text: suggestionText(value,spec,dictionary,true),
+				alt:spec.suggest? spec.suggest.alt : undefined
 			});
 		});
 	}
@@ -91,7 +92,8 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 			value: cloneEntity(entry),
 			text:entry.label,
 			source:'instance',
-			description:entry.description
+			description:entry.description,
+			alt:entry.alt
 		})
 	})
 
@@ -106,7 +108,8 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 					source:'context',
 					text:entry.label,
 					path:entry.path,
-					description:entry.description
+					description:entry.description,
+					alt:entry.alt
 				})
 			}
 		})
@@ -142,7 +145,8 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				source:'context',
 				text:entry.name,
 				path:entry.path,
-				description:entry.description
+				description:entry.description,
+				alt:entry.alt
 			})
 		});
 	}
@@ -159,9 +163,23 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 
 export function filterAndSortSuggestions(suggestions,filter){
 	const ret = {
-		list:suggestions.list.filter(item=>
-			typeof item.text === 'string' && item.text.toLowerCase().includes(filter.toLowerCase())
-		)
+		list:suggestions.list.filter(item=>{
+			filter = filter.toLowerCase();
+			const text = (item.text||'').toLowerCase();
+			if(text.includes(filter)){
+				item.matchedText = text;
+				return true;
+			}
+			//now check alt texts
+			const alt = item.alt || [];
+			for(let i=0;i<alt.length;++i){
+				if(alt[i].toLowerCase().includes(filter)){
+					item.matchedText = alt[i];
+					return true;
+				}
+			}
+			return false;
+		})
 	}
 	ret.list.forEach(item=>scoreSuggestion(item,filter));
 	ret.list.sort(comp);
@@ -172,10 +190,12 @@ function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpecte
 const types = dictionary.getExpressionsByValueType(expectedType,allowExpressions,role);
 types.forEach(type=>{
 	const value = generateNewElement(type,null,dictionary);
+	const spec = dictionary.getTypeSpec(type);
 	suggestions.list.push({
 		value: value,
-		description: dictionary.getTypeSpec(type).description,
+		description: spec.description,
 		source:'expression',
+		alt: spec.suggest? spec.suggest.alt : undefined,
 		text:suggestionText(value,itsExpectedSpec,dictionary,true)
 	});
 });
@@ -193,7 +213,7 @@ export function hasSuggestions(location, filter){
 	return getSuggestions(location,filter).list.length > 0;
 }
 
-export function suggestionText(value, spec,dictionary,isNew=false){
+export function suggestionText(value, spec,dictionary,isNew=false,entry){
 	assume(spec);
 	assume(dictionary);
 	if(value !== null && typeof value === 'object' && value.$type !== undefined){
