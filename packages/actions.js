@@ -6,6 +6,7 @@ export default [
 	{
 		pattern:'if <<condition>> then <<action>> otherwise <<alternateAction>>',
 		name:'condition statement',
+		suggest:{tag:'core'},
 		description:'Test if a condition is true. If it is true then execution action. Otherwise eecute the alternate action if exists.',
 		title:'condition statement',
 		isa:['action'],
@@ -24,6 +25,7 @@ export default [
 	{
 		name: 'action sequence to perform',
 		displayPattern:'do the following actions',
+		suggest:{tag:'core'},
 		expanded:true,
 		valueType:'action',
 		role:'type',
@@ -48,6 +50,7 @@ export default [
 	},
 	{
 		name:'set',
+		suggest:{tag:'core'},
 		title:'set value',
 		isa:'action',
 		valueType:'action',
@@ -70,6 +73,7 @@ export default [
 	{
 		name:'repeat for each',
 		pattern:'for each item in <<collection>> do <<actions>>',
+		suggest:{tag:'core'},
 		description:'Repeat a sequence of actions for each item in a collection. The current item can be referenced from the action script as "the item"',
 		role:'type',
 		isa:['action'],

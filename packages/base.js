@@ -314,6 +314,7 @@ const entities = 	[
 		It is important to use the registerEvent function because it takes care of unregistering event in case of development environment with hot reload
 		`,
 		pattern:'when <<event>> then <<action>>',
+		suggest:{tag:'core'},
 		properties:{
 			event:{
 				type:'event',

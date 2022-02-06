@@ -11,6 +11,10 @@ import { calcValue } from "./calc.js";
 import {contextEntries} from './context.js'
 import { cloneEntity } from "./entity.js";
 import {Role,matchRole} from './role.js'
+
+const NumberOfUntaggedAtTop = 3;
+const MaxSuggestionCount = 7;
+
 export function getSuggestions(location,filter='',allowExpressions,externalContext){
 	if(filter.startsWith('=')){
 		filter = filter.substr(1);
@@ -76,7 +80,8 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				description: spec.description,
 				source:'class',
 				text: suggestionText(value,spec,dictionary,true),
-				alt:spec.suggest? spec.suggest.alt : undefined
+				alt:spec.suggest? spec.suggest.alt : undefined,
+				tag: spec.suggest? spec.suggest.tag : undefined
 			});
 		});
 	}
@@ -161,9 +166,15 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 	return ret;
 }
 
-export function filterAndSortSuggestions(suggestions,filter){
+export function filterAndSortSuggestions(suggestions,filter,tags=[]){
 	const ret = {
 		list:suggestions.list.filter(item=>{
+			//filter by tags
+			if((tags.length >= 1) && !tags.includes(item.tag)){
+				return false;
+			}
+			
+			//filter by entry text
 			filter = filter.toLowerCase();
 			const text = (item.text||'').toLowerCase();
 			if(text.includes(filter)){
@@ -183,8 +194,63 @@ export function filterAndSortSuggestions(suggestions,filter){
 	}
 	ret.list.forEach(item=>scoreSuggestion(item,filter));
 	ret.list.sort(comp);
+	ret.list = groupSuggestions(ret.list);
 	return ret;
 }
+
+/**
+ * group suggestions by tags when there are too many suggestions
+ * @param {Array} list 
+ */
+function groupSuggestions(list){
+	const tags = [];
+	const ret = [];
+
+		//if there aren't many suggestions then don't need tagging
+		if(list.length < MaxSuggestionCount){
+			return list;
+		}
+	
+	//copy top suggestions - no grouping
+	let pos = 0;
+	const count = Math.min(NumberOfUntaggedAtTop,list.length);
+	for(;pos<count;++pos){
+		ret.push(list[pos]);
+	}
+
+	//generate tags
+	for(;pos<list.length;++pos){
+		if(list[pos].tag){
+			//check if already exists
+			const tag = tags.find(t=>t.name === list[pos].tag);
+			if(tag){
+				tag.count++;
+			}else{
+				tags.push({name:list[pos].tag,count:1});
+			}
+		}
+	}
+
+	const rest = list.length - NumberOfUntaggedAtTop;
+	//add tags only if they include more than one entry and less than rest
+	for(let i=0;i<tags.length;++i){
+		if(tags[i].count > 1 && tags[i].count < rest){
+			ret.push({entryType:'tag',text:tags[i].name});
+		}
+	}
+
+	//insert all entries that are not tagged
+	for(let i=NumberOfUntaggedAtTop;i<list.length;++i){
+		const entry = list[i];
+		if(!ret.find(e=>(e.entryType==='tag' && entry.tag===e.text))){
+			//the entry is not tagged (with a valid tag) - insert it at the end
+			ret.push(list[i]);
+		}
+	}
+
+	return ret;
+}
+
 
 function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpectedSpec,allowExpressions,role){
 const types = dictionary.getExpressionsByValueType(expectedType,allowExpressions,role);
@@ -196,6 +262,7 @@ types.forEach(type=>{
 		description: spec.description,
 		source:'expression',
 		alt: spec.suggest? spec.suggest.alt : undefined,
+		tag: spec.suggest? spec.suggest.tag : undefined,
 		text:suggestionText(value,itsExpectedSpec,dictionary,true)
 	});
 });
