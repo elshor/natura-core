@@ -5,7 +5,7 @@
 import { assume } from './error.js';
 import {calcTemplate} from './template.js'
 import Type from './type.js'
-import {createLocation,relativeLocations} from './location.js'
+import {createLocation,relativeLocations, shadowLocation} from './location.js'
 import { specContextType } from './spec.js';
 import {Role,matchRole} from './role.js'
 
@@ -34,11 +34,10 @@ import {Role,matchRole} from './role.js'
  * @param {Boolean} useExpected use expectedSpec instead of spec. This should be used for the first entry when looking for suggestions because we are looking for replacements to current value - we don't want to take current value into account
  */
 export function contextSearch(location,iterator,type,name,scope='',visitIt,useExpected){
-	let current = location;
+	let current = useExpected? shadowLocation(location) : location;
 	let cont = true;
-	let first = true;
 	while(current && cont !== false){
-		cont = visit(current,iterator,type,name,scope,visitIt,(first && useExpected)?true : false );
+		cont = visit(current,iterator,type,name,scope,visitIt );
 		current = previousContextLocation(current);
 	}
 }
@@ -51,19 +50,18 @@ export function contextSearch(location,iterator,type,name,scope='',visitIt,useEx
  * @param {String} name name to search for
  * @param {String} scope current scope. the reference access will be a join of scope and current access
  * @param {Function} visitIt a callback function used mostly for debug purposes
- * @param {Boolean} useExpected see explanation in contextSearch function
  */
-function visit(location,iterator,type,name,scope,visitIt,useExpected){
+function visit(location,iterator,type,name,scope,visitIt){
 	if(!location){
 		return true;
 	}
 	//if useExpected, we are at the fist entry that we want to change. We need to ignore this entry (we want to remove it)
-	const referenced = useExpected? location : location.referenced;
+	const referenced = location.referenced;
 	if(alreadyVisited(scope,location,iterator)){
 		return true;
 	}
 	visitIt?visitIt('location',referenced):null;
-	const currentSpec = useExpected? referenced.expectedSpec : referenced.spec;
+	const currentSpec = referenced.spec;
 
 	//iterate context
 	const entries = currentSpec.context || [];

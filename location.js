@@ -771,3 +771,31 @@ export function relativeLocations(location,path){
 	})
 	return current;
 }
+
+
+class ShadowLocation extends LocationChild{
+	constructor(baseLocation,value){
+		super(baseLocation.parent,baseLocation.property);
+		this._value = value;
+	}
+	get value(){
+		return this._value;
+	}
+	delete(){
+		throw new Error('Cannot delete a shadow location')
+	}
+	set(){
+		throw new Error('Cannot set a shadow location')
+	}
+	insert(){
+		throw new Error('Cannot insert at a shadow location')
+	}
+}
+
+
+/**
+ * Create a shadow location.. A shadow location is a location that is disconnected from the actual data tree. It cannot be approached from its parent. Its value cannot change. It is used to evaluate context and suggestions of possible values before the values are actually set. E.g. check validity of values and suggestions assuming the value is empty 
+ */
+ export function shadowLocation(baseLocation,value){
+	return new ShadowLocation(baseLocation,value);
+}
