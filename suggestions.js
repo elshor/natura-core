@@ -2,8 +2,8 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
-import { relativeLocations } from "./location.js";
-import { specComputedPattern, specIsGeneric} from "./spec.js";
+import { relativeLocations, shadowLocation } from "./location.js";
+import { specComputedPattern} from "./spec.js";
 import { assume } from "./error.js";
 import { generateNewElement } from "src/components/utils.js";
 import {calcTemplate} from './template.js'
@@ -351,7 +351,10 @@ function getOptionSuggestions(ret,location,spec){
 		return;
 	}
 	if(spec.options.$type === 'path options'){
-		const locations = relativeLocations(location,spec.options.path);
+		const locations = relativeLocations(
+			shadowLocation(location),
+			spec.options.path
+		);
 		locations.forEach(option=>{
 			const value = option.value;
 			if(value === undefined || value === null){
