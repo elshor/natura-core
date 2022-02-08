@@ -83,7 +83,8 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				text: suggestionText(value,spec,dictionary,true),
 				alt:spec.suggest? spec.suggest.alt : undefined,
 				tag: spec.suggest? spec.suggest.tag : undefined,
-				requiredContext:spec.suggest? spec.suggest.requiredContext : undefined
+				requiredContext:spec.suggest? spec.suggest.requiredContext : undefined,
+				entityScore:entityScore(spec)
 			});
 		});
 	}
@@ -304,6 +305,7 @@ types.forEach(type=>{
 		alt: spec.suggest? spec.suggest.alt : undefined,
 		tag: spec.suggest? spec.suggest.tag : undefined,
 		requiredContext:spec.suggest? spec.suggest.requiredContext : undefined,
+		entityScore:entityScore(spec),
 		text:suggestionText(value,itsExpectedSpec,dictionary,true)
 	});
 });
@@ -355,7 +357,7 @@ function hasFunction(obj,method){
 
 function scoreSuggestion(suggestion,filter){
 	suggestion.score =
-		(sourceScore[suggestion.source]) +
+		((sourceScore[suggestion.source]) * (suggestion.entityScore||0)) +
 		(suggestion.text.search(filter)===0?0.09:0)
 }
 
@@ -429,5 +431,21 @@ function getOptionSuggestions(ret,location,spec){
 		})
 	}else{
 		console.error('Unknown options definition',spec.options);
+	}
+}
+
+function entityScore(spec){
+	if(!spec || !spec.suggest || !spec.suggest.score){
+		//no bias
+		return 1;
+	}
+	switch(spec.suggest.score){
+		case 'low':
+			return 0.8;
+		case 'high':
+			return 1.2
+		case 'medium':
+		default:
+			return 1;
 	}
 }
