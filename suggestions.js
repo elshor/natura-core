@@ -8,9 +8,10 @@ import { assume } from "./error.js";
 import { generateNewElement } from "src/components/utils.js";
 import {calcTemplate} from './template.js'
 import { calcValue } from "./calc.js";
-import {contextEntries} from './context.js'
+import {contextEntries, contextSearch} from './context.js'
 import { cloneEntity } from "./entity.js";
 import {Role,matchRole} from './role.js'
+import Type from './type.js'
 
 const NumberOfUntaggedAtTop = 3;
 const MaxSuggestionCount = 7;
@@ -81,7 +82,8 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				source:'class',
 				text: suggestionText(value,spec,dictionary,true),
 				alt:spec.suggest? spec.suggest.alt : undefined,
-				tag: spec.suggest? spec.suggest.tag : undefined
+				tag: spec.suggest? spec.suggest.tag : undefined,
+				requiredContext:spec.suggest? spec.suggest.requiredContext : undefined
 			});
 		});
 	}
@@ -163,7 +165,45 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions,role);
 	}
 
+	ret.list = filterByContext(location,ret.list);
 	return ret;
+}
+
+/**
+ * Filter out any entries that require a context entity that does not exist
+ * @param {Location} location 
+ * @param {Array} list 
+ */
+function filterByContext(location,list){
+	//first check if there are any suggestions with required context
+	let found = false;
+	for(let i=0;i<list.length;++i){
+		if(list[i].requiredContext){
+			found = true;
+			break;
+		}
+	}
+	if(!found){
+		//no required context - just return the list
+		return list;
+	}
+
+	//search context and check if required contexts are found
+	const contextTypes = {};
+	contextSearch(location,entry=>{
+		contextTypes[entry.type.toString()] = entry.type;
+	});
+
+	//filter list
+	const types = Object.values(contextTypes);
+	return list.filter(entry=>{
+		const requiredContext = entry.requiredContext;
+		if(!requiredContext){
+			//not context required
+			return true;
+		}
+		return types.some(type=>location.dictionary.isa(type,requiredContext));
+	})
 }
 
 export function filterAndSortSuggestions(suggestions,filter,tags=[]){
@@ -263,6 +303,7 @@ types.forEach(type=>{
 		source:'expression',
 		alt: spec.suggest? spec.suggest.alt : undefined,
 		tag: spec.suggest? spec.suggest.tag : undefined,
+		requiredContext:spec.suggest? spec.suggest.requiredContext : undefined,
 		text:suggestionText(value,itsExpectedSpec,dictionary,true)
 	});
 });
