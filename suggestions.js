@@ -166,7 +166,9 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions,role);
 	}
 
+	ret.list = filterDuplicates(ret.list);
 	ret.list = filterByContext(location,ret.list);
+
 	return ret;
 }
 
@@ -206,6 +208,19 @@ function filterByContext(location,list){
 		return types.some(type=>location.dictionary.isa(type,requiredContext));
 	})
 }
+
+function filterDuplicates(list){
+	const texts = {};
+	return list.filter(entry=>{
+		if(texts[entry.text]){
+			return false;
+		}else{
+			texts[entry.text] = true;
+			return true;
+		}
+	})
+}
+
 
 export function filterAndSortSuggestions(suggestions,filter,tags=[]){
 	const ret = {
