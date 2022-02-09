@@ -156,6 +156,7 @@ const entities = 	[
 			show:{type:'name*',template:'{{this}}'},
 			mustShow:{
 				type:'boolean',
+				viewer:'boolean-viewer',
 				description:
 					'Determine if the "show" properties should be displayed' +
 					' after initializing the entity with the inline pattern.'
@@ -503,6 +504,13 @@ const entities = 	[
 		viewer: 'richtext-editor',
 	},
 	{
+		name:'boolean',
+		isa:['application type'],
+		placeholder:'true/false',
+		viewer:'boolean-viewer',
+		suggestExpressions:true
+	},
+	{
 		name:'name',
 		isa:['string','property type'],
 		placeholder:'Enter the name'
@@ -818,14 +826,15 @@ const entities = 	[
 	},
 	{
 		name:'js action',
-		show:['title','pattern','description','properties'],
+		show:['title','pattern','description','properties','call'],
 		pattern:'<<name>>',
 		properties:{
 			title:{type:'text'},
 			name:{type:'text'},
 			pattern:{type:'pattern'},
 			description:{type:'richtext'},
-			properties:{title:'parameters',hashSpec:{type:'js prop',placeholder:'type of parameter'}}
+			properties:{title:'parameters',hashSpec:{type:'js prop',placeholder:'type of parameter'}},
+			call:{title:'function',type:'string',noSuggestions:true,placeholder:'Python function to call'}
 		}
 	},
 	{
