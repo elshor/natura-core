@@ -55,16 +55,13 @@ class Location{
 			this._listeners.splice(index,1);
 		}
 	}
-	emitChange(){
-		this._listeners.forEach(l=>l());
+	emitChange(location,action){
+		this._listeners.forEach(l=>l({location,action}));
 	}
 	_invalidateCache(){
 		if(this._cache.hasCachedValue){
 			if(!this.parent.value){
-				this.emitChange();
 			}else if(this.parent.value[this.property]!== this._cache.value){
-				//value changed
-				this.emitChange();
 			}
 		}
 		Object.values(this._children).forEach(
@@ -483,7 +480,7 @@ class Location{
 			delete parentValue[this.property];
 			this._invalidateCache({self:true})
 		}
-		this.parent.emitChange();
+		this.parent.emitChange(this,'delete-child');
 	}
 	/** validate  value cache is correct*/
 	_dbValidate(){
@@ -510,8 +507,8 @@ class Location{
 		if(currentValue === value){
 			return this;
 		}
-		this.emitChange();//changed this value
-		this.parent.emitChange();//parent value changed
+		this.emitChange(this,'set');//changed this value
+		this.parent.emitChange(this,'set-child');//parent value changed
 		if(asInteger === -1 && Array.isArray(this.parent.value)){
 			//need to invalidate the location at the expected insert position
 			this.parent.child(this.parent.value.length)._invalidateCache({self:true});
@@ -620,7 +617,7 @@ class Location{
 			setter(parent,key,value);
 			this._invalidateCache({self:true});
 		}
-		this.parent.emitChange();
+		this.parent.emitChange(this,'insert-child');
 	}
 }
 
