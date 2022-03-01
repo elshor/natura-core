@@ -4,6 +4,7 @@
  */
 import calc from './calc.js'
 import {locationContext} from './context.js'
+import {Type} from './type.js'
 /**
  * Check if a value is valid at a certain location
  * @param {Location} location 
@@ -11,6 +12,10 @@ import {locationContext} from './context.js'
  */
 export function isValid(location,value){
 	const validators = location.spec.validators;
+	if(!isValidType(location,value)){
+		return 'type mismatch';
+	}
+
 	if(!Array.isArray(validators)){
 		//no validators are defined then return true
 		return true;
@@ -22,6 +27,30 @@ export function isValid(location,value){
 		}
 	}
 	return true;
+}
+
+function isValidType(location,value,expectedType){
+	if(value===undefined){
+		//undefined is always ok
+		return true;
+	}
+	expectedType = expectedType || location.expectedType;
+	if(value && value.$type){
+		//check if type isa expected type
+		return location.dictionary.isa(Type(value.$type),expectedType);
+	}
+	if(Array.isArray(value) && expectedType.isCollection){
+		//check if all array children match the expected type
+		for(let i=0;i<value.length;++i){
+			if(!isValidType(location.value[i],expectedType.singular)){
+				return false;
+			}
+		};
+		return true;
+	}
+
+	//working with primitive values - check typeof
+	return location.dictionary.isa(typeof value,expectedType)
 }
 
 /**
