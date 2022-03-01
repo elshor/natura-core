@@ -110,6 +110,7 @@ class Location{
 			const parentSpec = parent.contextSpec;
 			const childSpec = parentSpec.childSpec || 
 				Object.assign({},parentSpec,{type:Type(parentSpec.type,this).singular});
+			childSpec.type = childSpec.type || Type(parentSpec.type,this).singular;
 			ret = childSpec;
 		}else{
 			const parentSpec = parent.contextSpec;
