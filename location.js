@@ -94,7 +94,7 @@ class Location{
 		let ret;
 		if(!parent){
 			//top level - we have no information regarding the spec
-			return null;
+			return {};
 		}
 		const parentType = parent.type;
 		if(
@@ -125,8 +125,7 @@ class Location{
 		//store cache
 		this._cache.parentType = parentType;
 		this._cache.contextSpec = ret;
-
-		return ret;
+		return ret || {};
 	}
 
 	get valueType(){
