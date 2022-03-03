@@ -4,6 +4,7 @@
  */
 import calc from './calc.js'
 import {locationContext} from './context.js'
+import Type from './type.js';
 import getType from './type.js'
 /**
  * Check if a value is valid at a certain location
@@ -36,8 +37,9 @@ function isValidType(location,value,expectedType){
 	}
 	expectedType = expectedType || location.expectedType;
 	if(value && value.$type){
+		const actualType = valueType(value);
 		//check if type isa expected type
-		return location.dictionary.isa(getType(value.$type),expectedType);
+		return location.dictionary.isa(actualType,expectedType);
 	}
 	if(Array.isArray(value) && expectedType.isCollection){
 		//check if all array children match the expected type
@@ -51,6 +53,16 @@ function isValidType(location,value,expectedType){
 
 	//working with primitive values - check typeof
 	return location.dictionary.isa(typeof value,expectedType)
+}
+
+function valueType(value){
+	if(value && value.$type === 'reference' ){
+		return getType(value.valueType);
+	}
+	if(value && value.$type){
+		return getType(value.$type);
+	}
+	return Type(typeof value);
 }
 
 /**
