@@ -51,8 +51,8 @@ function isValidType(location,value,expectedType){
 		return true;
 	}
 
-	//working with primitive values - check typeof
-	return location.dictionary.isa(typeof value,expectedType)
+	//working with primitive values - always allow
+	return true;
 }
 
 function valueType(value){
