@@ -789,6 +789,15 @@ class ShadowLocation extends LocationChild{
 	}
 }
 
+export function relativeLocation(location,path){
+	const locations = relativeLocations(location,path);
+	if(locations.length === 0){
+		//no locations found
+		return null;
+	}
+	return locations[0];
+}
+
 
 /**
  * Create a shadow location.. A shadow location is a location that is disconnected from the actual data tree. It cannot be approached from its parent. Its value cannot change. It is used to evaluate context and suggestions of possible values before the values are actually set. E.g. check validity of values and suggestions assuming the value is empty 
