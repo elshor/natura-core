@@ -4,7 +4,9 @@
  */
 import {assume,MissingParam } from './error.js'
 import clone from 'clone'
-import calc from './calc.js'
+import Type from './type'
+import { contextEntries } from './context.js';
+import { relativeLocation } from './location.js';
 
 export function entityType(data){
 	if(typeof data === 'object' && data !== null && data.$isProxy===true){
@@ -32,7 +34,8 @@ export function entityValue(entity){
 	}
 }
 
-export function generateNewEntity(type,context={},dictionary){
+export function generateNewEntity(location, type=location.expectedType){
+	const dictionary = location.dictionary;
 	assume(dictionary,MissingParam,'dictionary');
 	switch(type.searchString || type){
 	case 'string':
@@ -57,6 +60,28 @@ export function generateNewEntity(type,context={},dictionary){
 			Object.keys(spec.properties).forEach(prop=>{
 				if(spec.properties[prop].init !== undefined){
 					ret[prop] = cloneEntity(spec.properties[prop].init);
+				}
+				if(spec.properties[prop].unique !== undefined){
+					//generate a unique name in the current context for entities of type `type`
+					const propertyType = Type(spec.properties[prop].unique.type);
+					const base = spec.properties[prop].unique.base || 'entity';
+					const path = spec.properties[prop].unique.path || '.';
+
+					//get existing context
+					const ctx = contextEntries(relativeLocation(location,path),propertyType);
+					const names = {}
+					ctx.forEach(c=>names[c.name]=true);
+					let newName = base;
+					if(names[newName]){
+						//name already exists - add an integer from 1 to it until name doesn't exist
+						for(let i=1;;++i){
+							newName = base + ' ' + i;
+							if(!names[newName]){
+								break;
+							}
+						}
+					}
+					ret[prop] = newName;
 				}
 			});
 		}

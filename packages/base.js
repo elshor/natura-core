@@ -465,7 +465,20 @@ const entities = 	[
 			suggestExpressions:{
 				type:'boolean',
 				description:'by default show expressions in suggestions menu, without requiring user to type "="'
+			},
+			unique:{
+				type:'uniqe spec',
+				description:'initialize the property with a unique name in a specified location context'
 			}
+		}
+	},
+	{
+		name:'unique spec',
+		description:'Specify how to initialize a unique name',
+		properties:{
+			base:{type:'string',description:'The base name to use. If this name does not exist in the context then just use it. If it exists then add an integer to it that does nott already appear'},
+			path:{type:'string',description:'The path in which to check the uniqueness of the name'},
+			type:{type:'type',description:'The context search type to use to evaluate which names are already in use'}
 		}
 	},
 	{
