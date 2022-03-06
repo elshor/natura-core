@@ -5,7 +5,7 @@
 import { relativeLocations, shadowLocation } from "./location.js";
 import { specComputedPattern} from "./spec.js";
 import { assume } from "./error.js";
-import { generateNewElement } from "src/components/utils.js";
+import { generateNewEntity } from "./entity";
 import {calcTemplate} from './template.js'
 import { calcValue } from "./calc.js";
 import {contextEntries, contextSearch} from './context.js'
@@ -75,7 +75,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				//ignore abstract types
 				return;
 			}
-			const value = generateNewElement(type,null,dictionary);
+			const value = generateNewEntity(location,type);
 			ret.list.push({
 				value: value,
 				description: spec.description,
@@ -163,7 +163,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 	//dictionary expressions
 	////////////////////////
 	if(expectedType && !(role && matchRole(role,Role.type))){
-		getExpressionSuggestions(ret,expectedType,dictionary,itsExpectedSpec,allowExpressions,role);
+		getExpressionSuggestions(ret,expectedType,location,itsExpectedSpec,allowExpressions,role);
 	}
 
 	ret.list = filterDuplicates(ret.list);
@@ -308,10 +308,11 @@ function groupSuggestions(list){
 }
 
 
-function getExpressionSuggestions(suggestions,expectedType,dictionary,itsExpectedSpec,allowExpressions,role){
+function getExpressionSuggestions(suggestions,expectedType,location,itsExpectedSpec,allowExpressions,role){
+	const dictionary = location.dictionary;
 const types = dictionary.getExpressionsByValueType(expectedType,allowExpressions,role);
 types.forEach(type=>{
-	const value = generateNewElement(type,null,dictionary);
+	const value = generateNewEntity(location,type);
 	const spec = dictionary.getTypeSpec(type);
 	suggestions.list.push({
 		value: value,

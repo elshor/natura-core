@@ -580,7 +580,7 @@ class Location{
 		if(type.isCollection){
 			return this.set([],setter);
 		}
-		return this.set(generateNewEntity(type.toString(),null,this.dictionary),setter)
+		return this.set(generateNewEntity(this),setter)
 	}
 
 	/**
