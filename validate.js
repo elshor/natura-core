@@ -37,7 +37,7 @@ function isValidType(location,value,expectedType){
 	}
 	expectedType = expectedType || location.expectedType;
 	if(value && value.$type){
-		const actualType = valueType(value);
+		const actualType = valueType(value,location.dictionary);
 		//check if type isa expected type
 		return location.dictionary.isa(actualType,expectedType);
 	}
@@ -55,12 +55,16 @@ function isValidType(location,value,expectedType){
 	return true;
 }
 
-function valueType(value){
+function valueType(value,dictionary){
 	if(value && value.$type === 'reference' ){
 		return getType(value.valueType);
 	}
 	if(value && value.$type){
-		return getType(value.$type);
+		const spec = dictionary.getTypeSpec(value.$type);
+		return getType(spec.valueType || value.$type);
+	}
+	if(value && value.$type){
+		//get valueType of spec
 	}
 	return Type(typeof value);
 }
