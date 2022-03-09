@@ -13,7 +13,8 @@ import getType from './type.js'
  */
 export function isValid(location,value){
 	const validators = location.spec.validators;
-	if(!isValidType(location,value)){
+	if(typeof value === 'object' && !isValidType(location,value)){
+		//only validate objects for performance reasons
 		return 'type mismatch';
 	}
 
