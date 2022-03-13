@@ -76,16 +76,20 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				return;
 			}
 			const value = generateNewEntity(location,type);
-			ret.list.push({
+			const suggest = {
 				value: value,
 				description: spec.description,
 				source:'class',
 				text: suggestionText(value,spec,dictionary,true),
 				alt:spec.suggest? spec.suggest.alt : undefined,
 				tag: spec.suggest? spec.suggest.tag : undefined,
-				requiredContext:spec.suggest? spec.suggest.requiredContext : undefined,
 				entityScore:entityScore(spec)
-			});
+			};
+			if(spec.suggest){
+				suggest.requiredContext = spec.suggest.requiredContext;
+				suggest.screenshot = spec.suggest.screenshot;
+			}
+			ret.list.push(suggest);
 		});
 	}
 
