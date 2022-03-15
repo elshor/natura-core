@@ -196,7 +196,7 @@ const entities = 	[
 			subject:{
 				type:{
 					$type:'role type',
-					type:'application type',
+					type:'condition subject',
 					role:'instance'
 				},
 				description:'Specify the entity you want to test',
