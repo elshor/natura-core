@@ -269,6 +269,10 @@ const entities = 	[
 		inlineDetails:'expanded',
 		role:'calc',
 		valueType:'?',
+		suggest:{
+			alt:[],
+			requiredContext:'condition subject'
+		},
 		properties:{
 			items:{
 				type:'conditional value item*',
