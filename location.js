@@ -507,8 +507,6 @@ class Location{
 		if(currentValue === value){
 			return this;
 		}
-		this.emitChange(this,'set');//changed this value
-		this.parent.emitChange(this,'set-child');//parent value changed
 		if(asInteger === -1 && Array.isArray(this.parent.value)){
 			//need to invalidate the location at the expected insert position
 			this.parent.child(this.parent.value.length)._invalidateCache({self:true});
@@ -553,13 +551,17 @@ class Location{
 			const keyProperty = created.spec.key || "$key";
 			setter(created.value,keyProperty, hashKey);
 			this._invalidateCache({self:true});
-			return created;
+			this.emitChange(this,'set');//changed this value
+			this.parent.emitChange(this,'set-child');//parent value changed
+		return created;
 		}else if(asInteger === -1 && Array.isArray(this.parent.value)){
 			//insert a new item into array
 			const parentValue = this.parent.value;
 			parentValue.push(value);
 			this._invalidateCache({self:true});
-			return this.parent.child((parentValue.length-1).toString());
+			this.emitChange(this,'set');//changed this value
+			this.parent.emitChange(this,'set-child');//parent value changed
+		return this.parent.child((parentValue.length-1).toString());
 		}else{
 			//set this path
 			setter(parent.value,property,value);
@@ -567,6 +569,8 @@ class Location{
 			//invalidate cache
 			this._invalidateCache();
 	
+			this.emitChange(this,'set');//changed this value
+			this.parent.emitChange(this,'set-child');//parent value changed
 			return this;
 		}
 	}
