@@ -33,7 +33,6 @@ export function createLocation(data,dictionary=new Dictionary(),path=''){
 	}
 	return current;
 }
-
 class Location{
 	constructor(data,dictionary,path,lang,uri){
 		this.data = data;
@@ -614,14 +613,17 @@ class Location{
 				throw new Error('Insert position is not an array index');
 			}else{
 				inserter(parent,pos,value);
+				this.parent.emitChange(this,'insert-child');
+				this.emitChange(this,'set');
 				this.parent._invalidateCache({from:pos})
 			}
 		}else{
 			//this is not an array pos - treat it as a property
 			setter(parent,key,value);
+			this.parent.emitChange(this,'set-child');
+			this.emitChange(this,'set');
 			this._invalidateCache({self:true});
 		}
-		this.parent.emitChange(this,'insert-child');
 	}
 }
 
