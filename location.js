@@ -165,9 +165,9 @@ class Location{
 			this._cache.parentType = parent? parent.type : 'any';
 		}
 
-		if(Type(this._cache.parentType,location).isCollection){
+		if(Type(this._cache.parentType,this).isCollection){
 			//this is a list type
-			return Type(this._cache.parentType,location).singular;
+			return Type(this._cache.parentType,this).singular;
 		}
 
 		if(this._cache.parentSpec === undefined){
