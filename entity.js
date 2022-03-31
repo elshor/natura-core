@@ -4,7 +4,7 @@
  */
 import {assume,MissingParam } from './error.js'
 import clone from 'clone'
-import Type from './type'
+import Type from './type.js'
 import { contextEntries } from './context.js';
 import { relativeLocation } from './location.js';
 
