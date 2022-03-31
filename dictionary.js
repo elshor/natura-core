@@ -277,7 +277,7 @@ export default class Dictionary{
 		return this.instances[ID];
 	}
 
-	_processDefinition(entity,model={}){
+	_processDefinition(entity,model={},pkg){
 		if(typeof entity !== 'object' || entity === null){
 			//nothing to process
 			return;
@@ -293,17 +293,18 @@ export default class Dictionary{
 				memberModel = deepmerge(model,entity.model);
 				//add group isa as a separate subtype of model isa
 				entity.model.isa.forEach(type=>{
-					this._processDefinition({type:type},memberModel)
+					this._processDefinition({type:type},memberModel,pkg)
 				});
 			}
 			for(let i=0;i<entity.members.length;++i){
-				this._processDefinition(entity.members[i],memberModel);
+				this._processDefinition(entity.members[i],memberModel,pkg);
 			}
 		}else{
 			entity.isa = entity.isa || [];
 			this._registerType(
 				specType(entity),
-				deepmerge(model,entity)
+				deepmerge(model,entity),
+				pkg
 			);
 		}
 	}
@@ -318,7 +319,7 @@ export default class Dictionary{
 			const pkgCopy = deepCopy(pkg);
 			for(let p in pkgCopy){
 				if(this._isDefinitionGroup(pkgCopy[p])){
-					this._processDefinition(pkgCopy[p]);
+					this._processDefinition(pkgCopy[p],{},pkgCopy);
 				}
 			}
 		}
@@ -329,12 +330,16 @@ export default class Dictionary{
 	 * @param {String} type the type to register. This will be used to retreive the type
 	 * @param {Object} spec the spec body
 	 */
-	_registerType(type,spec){
+	_registerType(type,spec,pkg){
 		const specType = spec.$type;
 		const specTypeSpec = this.getTypeSpec(specType);
 		if(typeof specTypeSpec.register === 'function'){
 			//the spec defines its own register function - use it
-			return specTypeSpec.register(this,type,spec);
+			return specTypeSpec.register(this,type,spec,pkg);
+		}
+		if(pkg){
+			//connect the spec to the package
+			spec.$package = pkg;
 		}
 		//normalize structure of type spec
 		//isa
@@ -411,7 +416,7 @@ export default class Dictionary{
 		Object.assign(sSpec,override);
 		
 		//register the type
-		this._registerType(type,sSpec);
+		this._registerType(type,sSpec,spec.$package);
 		
 		return sSpec;
 	}
