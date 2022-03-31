@@ -799,7 +799,7 @@ const entities = 	[
 			description:{type:'richtext',description:'Description of the property'},
 			access:{type:'string',description:'The path to the property using > instead of . like in reference access'}
 		},
-		register(dictionary,_,spec){
+		register(dictionary,_,spec,pkg){
 			//get the pattern
 			const pattern = `${spec.name} of <<object>>`;
 			const name = 'property.' + pattern;
@@ -828,7 +828,7 @@ const entities = 	[
 					properties:{
 						object:{type:'object.'+name,placeholder:'the object'},
 					}
-				});
+				},pkg);
 			}
 
 			//tag object type
