@@ -15,7 +15,7 @@ export function isValid(location,value){
 	const validators = location.spec.validators;
 	if(typeof value === 'object' && !isValidType(location,value)){
 		//only validate objects for performance reasons
-		return 'type mismatch';
+		return `type mismatch. Expected ${location.expectedType} but got ${valueType(value,location.dictionary)}`;
 	}
 
 	if(!Array.isArray(validators)){
