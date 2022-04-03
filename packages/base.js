@@ -3,6 +3,7 @@
  *   All rights reserved.
  */
 import basicTypes from "./basic-types.js"
+import packageDef from './package-def.js'
 import {JsonPointer} from 'json-ptr'
 import { validators } from "../validate.js";
 import actions from './actions.js'
@@ -942,7 +943,12 @@ export default {
 	name:'base',
 	entities:{
 		$type:'entity definition group',
-		members:[...entities,...actions],
+		members:[
+			...entities,
+			...actions,
+			...validators,
+			...packageDef
+		],
 		model:{isa:[]}
 	}
 }
@@ -956,10 +962,8 @@ function calcValueType({$location}){
 }
 
 //add basic types
-entities.push(...basicTypes);
+//entities.push(...basicTypes);
 
-//add validators
-entities.push(...validators);
 
 function defaultDefinitionModel(context){
 	if(!context){
