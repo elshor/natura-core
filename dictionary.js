@@ -226,8 +226,9 @@ export default class Dictionary{
 	 * Associate a function with a type name. This is used to define functions used to calculate expressions and execute actions.
 	 * @param {String} name type name
 	 * @param {FunctionEntry} functionEntry
+	 * @param {NaturaPackage} pkg
 	 */
-	_registerFunction(name,functionEntry){
+	_registerFunction(name,functionEntry,pkg){
 		if(!functionEntry){
 			return;
 		}
@@ -237,9 +238,11 @@ export default class Dictionary{
 			this.functions[name] = {
 				library:parsed[2],
 				name:parsed[1],
-				args:parsed[3]? parsed[3].split(',').map(item=>item.trim()) : []
+				args:parsed[3]? parsed[3].split(',').map(item=>item.trim()) : [],
+				pkg
 			}
 		}else{
+			functionEntry.pkg = pkg;
 			this.functions[name] = functionEntry;
 		}
 	}
@@ -378,7 +381,7 @@ export default class Dictionary{
 			//for generic types we do not register isa and valueType - only for their specializations
 			this._registerValueType(spec.valueType,type,spec.role);
 		}
-		this._registerFunction(type,spec.fn);
+		this._registerFunction(type,spec.fn,pkg);
 	}
 /**
  * A specialized type is a type that is derived from a generic type and its insance value is initialized with specific properties. It is a similar concept to genrics in typescript however, the specialized values are part of the instance object. The reason for that is that we need the specialized values in the instance so we can use them in the application. 
