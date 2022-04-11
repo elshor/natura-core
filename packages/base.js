@@ -293,6 +293,13 @@ const entities = 	[
 		}
 	},
 	{
+		name:'javascript expression',
+		title:'javascript expression',
+		valueType:'?',
+		role:'calc',
+		viewer:'code-expression'
+	},
+	{
 		name:'basic event definition',
 		isa:'event definition',
 		title:'event definition',
