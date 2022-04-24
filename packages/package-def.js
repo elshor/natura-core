@@ -12,7 +12,7 @@ export default [
 			components:{type:'component definition*',expanded:true},
 			types:{type:'type definition',expanded:true}
 		},
-		register(dictionary,_,spec,pkg){
+		register(dictionary,_,spec){
 			registerPackage(dictionary,spec,spec);
 		}
 	},
@@ -58,16 +58,18 @@ export default [
 
 function registerPackage(dictionary,script,pkg){
 	(script.components||[]).forEach(component=>registerComponent(component,dictionary,pkg));
+	registerValues(dictionary,pkg);
 }
 
 function registerComponent(component,dictionary,pkg){
-	const props = generateProps(component,component.props||[]);
+	const props = generateProps(component,component.props||[],component.slots||[]);
 	const display = generateComponentDisplay(component);
 	const pattern = component.patten || `${component.title||component.name} referenced as <<ref>>`;
 	const childrenProperty = generateChildrenProperty(component);
+	const name = component.name;
 	dictionary._registerType(props.name,props,pkg);
 	const ret = {
-		name:component.name,
+		name,
 		title:component.title,
 		description:component.description,
 		properties:{
@@ -102,7 +104,7 @@ function registerComponent(component,dictionary,pkg){
 		context: [
 			{$type:'use context',path:'display'},
 			{$type:'use context',path:'props'},
-			{$type:'use context',path:'children/*'},
+			{$type:'use context',path:'slots/*/*'},
 			{$type:'use scope',path:'',key:'expose',access:'$root.$refs.{{ref}}'},
 			{$type:'use context',path:'..'},
 			{
@@ -138,6 +140,7 @@ function registerComponent(component,dictionary,pkg){
 		ret.properties.children = childrenProperty;
 	}
 	ret.show = generateShow(component,ret,props);
+	(component.isa||[]).forEach(supertype=>dictionary._registerIsa(name,supertype));
 
 	//registrations
 	dictionary._registerType(props.name,props,pkg);
@@ -147,16 +150,18 @@ function registerComponent(component,dictionary,pkg){
 	dictionary._registerFunction(component.name,generateComponentFn(component),pkg);
 }
 
-function generateProps(component,props){
+function generateProps(component,props,slots){
 	return {
 		name: 'props.' + component.name,
-		properties:generatePropsProperties(props)
+		properties:generatePropsProperties(props,slots)
 	}
 
 }
 
-function generatePropsProperties(props){
+function generatePropsProperties(props,slots){
 	const ret = {};
+	
+	//add plain properties
 	props.forEach(prop=>{
 		ret[prop.name] = {
 			type:prop.type,
@@ -164,6 +169,26 @@ function generatePropsProperties(props){
 			description:prop.description
 		}
 	})
+
+	//add slots that are not default
+	slots.forEach(slot=>{
+		if(slot.name === 'default' || !slot.name){
+			//this slot will be displayed as content elements
+			return;
+		}
+		const entry = {
+			type:slot.type,
+			title: slot.title || slot.name,
+			description:slot.description
+		}
+		if(slot.initType){
+			entry.init = {
+				$type:slot.initType
+			}
+		}
+		ret[slot.name] = entry;
+	});
+
 	return ret;
 }
 
@@ -192,7 +217,8 @@ function generateChildrenProperty(component){
 				type:(slot.type||'component') + '*',//accept an array of type
 			},
 			expanded:true,
-			title: (slot.title && slot.title !=='default')? slot.title : 'children',
+			title: (slot.title && slot.title !=='default')? 
+				slot.title : (slot.type || 'content elements'),
 			description:slot.description,
 			childSpec: {
 				context: [{
@@ -215,7 +241,7 @@ function generateShow(input,component,props){
 		ret.push(...propList);
 	}
 	if(component.properties.children){
-		ret.push('children')
+		ret.push('children');
 	}
 	return ret;
 }
@@ -227,4 +253,44 @@ function generateComponentFn(component){
 		importLibrary:component.importLibrary,
 		name: component.importIdentifier || component.name
 	}
+}
+
+function registerValues(dictionary,pkg){
+	const values = pkg.values || [];
+	values.forEach(value=>{
+		if(value.value){
+			dictionary._registerInstance(
+				value.name,
+				value.type,
+				value.value,
+				value.title,
+				value.description
+			)
+		}else if(value.call){
+			dictionary._registerType(value.name,{
+				name:value.name,
+				title: value.title || value.name,
+				valueType:value.type,
+				description: value.description,
+				fn:	{
+					library: pkg.name,
+					name: value.name,
+					args:value.args || []
+				},
+				role:'value'
+			})
+			dictionary._registerFunction(
+				value.name,
+				{
+					library:pkg.name,
+					name: value.name,
+					args:value.args || []
+				}
+			,
+				pkg);
+
+		}else{
+			console.error('Value entry must have either `value` or `call` properties',value);
+		}
+	})
 }
