@@ -64,7 +64,7 @@ function registerPackage(dictionary,script,pkg){
 function registerComponent(component,dictionary,pkg){
 	const props = generateProps(component,component.props||[],component.slots||[]);
 	const display = generateComponentDisplay(component);
-	const pattern = component.patten || `${component.title||component.name} referenced as <<ref>>`;
+	const pattern = component.pattern || `${component.title||component.name} referenced as <<ref>>`;
 	const childrenProperty = generateChildrenProperty(component);
 	const name = component.name;
 	dictionary._registerType(props.name,props,pkg);
@@ -96,7 +96,7 @@ function registerComponent(component,dictionary,pkg){
 				placeholder:'reference name',
 				unique:{
 					path:'..',
-					base: component.title,
+					base: component.title||component.name,
 					type: 'component'
 				}
 			},
