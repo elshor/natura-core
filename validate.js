@@ -45,7 +45,7 @@ function isValidType(location,value,expectedType){
 	if(Array.isArray(value) && expectedType.isCollection){
 		//check if all array children match the expected type
 		for(let i=0;i<value.length;++i){
-			if(!isValidType(location.value[i],expectedType.singular)){
+			if(!isValidType(location.child(i),location.value[i],expectedType.singular)){
 				return false;
 			}
 		};
