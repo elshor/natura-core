@@ -15,16 +15,16 @@
     "clone": "^2.1.2",
     "deepmerge": "^4.2.2",
     "handlebars": "^4.7.7",
-    "json-ptr": "^2.0.0",
+    "json-ptr": "^3.1.0",
     "no-case": "^3.0.4",
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.27.2",
     "change-case": "^4.1.2",
-    "jasmine": "^3.7.0",
-    "jsdoc": "^3.6.6",
-    "jsdoc-api": "^6.0.0",
-    "terminal-kit": "^1.45.9"
+    "jasmine": "^4.1.0",
+    "jsdoc": "^3.6.10",
+    "jsdoc-api": "^7.1.1",
+    "terminal-kit": "^2.4.0"
   }
 }
