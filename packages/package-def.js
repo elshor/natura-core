@@ -2,6 +2,7 @@
  *   Copyright (c) 2022 DSAS Holdings LTD.
  *   All rights reserved.
  */
+import {noCase}  from "no-case";
 export default [
 	{
 		name:'package definition',
@@ -59,95 +60,105 @@ export default [
 function registerPackage(dictionary,script,pkg){
 	(script.components||[]).forEach(component=>registerComponent(component,dictionary,pkg));
 	registerValues(dictionary,pkg);
+	registerTypes(dictionary,pkg);
 }
 
 function registerComponent(component,dictionary,pkg){
-	const props = generateProps(component,component.props||[],component.slots||[]);
-	const display = generateComponentDisplay(component);
-	const pattern = component.pattern || `${component.title||component.name} referenced as <<ref>>`;
-	const childrenProperty = generateChildrenProperty(component);
-	const name = component.name;
-	dictionary._registerType(props.name,props,pkg);
-	const ret = {
-		name,
-		title:component.title,
-		description:component.description,
-		properties:{
-			props:{
-				type:props.name,
-				title:'properties',
-				description:'Specify the properties of the component',
-				init:{$type:props.name},
-				init:{$type:props.name},
-				expanded:true,
-				displayInline:false,
-				context:[{$type:'use context',path:'..'}]
-			},
-			display:{
-				type:display.name,
-				description:'Set data to display in component, when to display it and how to reference it',
-				context:[{$type:'use context',path:'..'}]
-			},
-			ref:{
-				title:'reference',
-				type:'string',
-				noSuggestions:true,
-				description:'reference name used to reference and identify this component. The reference is used to identify the component so it should be descriptive. It may contain spaces.',
-				placeholder:'reference name',
-				unique:{
-					path:'..',
-					base: component.title||component.name,
-					type: 'component'
-				}
-			},
-		},
-		context: [
-			{$type:'use context',path:'display'},
-			{$type:'use context',path:'props'},
-			{$type:'use context',path:'slots/*/*'},
-			{$type:'use scope',path:'',key:'expose',access:'$root.$refs.{{ref}}'},
-			{$type:'use context',path:'..'},
-			{
-				$type: 'basic emit',
-				name:'{{ref}}',
-				access:'$root.$refs.{{ref}}',
-				type:component.name,
-				useScope:true
-			}
-		],
-		scope:{
-			expose:[
-				{
-					$type:'scope mixin',
-					path:'display',
-					key:'expose'
+	try{
+		const props = generateProps(component,component.props||[],component.slots||[]);
+		const display = generateComponentDisplay(component);
+		const pattern = component.pattern || `${component.title||component.name} referenced as <<ref>>`;
+		const childrenProperty = generateChildrenProperty(component);
+		const name = component.name;
+		dictionary._registerType(props.name,props,pkg);
+		const ret = {
+			name,
+			title:component.title,
+			description:component.description,
+			properties:{
+				props:{
+					type:props.name,
+					title:'properties',
+					description:'Specify the properties of the component',
+					init:{$type:props.name},
+					init:{$type:props.name},
+					expanded:true,
+					displayInline:false,
+					context:[{$type:'use context',path:'..'}]
 				},
+				display:{
+					type:display.name,
+					description:'Set data to display in component, when to display it and how to reference it',
+					context:[{$type:'use context',path:'..'}]
+				},
+				ref:{
+					title:'reference',
+					type:'string',
+					noSuggestions:true,
+					description:'reference name used to reference and identify this component. The reference is used to identify the component so it should be descriptive. It may contain spaces.',
+					placeholder:'reference name',
+					unique:{
+						path:'..',
+						base: component.title||component.name,
+						type: 'component'
+					}
+				},
+			},
+			context: [
+				{$type:'use context',path:'display'},
+				{$type:'use context',path:'props'},
+				{$type:'use context',path:'slots/*/*'},
+				{$type:'use scope',path:'',key:'expose',access:'$root.$refs.{{ref}}'},
+				{$type:'use context',path:'..'},
 				{
-					$type:'scope mixin',
-					path:'props',
-					key:'expose'
+					$type: 'basic emit',
+					name:'{{ref}}',
+					access:'$root.$refs.{{ref}}',
+					type:component.name,
+					useScope:true
 				}
-			]
-		},
-		pattern,
-		description:component.description,
-		suggest:{
-			screenshot:component.screenshot
+			],
+			scope:{
+				expose:[
+					{
+						$type:'scope mixin',
+						path:'display',
+						key:'expose'
+					},
+					{
+						$type:'scope mixin',
+						path:'props',
+						key:'expose'
+					}
+				]
+			},
+			pattern,
+			description:component.description,
+			suggest:{
+				screenshot:component.screenshot
+			}
 		}
-	}
 
-	if(childrenProperty){
-		ret.properties.children = childrenProperty;
-	}
-	ret.show = generateShow(component,ret,props);
-	(component.isa||[]).forEach(supertype=>dictionary._registerIsa(name,supertype));
+		if(childrenProperty){
+			ret.properties.children = childrenProperty;
+		}
+		ret.show = generateShow(component,ret,props);
+		
+		ret.isa = component.isa||[];
+		ret.isa.forEach(supertype=>{
+			dictionary._registerIsa(name,supertype)
+		});
 
-	//registrations
-	dictionary._registerType(props.name,props,pkg);
-	dictionary._registerType(display.name,display,pkg);
-	dictionary._registerType(ret.name,ret,pkg);
-	dictionary._registerIsa(component.name,'component');
-	dictionary._registerFunction(component.name,generateComponentFn(component),pkg);
+
+		//registrations
+		dictionary._registerType(props.name,props,pkg);
+		dictionary._registerType(display.name,display,pkg);
+		dictionary._registerType(ret.name,ret,pkg);
+		dictionary._registerIsa(component.name,'component');
+		dictionary._registerFunction(component.name,generateComponentFn(component),pkg);
+	}catch(e){
+		console.error('Failed to process component',component.name,component,'\n',e)
+	}
 }
 
 function generateProps(component,props,slots){
@@ -163,11 +174,7 @@ function generatePropsProperties(props,slots){
 	
 	//add plain properties
 	props.forEach(prop=>{
-		ret[prop.name] = {
-			type:prop.type,
-			title:prop.title || prop.name,
-			description:prop.description
-		}
+		ret[prop.name] = generatePropertyEntry(prop,{})
 	})
 
 	//add slots that are not default
@@ -176,18 +183,28 @@ function generatePropsProperties(props,slots){
 			//this slot will be displayed as content elements
 			return;
 		}
-		const entry = {
-			type:slot.type,
-			title: slot.title || slot.name,
-			description:slot.description
-		}
-		if(slot.initType){
-			entry.init = {
-				$type:slot.initType
-			}
-		}
+		const entry = generatePropertyEntry(slot,{role:'type'});
 		ret[slot.name] = entry;
 	});
+
+	return ret;
+}
+
+function generatePropertyEntry(prop,{role}){
+	const ret = {
+		type: getType(prop.type,role),
+		title: prop.title || noCase(prop.name),
+		description:prop.description
+	}
+	if(prop.expanded){
+		ret.expanded = prop.expanded;
+	}
+
+	if(prop.initType){
+		ret.init = {
+			$type: prop.initType
+		}
+	}
 
 	return ret;
 }
@@ -211,11 +228,7 @@ function generateChildrenProperty(component){
 	if(component.slots && component.slots.find(slot=>(slot.name==='default' || slot.name === undefined))){
 		const slot = component.slots.find(slot=>(slot.name==='default' || slot.name === undefined));
 		return {
-			type:{
-				$type:'role type',
-				role:'type',
-				type:(slot.type||'component') + '*',//accept an array of type
-			},
+			type:getType(slot.type||'component',null,true),
 			expanded:true,
 			title: (slot.title && slot.title !=='default')? 
 				slot.title : (slot.type || 'content elements'),
@@ -247,12 +260,23 @@ function generateShow(input,component,props){
 }
 
 function generateComponentFn(component){
-	return {
+	const entry = {
 		component:true,
 		type:'constant',
 		importLibrary:component.importLibrary,
 		name: component.importIdentifier || component.name
 	}
+	if(component.slots){
+		entry.options = {slots: {}};
+		component.slots.forEach(slot=>{
+			if(slot.name && slot.name !== 'default'){
+				entry.options.slots[slot.name] = {
+					name: slot.slotName || slot.name
+				}
+			}
+		})
+	}
+	return entry;
 }
 
 function registerValues(dictionary,pkg){
@@ -292,5 +316,67 @@ function registerValues(dictionary,pkg){
 		}else{
 			console.error('Value entry must have either `value` or `call` properties',value);
 		}
+	})
+}
+
+function getType(base,role,collection){
+	const parsed = base.match(/^(.*?)(\[\]|\*)?$/)
+	if(parsed[2] || collection){
+		base = parsed[1] + '*';//array
+	}
+	return {
+		$type: role? 'role type' : 'base type',
+		type: base,
+		role: role
+	}
+}
+
+function registerTypes(dictionary,pkg){
+	(pkg.types||[]).forEach(t=>{
+		const spec = {
+			name: t.name,
+			title: t.title || noCase(t.name),
+			description:t.description,
+			pattern:t.pattern,
+			template:t.template,
+			isa: t.isa || [],
+			show: t.show,
+			properties:{}
+		}
+		if(t.type){
+			spec.isa.push(t.type);
+		}
+		if(t.type === 'string'){
+			spec.textEditor = true;
+		}
+		if(t.type === 'number'){
+			spec.numberEditor = true;
+		}
+		if(t.type === 'boolean'){
+			spec.viewer = 'boolean-viewer';
+		}
+		(t.properties||[]).forEach(prop=>{
+			spec.properties[prop.name] = generatePropertyEntry(prop,{});
+		});
+
+		//generate show if does not exist
+		if(!spec.show && Array.isArray(t.properties)){
+			spec.show = t.properties.map(p=>p.name);
+		}
+		//if pattern or template are not defined, define a template to show the title
+		if(!spec.template && !spec.pattern){
+			spec.template = spec.title;
+		}
+
+		//register the type
+		dictionary._registerType(t.name,spec,pkg);
+
+		//should be possible to use as a JSON and edit it in editor inline
+		if(t.editorForm){
+			dictionary._registerValueType(t.name,t.name);
+		}
+		
+		//register isa relations
+		spec.isa.forEach(supertype=>dictionary._registerIsa(t.name,supertype));
 	})
 }
