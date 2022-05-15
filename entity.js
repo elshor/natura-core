@@ -36,7 +36,6 @@ export function entityValue(entity){
 }
 
 export function generateNewEntity(location, type=location.expectedType){
-	console.log('generateNewEntity',type,location.path);
 	const dictionary = location.dictionary;
 	assume(dictionary,MissingParam,'dictionary');
 	switch(type.searchString || type){
