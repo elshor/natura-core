@@ -295,8 +295,16 @@ const entities = 	[
 	{
 		name:'javascript expression',
 		title:'javascript expression',
+		template: 'Javascript Expression',
 		valueType:'?',
 		role:'calc',
+		viewer:'code-expression'
+	},
+	{
+		name:'javascript function',
+		$generic: 'javascript expression',
+		title:'javascript function',
+		isa:['action'],
 		viewer:'code-expression'
 	},
 	{

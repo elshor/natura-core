@@ -7,6 +7,7 @@ import clone from 'clone'
 import Type from './type.js'
 import { contextEntries } from './context.js';
 import { relativeLocation } from './location.js';
+import locationQuery from './location-query.js';
 
 export function entityType(data){
 	if(typeof data === 'object' && data !== null && data.$isProxy===true){
@@ -35,6 +36,7 @@ export function entityValue(entity){
 }
 
 export function generateNewEntity(location, type=location.expectedType){
+	console.log('generateNewEntity',type,location.path);
 	const dictionary = location.dictionary;
 	assume(dictionary,MissingParam,'dictionary');
 	switch(type.searchString || type){
@@ -48,13 +50,12 @@ export function generateNewEntity(location, type=location.expectedType){
 	case undefined:
 		return '';//default new entity is text
 	default:
-		const ret = {
-			$type:type.searchString || type,
-			$id: uid()
-		};
-
 		//if type is registered, look for init values in properties
 		const spec = dictionary.getTypeSpec(type);
+
+		const ret = spec.init? cloneEntity(spec.init) : {$id:uid()};
+		ret.$type = type.searchString || type;
+
 
 		if(spec.properties){
 			Object.keys(spec.properties).forEach(prop=>{
@@ -63,25 +64,7 @@ export function generateNewEntity(location, type=location.expectedType){
 				}
 				if(spec.properties[prop].unique !== undefined){
 					//generate a unique name in the current context for entities of type `type`
-					const propertyType = Type(spec.properties[prop].unique.type);
-					const base = spec.properties[prop].unique.base || 'entity';
-					const path = spec.properties[prop].unique.path || '.';
-
-					//get existing context
-					const ctx = contextEntries(relativeLocation(location,path),propertyType);
-					const names = {}
-					ctx.forEach(c=>names[c.name]=true);
-					let newName = base;
-					if(names[newName]){
-						//name already exists - add an integer from 1 to it until name doesn't exist
-						for(let i=1;;++i){
-							newName = base + ' ' + i;
-							if(!names[newName]){
-								break;
-							}
-						}
-					}
-					ret[prop] = newName;
+					ret[prop] = generateUniqueValue(location,spec.properties[prop].unique);
 				}
 			});
 		}
@@ -94,7 +77,6 @@ export function generateNewEntity(location, type=location.expectedType){
 		if(spec.$generic){
 			ret.$generic = spec.$generic;
 		}
-
 		return ret;
 	}
 }
@@ -102,6 +84,27 @@ export function generateNewEntity(location, type=location.expectedType){
 function uid(){
 	const ret = '$'+(Number(new Date()) - new Date('2020-01-01')+Math.random()).toString(36).replace('.','');
 	return ret;
+}
+
+function generateUniqueValue(location,{base,path,type,query}){
+	const names = {}
+	assume(query,'Missing query for generating unique values.',path,type);
+	//using query to find existing values
+	locationQuery(location,query).forEach(l=>{
+		names[l.value]=true;
+	});
+	let newName = base || 'entity';
+	if(names[newName]){
+		//name already exists - add an integer from 1 to it until name doesn't exist
+		for(let i=1;;++i){
+			newName = base + ' ' + i;
+			if(!names[newName]){
+				return newName;
+			}
+		}
+	}else{
+		return newName;
+	}
 }
 
 /**

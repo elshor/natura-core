@@ -46,6 +46,9 @@ export default class Dictionary{
 	}
 
 	isa(type,className){
+		if(className.isa){
+			return className.isa(this,type);
+		}
 		type = searchString(type);
 		className = searchString(className);
 
@@ -137,10 +140,16 @@ export default class Dictionary{
 	 * @param {String} type the class type
 	 */
 	getClassMembers(type){
+		if(type.getClassMembers){
+			return type.getClassMembers(this);
+		}
 		return this.isaRepo[type]||[];
 	}
 
 	getExpressionsByValueType(type,allowCalc=true,expectedRole){
+		if(type.getExpressionsByValueType){
+			type.getExpressionsByValueType(this,allowCalc,expectedRole);
+		}
 		//get all valueTypes
 		let current = Object.keys(this.valueTypeRepo);
 		//only keep valueTypes where valueType isa type
@@ -158,10 +167,6 @@ export default class Dictionary{
 		});
 		current = current.map(({type})=>type);
 		return unique(current);
-	}
-
-	isClass(type){
-		return this.isaRepo[type] !== undefined;
 	}
 
 	getTypes(){
@@ -488,9 +493,6 @@ function unique(arr){
 	return arr.filter(function(value, index, self) {
 		return self.indexOf(value) === index;
 	})
-}
-function isGenericType(spec){
-	return Array.isArray(spec.genericProperties) && !spec.$specialized;
 }
 
 function searchString(str){

@@ -6,6 +6,8 @@ import { JsonPointer } from 'json-ptr';
 import {IllegalType} from './error.js'
 import calc from "./calc.js";
 import { calcTemplate } from './template.js';
+import OneOfType from './one-of-type.js'
+import RoleType from './role-type.js'
 
 export default function Type(type,location){
 	if(typeof type === 'string'){
@@ -43,6 +45,8 @@ export default function Type(type,location){
 					specializedValue(type.specialized,location)
 				}>${type.collection?'*' : ''}`
 			);
+		case 'one of':
+			return new OneOfType(type.types.map(type=>Type(type,location)),type.collection);
 		default:
 			console.error('Using an unknown type',type.$type,type)
 			throw new Error(IllegalType);
@@ -65,6 +69,7 @@ class BaseType{
 	get typeString(){
 		return this.type.typeString || this.type.toString();
 	}
+	/** A search string is always the singular of a type */
 	get searchString(){
 		return this.isCollection? this.singular.typeString : this.typeString;
 	}
@@ -88,39 +93,6 @@ class BaseType{
 
 }
 
-class RoleType{
-	constructor(type,role){
-		this.$type="role type",
-		this.type = Type(type);
-		this.role = role;
-	}
-	
-	toString(){
-		return this.role + '.' + this.type.toString();
-	}
-	get isTypeObject(){
-		return true;
-	}
-	get typeString(){
-		return this.type.typeString;
-	}
-
-	get searchString(){
-		return this.type.searchString;
-	}
-	
-	get singular(){
-		return new RoleType(this.type.singular.typeString,this.role);
-	}
-
-	get isCollection(){
-		return this.type.isCollection;
-	}
-
-	get isArray(){
-		return this.type.isArray;
-	}
-}
 
 function specializedValue(val,location){
 	//currently only type specialized values are supported (not values)

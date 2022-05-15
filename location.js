@@ -13,7 +13,8 @@ import langLib from './lang.js'
 import { isValid } from './validate.js';
 import Dictionary from './dictionary.js'
 import { calcTemplate } from './template.js';
-
+import locationQuery from './location-query.js'
+import { assume } from './error.js';
 const locationMap = new Map();
 export function createLocation(data,dictionary=new Dictionary(),path=''){
 	const segments = JsonPointer.decode(uriHash(path));
@@ -736,43 +737,9 @@ function plainSetter(obj,key,value){
 function plainInserter(arr,pos,value){
 	arr.splice(pos,0,value);
 }
+
 export function relativeLocations(location,path){
-	function follow(location,part,current){
-		if(!location){
-			return;
-		}
-		location = location.referenced;
-		switch(part){
-			case '':
-			case '.':
-			case '$':
-				current.push(location);
-				break;
-			case '..':
-				current.push(location.parent);
-				break;
-			case  '*':
-				current.push(...location.children);
-				break;
-			case '$previous':
-				current.push(location.previous);
-				break;
-			default:
-				current.push(location.child(part));
-		}
-	}
-	if(path[0]==='/'){
-		//the location is relative to top
-		location = createLocation(location.data,location.dictionary);
-	}
-	let current = [location];
-	const parts = path.split('/');
-	parts.forEach(part=>{
-		const now = [];
-		current.forEach(l=>follow(l,part,now));
-		current = now;
-	})
-	return current;
+	return locationQuery(location,path);
 }
 
 
@@ -796,7 +763,7 @@ class ShadowLocation extends LocationChild{
 }
 
 export function relativeLocation(location,path){
-	const locations = relativeLocations(location,path);
+	const locations = locationQuery(location,path);
 	if(locations.length === 0){
 		//no locations found
 		return null;

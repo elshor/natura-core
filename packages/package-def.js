@@ -67,7 +67,7 @@ function registerComponent(component,dictionary,pkg){
 	try{
 		const props = generateProps(component,component.props||[],component.slots||[]);
 		const display = generateComponentDisplay(component);
-		const pattern = component.pattern || `${component.title||component.name} referenced as <<ref>>`;
+		const pattern = component.pattern || `${component.title||component.name} named <<ref>>`;
 		const childrenProperty = generateChildrenProperty(component);
 		const name = component.name;
 		dictionary._registerType(props.name,props,pkg);
@@ -75,6 +75,7 @@ function registerComponent(component,dictionary,pkg){
 			name,
 			title:component.title,
 			description:component.description,
+			init: component.init,
 			properties:{
 				props:{
 					type:props.name,
@@ -98,9 +99,8 @@ function registerComponent(component,dictionary,pkg){
 					description:'reference name used to reference and identify this component. The reference is used to identify the component so it should be descriptive. It may contain spaces.',
 					placeholder:'reference name',
 					unique:{
-						path:'..',
-						base: component.title||component.name,
-						type: 'component'
+						query:'/**/?isa component/ref',
+						base: component.title||component.name
 					}
 				},
 			},
@@ -139,6 +139,7 @@ function registerComponent(component,dictionary,pkg){
 			}
 		}
 
+		const events  = generateEvents(dictionary,component,pkg);
 		if(childrenProperty){
 			ret.properties.children = childrenProperty;
 		}
@@ -148,6 +149,25 @@ function registerComponent(component,dictionary,pkg){
 		ret.isa.forEach(supertype=>{
 			dictionary._registerIsa(name,supertype)
 		});
+
+
+		//config property
+		ret.properties.config = {
+			type:{
+				$type: 'role type',
+				role: 'type',
+				type:{
+					$type:'one of',
+					collection:true,
+					types:[...events,'style config','css class'],
+				}
+			},
+			description:'component configuration including style, classes, properties and events',
+			expanded:true,
+			hideName:true,
+			title:'component configuration'
+		}
+		ret.additional = ['config'];
 
 
 		//registrations
@@ -228,7 +248,11 @@ function generateChildrenProperty(component){
 	if(component.slots && component.slots.find(slot=>(slot.name==='default' || slot.name === undefined))){
 		const slot = component.slots.find(slot=>(slot.name==='default' || slot.name === undefined));
 		return {
-			type:getType(slot.type||'component',null,true),
+			type:{
+				$type:'role type',
+				role: 'type',
+				type: getType(slot.type||'component',null,true)
+			},
 			expanded:true,
 			title: (slot.title && slot.title !=='default')? 
 				slot.title : (slot.type || 'content elements'),
@@ -267,7 +291,13 @@ function generateComponentFn(component){
 		name: component.importIdentifier || component.name
 	}
 	if(component.slots){
-		entry.options = {slots: {}};
+		//generate slots
+		if(!entry.options){
+			entry.options = {};
+		}
+		if(!entry.options.slots){
+			entry.options.slots = {};
+		}
 		component.slots.forEach(slot=>{
 			if(slot.name && slot.name !== 'default'){
 				entry.options.slots[slot.name] = {
@@ -275,6 +305,14 @@ function generateComponentFn(component){
 				}
 			}
 		})
+	}
+
+	if(component.placeholders){
+		//generate placeholders
+		if(!entry.options){
+			entry.options = {};
+		}
+		entry.options.placeholders = component.placeholders;
 	}
 	return entry;
 }
@@ -314,6 +352,10 @@ function registerValues(dictionary,pkg){
 }
 
 function getType(base,role,collection){
+	if(typeof base !== 'string'){
+		//we can only process string type - assuming this is an object type
+		return base;
+	}
 	const parsed = base.match(/^(.*?)(\[\]|\*)?$/)
 	if(parsed[2] || collection){
 		base = parsed[1] + '*';//array
@@ -327,50 +369,39 @@ function getType(base,role,collection){
 
 function registerTypes(dictionary,pkg){
 	(pkg.types||[]).forEach(t=>{
-		const spec = {
-			name: t.name,
-			title: t.title || noCase(t.name),
-			description:t.description,
-			pattern:t.pattern,
-			template:t.template,
-			isa: t.isa || [],
-			show: t.show,
-			properties:{}
-		}
-		if(t.type){
-			spec.isa.push(t.type);
-		}
-		if(t.type === 'string'){
-			spec.textEditor = true;
-		}
-		if(t.type === 'number'){
-			spec.numberEditor = true;
-		}
-		if(t.type === 'boolean'){
-			spec.viewer = 'boolean-viewer';
-		}
-		(t.properties||[]).forEach(prop=>{
-			spec.properties[prop.name] = generatePropertyEntry(prop,{});
-		});
+		dictionary._registerType(t.name,t,pkg);
+	})
+}
 
-		//generate show if does not exist
-		if(!spec.show && Array.isArray(t.properties)){
-			spec.show = t.properties.map(p=>p.name);
+function generateEvents(dictionary,component,pkg){
+	return (component.events||[]).map(evt=>{
+		const entity = {
+			name: `${evt.name}.${component.name}`,
+			title: evt.title + ' (event)',
+			description:evt.description,
+			pattern:'on ' + evt.title + ': <<value>>',
+			$generic:'component config',
+			$specialized:{
+				key:evt.name,
+				type:'event'
+			},
+			properties:{
+				value:{
+					type: {
+						$type: 'role type',
+						type:'action',
+						role: 'type'
+					},
+					placeholder:'event handler',
+					description: evt.description,
+					viewerOptions:{
+						initialCode:'function(evt){\n  //your event handler code here\n}',
+						title:`Event handler for ${evt.title} event`
+					}
+				}
+			}
 		}
-		//if pattern or template are not defined, define a template to show the title
-		if(!spec.template && !spec.pattern){
-			spec.template = spec.title;
-		}
-
-		//register the type
-		dictionary._registerType(t.name,spec,pkg);
-
-		//should be possible to use as a JSON and edit it in editor inline
-		if(t.editorForm){
-			dictionary._registerValueType(t.name,t.name);
-		}
-		
-		//register isa relations
-		spec.isa.forEach(supertype=>dictionary._registerIsa(t.name,supertype));
+		dictionary._registerType(entity.name,entity,pkg);
+		return entity.name;
 	})
 }

@@ -3,10 +3,11 @@
  *   All rights reserved.
  */
 import calc,{ isExpression } from './calc.js';
+import Type from './type.js'
 const DefaultPlaceholder = 'Enter value here';
 
 export function specType(spec){
-	return spec? (spec.name || spec.type || specComputedPattern(spec)) : 'any';
+	return spec? (spec.name || Type(spec.type) || specComputedPattern(spec)) : 'any';
 }
 
 export function specContextType(spec){

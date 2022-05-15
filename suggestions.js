@@ -5,7 +5,6 @@
 import { relativeLocations, shadowLocation } from "./location.js";
 import { specComputedPattern} from "./spec.js";
 import { assume } from "./error.js";
-import { generateNewEntity } from "./entity";
 import {calcTemplate} from './template.js'
 import { calcValue } from "./calc.js";
 import {contextEntries, contextSearch} from './context.js'
@@ -49,7 +48,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 			return parsed? [parsed[2],parsed[1]] : [type];
 		}else{
 			//if type is an object with role specified, then use it. Otherwise ignore role (it will be undefined)
-			return [expectedType.typeString,expectedType.role];
+			return [expectedType,expectedType.role];
 		}
 	}(location);
 	
@@ -64,7 +63,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 	////////////////////////////
 	//category types suggestions
 	////////////////////////////
-	if(dictionary.isClass(expectedType) && role === Role.type){
+	if(role === Role.type){
 		dictionary.getClassMembers(expectedType).forEach(type=>{
 			const spec = dictionary.getTypeSpec(type);
 			if(matchRole(spec.role,Role.type) && !matchRole(role,Role.type)){
@@ -75,12 +74,12 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				//ignore abstract types
 				return;
 			}
-			const value = generateNewEntity(location,type);
+			//TODO generate value before insert to doc - currently, the same $id can be used several times
 			const suggest = {
-				value: value,
+				valueType:type,
 				description: spec.description,
 				source:'class',
-				text: suggestionText(value,spec,dictionary,true),
+				text: suggestionText(undefined,spec,dictionary,true),
 				alt:spec.suggest? spec.suggest.alt : undefined,
 				tag: spec.suggest? spec.suggest.tag : undefined,
 				entityScore:entityScore(spec)
@@ -96,6 +95,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 	//////////////////////
 	//dictionary instances
 	//////////////////////
+
 	const entries = dictionary.getInstancesByType(expectedType,role);
 	//TODO check scope
 	//TODO should only work for instance types
@@ -105,7 +105,8 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 			text:entry.label,
 			source:'instance',
 			description:entry.description,
-			alt:entry.alt
+			alt:entry.alt,
+			icon:entry.icon
 		})
 	})
 
@@ -316,17 +317,16 @@ function getExpressionSuggestions(suggestions,expectedType,location,itsExpectedS
 	const dictionary = location.dictionary;
 const types = dictionary.getExpressionsByValueType(expectedType,allowExpressions,role);
 types.forEach(type=>{
-	const value = generateNewEntity(location,type);
 	const spec = dictionary.getTypeSpec(type);
 	suggestions.list.push({
-		value: value,
+		valueType:type,
 		description: spec.description,
 		source:'expression',
 		alt: spec.suggest? spec.suggest.alt : undefined,
 		tag: spec.suggest? spec.suggest.tag : undefined,
 		requiredContext:spec.suggest? spec.suggest.requiredContext : undefined,
 		entityScore:entityScore(spec),
-		text:suggestionText(value,itsExpectedSpec,dictionary,true)
+		text:suggestionText(undefined,spec,dictionary,true)
 	});
 });
 }
@@ -343,7 +343,7 @@ export function hasSuggestions(location, filter){
 	return getSuggestions(location,filter).list.length > 0;
 }
 
-export function suggestionText(value, spec,dictionary,isNew=false,entry){
+export function suggestionText(value, spec,dictionary,isNew=false){
 	assume(spec);
 	assume(dictionary);
 	if(value !== null && typeof value === 'object' && value.$type !== undefined){
@@ -354,12 +354,19 @@ export function suggestionText(value, spec,dictionary,isNew=false,entry){
 	if(isNew && spec.title){
 		return spec.title;
 	}else	if(spec.template){
-		return calcTemplate(spec.template,value);
+		return calcTemplate(spec.template,value||{});
 	}else if(isPrimitive(value)){
 		return value.toString();
 	}else if(specComputedPattern(spec)){
 		return specComputedPattern(spec);
 	}else{
+		if(value === undefined){
+			return 'undefined';
+		}else if(value === null){
+			return 'null'
+		}else if(typeof value !== 'object'){
+			return value.toString();
+		}
 		const ret =  
 			value.title || 
 			value.label || 

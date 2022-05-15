@@ -121,3 +121,14 @@ export const validators = [
 		}
 	}
 ]
+
+export function isValidBasicType(location,type){
+	const dictionary = location.dictionary;
+	const spec = dictionary.getTypeSpec(location.expectedType);
+	if(spec && spec.basicType === type){
+		return true;
+	}
+	const members = dictionary.getClassMembers(location.expectedType);
+	const match = members.find(item=>dictionary.getTypeSpec(item).basicType === type);
+	return match !== undefined;
+}
