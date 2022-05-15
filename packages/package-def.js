@@ -283,13 +283,7 @@ function registerValues(dictionary,pkg){
 	const values = pkg.values || [];
 	values.forEach(value=>{
 		if(value.value){
-			dictionary._registerInstance(
-				value.name,
-				value.type,
-				value.value,
-				value.title,
-				value.description
-			)
+			dictionary._registerInstance(value);
 		}else if(value.call){
 			dictionary._registerType(value.name,{
 				name:value.name,

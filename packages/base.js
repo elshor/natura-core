@@ -846,13 +846,13 @@ const entities = 	[
 	{
 		name:'js instance',
 		register:function(dictionary,type,spec){
-			dictionary._registerInstance(
-				spec.id,
-				spec.type,
-				spec.value,
-				spec.label,
-				spec.description
-			)
+			dictionary._registerInstance({
+				name:spec.id,
+				valueType:spec.type,
+				value:spec.value,
+				label:spec.label,
+				description:spec.description
+		})
 		}
 	},
 	{

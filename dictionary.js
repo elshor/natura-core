@@ -197,18 +197,19 @@ export default class Dictionary{
 	 * @param {"artifact"|"value"} role the role of the instance
 	 * @returns {Reference} a reference to the instance
 	 */
-	_registerInstance(id, type, value,label,description,role){
-		if(type){
-			this._ensureSpecializedIsRegistered(type);
-			if(!this.instancesByType[type]){
-				this.instancesByType[type] = [];
+	_registerInstance(entry){
+		const {valueType,name,value,label,description} = entry;
+		if(valueType){
+			this._ensureSpecializedIsRegistered(valueType);
+			if(!this.instancesByType[valueType]){
+				this.instancesByType[valueType] = [];
 			}
-			this.instancesByType[type].push({id,type,value,label,description,role});
-			this.instances[id] = value;
+			this.instancesByType[valueType].push(entry);
+			this.instances[name] = value;
 			return reference(
-				label||id,
-				type,
-				'dictionary:'+ id,
+				label||name,
+				valueType,
+				'dictionary:'+ name,
 				description,
 				value
 			)
@@ -266,13 +267,9 @@ export default class Dictionary{
 		if(role){
 			current = current.filter(entry=>entry.role===role);
 		}
-		current = current.map(entry=>reference(
-			entry.label||entry.id,
-			entry.type,
-			undefined,//don't use path - instead use inline value
-			entry.description,
-			entry.value
-		));
+		current = current.map(entry=>
+			Object.assign({},entry,{$type:'reference'})
+		);
 		return current;
 	}
 
