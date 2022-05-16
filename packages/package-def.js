@@ -195,24 +195,22 @@ function registerCategories(dictionary,categories){
 	})
 }
 
-function generatePropsProperties(props,slots){
+function generatePropsProperties(props=[],slots=[]){
 	const ret = {};
-	
 	//add plain properties
-	props.forEach(prop=>{
-		ret[prop.name] = generatePropertyEntry(prop,{})
-	})
+	for(let i=0;i<props.length;++i){
+		ret[props[i].name] = generatePropertyEntry(props[i],{});
+	}
 
 	//add slots that are not default
-	slots.forEach(slot=>{
-		if(slot.name === 'default' || !slot.name){
+	for(let j=0;j<slots.length;++j){
+		if(slots[j].name === 'default' || !slots[j].name){
 			//this slot will be displayed as content elements
-			return;
+			continue;
 		}
-		const entry = generatePropertyEntry(slot,{role:'type'});
-		ret[slot.name] = entry;
-	});
-
+		const entry = generatePropertyEntry(slots[j],{role:'type'});
+		ret[slots[j].name] = entry;
+	};
 	return ret;
 }
 
@@ -251,27 +249,29 @@ function generateComponentDisplay(component){
 
 
 function generateChildrenProperty(component){
-	if(component.slots && component.slots.find(slot=>(slot.name==='default' || slot.name === undefined))){
-		const slot = component.slots.find(slot=>(slot.name==='default' || slot.name === undefined));
-		return {
-			type:{
-				$type:'role type',
-				role: 'type',
-				type: getType(slot.type||'component',null,true)
-			},
-			expanded:true,
-			title: (slot.title && slot.title !=='default')? 
-				slot.title : (slot.type || 'content elements'),
-			description:slot.description,
-			childSpec: {
-				context: [{
-					$type: "use context",
-					path: "../.."
-				}]
-			}
-		}
-	}else{
+	if(!Array.isArray(component.slots)){
 		return undefined;
+	}
+	const defaultSlot = component.slots.find(s=>(s.name==='default' || s.name === undefined));
+	if(!defaultSlot){
+		return undefined;
+	}
+	return {
+		type:{
+			$type:'role type',
+			role: 'type',
+			type: getType(defaultSlot.type||'component',null,true)
+		},
+		expanded:true,
+		title: (defaultSlot.title && defaultSlot.title !=='default')? 
+			defaultSlot.title : (defaultSlot.type || 'content elements'),
+		description:defaultSlot.description,
+		childSpec: {
+			context: [{
+				$type: "use context",
+				path: "../.."
+			}]
+		}
 	}
 }
 
@@ -296,7 +296,7 @@ function generateComponentFn(component){
 		importLibrary:component.importLibrary,
 		name: component.importIdentifier || component.name
 	}
-	if(component.slots){
+	if(Array.isArray(component.slots)){
 		//generate slots
 		if(!entry.options){
 			entry.options = {};
@@ -314,11 +314,14 @@ function generateComponentFn(component){
 	}
 
 	if(component.placeholders){
-		//generate placeholders
-		if(!entry.options){
-			entry.options = {};
-		}
-		entry.options.placeholders = component.placeholders;
+		if(!Array.isArray(component.placeholders)){
+			console.error('component placeholders must be an array. Got',component.placeholders);
+		}else{
+			//generate placeholders
+			if(!entry.options){
+				entry.options = {};
+			}
+			entry.options.placeholders = component.placeholders;
 	}
 	return entry;
 }
