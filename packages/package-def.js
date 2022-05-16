@@ -322,6 +322,12 @@ function generateComponentFn(component){
 				entry.options = {};
 			}
 			entry.options.placeholders = component.placeholders;
+		}
+	}
+
+	if(component.editModeStyle){
+		//generate edit mode style
+		entry.options.devStyle = component.editModeStyle;
 	}
 	return entry;
 }
