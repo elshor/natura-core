@@ -61,6 +61,7 @@ function registerPackage(dictionary,script,pkg){
 	(script.components||[]).forEach(component=>registerComponent(component,dictionary,pkg));
 	registerValues(dictionary,pkg);
 	registerTypes(dictionary,pkg);
+	registerCategories(dictionary,pkg.categories||{});
 }
 
 function registerComponent(component,dictionary,pkg){
@@ -186,7 +187,12 @@ function generateProps(component,props,slots){
 		name: 'props.' + component.name,
 		properties:generatePropsProperties(props,slots)
 	}
+}
 
+function registerCategories(dictionary,categories){
+	Object.entries(categories).forEach(([category,members])=>{
+		(members||[]).forEach(member=>dictionary._registerIsa(member,category));
+	})
 }
 
 function generatePropsProperties(props,slots){
