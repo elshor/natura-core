@@ -307,7 +307,8 @@ function generateComponentFn(component){
 		component.slots.forEach(slot=>{
 			if(slot.name && slot.name !== 'default'){
 				entry.options.slots[slot.name] = {
-					name: slot.slotName || slot.name
+					name: slot.name,
+					slotName: slot.slotName || slot.name
 				}
 			}
 		})
