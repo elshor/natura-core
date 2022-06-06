@@ -6,7 +6,7 @@ import { assume } from './error.js';
 import {calcTemplate} from './template.js'
 import Type from './type.js'
 import {createLocation,relativeLocations, shadowLocation} from './location.js'
-import { specContextType } from './spec.js';
+import { specContextType, Spec } from './spec.js';
 import {Role,matchRole} from './role.js'
 
 /**
@@ -209,7 +209,7 @@ function emitEntity(location,entry,iterator,type,name,scope='',visitIt){
  * @param {String} entry.scope
  * @param {String} entry.type
  * @param {String} entry.name
- * @param {String} entry.access
+ * @param {String} entry.access the code name used to access the context entity. If empty then this entry is ignored
  * @param {String} entry.description
  * @param {*} iterator 
  * @param {*} type 
@@ -486,7 +486,15 @@ export function locationContext(location,contextLocation=location){
 				return locationContext(location.parent,contextLocation);
 			}
 			if(prop==='$spec'){
-				return location.spec;
+				return Spec(location.spec);
+			}
+			if(prop==='$valueType'){
+				const spec = location.spec;
+				return spec.valueType || location.type;
+			}
+			if(prop==='$valueTypeSpec'){
+				const valueType = location.spec.valueType || location.type;
+				return Spec(location.dictionary.getTypeSpec(valueType),location.dictionary);
 			}
 			if(prop==='$type'){
 				return location.type;

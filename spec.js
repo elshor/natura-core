@@ -6,6 +6,20 @@ import calc,{ isExpression } from './calc.js';
 import Type from './type.js'
 const DefaultPlaceholder = 'Enter value here';
 
+export function Spec(json,dictionary){
+	return new Proxy({json,dictionary},{
+		get({json},prop){
+			if(json[prop] !== undefined){
+				return json[prop]
+			}
+			if(json.$specialized && json.$specialized[prop] !== undefined){
+				return json.$specialized[prop];
+			}
+			return undefined;
+		}
+	})
+}
+
 export function specType(spec){
 	return spec? (spec.name || Type(spec.type) || specComputedPattern(spec)) : 'any';
 }

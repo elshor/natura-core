@@ -2,7 +2,6 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
-import basicTypes from "./basic-types.js"
 import packageDef from './package-def.js'
 import {JsonPointer} from 'json-ptr'
 import { validators } from "../validate.js";
@@ -579,6 +578,10 @@ const entities = 	[
 		options:function({$location}){
 			return $location.dictionary.getClassMembers('data type');
 		}
+	},
+	{
+		name:'dataset',
+		genericProperties:['itemType']
 	},
 	{
 		name:'entity type',

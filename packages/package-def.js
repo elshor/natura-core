@@ -3,6 +3,8 @@
  *   All rights reserved.
  */
 import {noCase}  from "no-case";
+import Type from '../type.js'
+
 export default [
 	{
 		name:'package definition',
@@ -61,6 +63,7 @@ function registerPackage(dictionary,script,pkg){
 	(script.components||[]).forEach(component=>registerComponent(component,dictionary,pkg));
 	registerValues(dictionary,pkg);
 	registerTypes(dictionary,pkg);
+	registerExpressions(dictionary,pkg);
 	registerCategories(dictionary,pkg.categories||{});
 }
 
@@ -386,6 +389,44 @@ function getType(base,role,collection){
 function registerTypes(dictionary,pkg){
 	(pkg.types||[]).forEach(t=>{
 		dictionary._registerType(t.name,t,pkg);
+		//register getters if required
+		if(t.generateGetters){
+			Object.entries(t.properties||[]).forEach(([key,value])=>{
+				registerProperty(t.name, key, value, dictionary)
+			}
+			)
+		}
+	})
+}
+
+function registerExpressions(dictionary,pkg){
+	(pkg.expressions||[]).forEach(t=>{
+		dictionary._registerType(t.name,t,pkg);
+		dictionary._registerFunction(t.name,{
+			library:pkg.name,
+			name: t.importIdentifier,
+			args: (t.args||[])
+		},
+		pkg)
+	})
+}
+
+function registerProperty(objectType, access, def, dictionary){
+	const propertyName = (def.title || def.name || key);
+	const name = objectType.toString() + '.' + propertyName;
+	const basicValueType = Type(getType(def.type));
+	const valueType = basicValueType.isCollection?
+		Type(`dataset<${basicValueType.singular.toString()}>`) :
+		basicValueType
+	dictionary._registerType(name,{
+		name,
+		title:propertyName + ' of a ' + objectType.toString(),
+		pattern: propertyName + ' of <<object>>',
+		properties:{
+			object:{type:objectType},
+			access:{init:access}
+		},
+		valueType
 	})
 }
 
