@@ -4,6 +4,7 @@
  */
 import calc from './calc.js'
 import {locationContext} from './context.js'
+import { Role } from './role.js';
 import Type from './type.js';
 import getType from './type.js'
 /**
@@ -38,7 +39,10 @@ function isValidType(location,value,expectedType){
 	}
 	expectedType = expectedType || location.expectedType;
 	if(value && value.$type){
-		const actualType = valueType(value,location.dictionary);
+		const actualType = (expectedType.role === Role.type)?
+			value.$type : 
+			valueType(value,location.dictionary);
+		
 		//check if type isa expected type
 		return location.dictionary.isa(actualType,expectedType);
 	}
