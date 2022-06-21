@@ -58,6 +58,9 @@ export function generateNewEntity(location, type=location.expectedType){
 
 		if(spec.properties){
 			Object.keys(spec.properties).forEach(prop=>{
+				if(spec.properties[prop].initType !== undefined){
+					ret[prop] = generateNewEntity(location.child(prop),spec.properties[prop].initType)
+				}
 				if(spec.properties[prop].init !== undefined){
 					ret[prop] = cloneEntity(spec.properties[prop].init);
 				}
