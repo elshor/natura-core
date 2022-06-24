@@ -4,7 +4,6 @@
  */
 import {noCase}  from "no-case";
 import Type from '../type.js'
-
 export default [
 	{
 		name:'package definition',
@@ -85,8 +84,7 @@ function registerComponent(component,dictionary,pkg){
 					type:props.name,
 					title:'properties',
 					description:'Specify the properties of the component',
-					init:{$type:props.name},
-					init:{$type:props.name},
+					initType:props.name,
 					expanded:true,
 					displayInline:false,
 					context:[{$type:'use context',path:'..'}]
@@ -339,7 +337,10 @@ function generateComponentFn(component){
 function registerValues(dictionary,pkg){
 	const values = pkg.values || [];
 	values.forEach(value=>{
-		if(value.value){
+		if(!value.call){
+			value.value = value.value !== undefined? value.value : value.name;
+			value.label = value.label || value.title || value.name;
+			value.valueType = value.valueType || value.type;
 			dictionary._registerInstance(value);
 		}else if(value.call){
 			dictionary._registerType(value.name,{
@@ -405,7 +406,8 @@ function registerExpressions(dictionary,pkg){
 		dictionary._registerFunction(t.name,{
 			library:pkg.name,
 			name: t.importIdentifier,
-			args: (t.args||[])
+			args: (t.args||[]),
+			isFactory:t.isFactory || false
 		},
 		pkg)
 	})
@@ -414,6 +416,7 @@ function registerExpressions(dictionary,pkg){
 function registerProperty(objectType, access, def, dictionary){
 	const propertyName = (def.title || def.name || key);
 	const name = objectType.toString() + '.' + propertyName;
+	const description = def.description || `${propertyName} property of ${objectType.toString()}`
 	const basicValueType = Type(getType(def.type));
 	const valueType = basicValueType.isCollection?
 		Type(`dataset<${basicValueType.singular.toString()}>`) :
@@ -421,12 +424,20 @@ function registerProperty(objectType, access, def, dictionary){
 	dictionary._registerType(name,{
 		name,
 		title:propertyName + ' of a ' + objectType.toString(),
+		description,
 		pattern: propertyName + ' of <<object>>',
 		properties:{
 			object:{type:objectType},
 			access:{init:access}
 		},
-		valueType
+		valueType,
+		isa:['data property']
+	})
+	dictionary._registerInstance({
+		value:propertyName,
+		label: propertyName,
+		valueType: 'property.' + objectType.toString(),
+		description
 	})
 }
 
