@@ -63,6 +63,7 @@ function registerPackage(dictionary,script,pkg){
 	registerValues(dictionary,pkg);
 	registerTypes(dictionary,pkg);
 	registerExpressions(dictionary,pkg);
+	registerActions(dictionary,pkg);
 	registerCategories(dictionary,pkg.categories||{});
 }
 
@@ -402,6 +403,19 @@ function registerTypes(dictionary,pkg){
 
 function registerExpressions(dictionary,pkg){
 	(pkg.expressions||[]).forEach(t=>{
+		dictionary._registerType(t.name,t,pkg);
+		dictionary._registerFunction(t.name,{
+			library:pkg.name,
+			name: t.importIdentifier,
+			args: (t.args||[]),
+			isFactory:t.isFactory || false
+		},
+		pkg)
+	})
+}
+
+function registerActions(dictionary,pkg){
+	(pkg.actions||[]).forEach(t=>{
 		dictionary._registerType(t.name,t,pkg);
 		dictionary._registerFunction(t.name,{
 			library:pkg.name,
