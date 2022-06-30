@@ -377,6 +377,10 @@ export default class Dictionary{
 		unique(spec.isa).forEach(parent=>{
 			this._registerIsa(type,parent);
 		});
+		if(this.repo[type]){
+			//an entity with this type already exists - warn
+			console.debug('[dictionary] Adding an entity to the dictionary with a name that already exists',JSON.stringify(type))
+		}
 		this.repo[type]=spec;
 
 		if(!specIsGeneric(spec)){
