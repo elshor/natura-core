@@ -339,7 +339,7 @@ function registerValues(dictionary,pkg){
 	const values = pkg.values || [];
 	values.forEach(value=>{
 		if(!value.call){
-			value.value = value.value !== undefined? value.value : value.name;
+			value.value = value.value !== undefined? value.value : (value.label || value.title || value.name);
 			value.label = value.label || value.title || value.name;
 			value.valueType = value.valueType || value.type;
 			dictionary._registerInstance(value);
