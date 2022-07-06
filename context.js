@@ -233,7 +233,7 @@ function basicEmit(original,entry,iterator,type,name,scope=''){
 			entryType = calcTemplate(entry.type,referenced.contextNoSearch);
 			if(!entryType){
 				//the calculation failed - do not emit
-				return true;
+				continue;
 			}
 		 }else if(typeof entry.type === 'object'){
 			 //entry.type is a type object
@@ -251,16 +251,15 @@ function basicEmit(original,entry,iterator,type,name,scope=''){
 		}(entryType);
 		if(emitName===''){
 			//emit name is empty - disregard this entry - cannot display it
-			return true;
+			continue;
 		}
 		
 		//calculate access
 		const access = calcTemplate(entry.access||entry.name,referenced.contextNoSearch);
 		if(access===''){
 			//access is empty - this means we need to disregard this entry
-			return true;
+			continue;
 		}
-		
 		if(match(
 			referenced.dictionary,
 			iterator,
@@ -272,7 +271,7 @@ function basicEmit(original,entry,iterator,type,name,scope=''){
 				$type:'reference',
 				label:emitName,
 				valueType:entryType,
-				access: scope + access,
+				access: scope? (scope + access) : access,
 				path:referenced.path,
 				role:entry.role || 'artifact'
 			},
@@ -281,14 +280,14 @@ function basicEmit(original,entry,iterator,type,name,scope=''){
 		)===false){
 			return false;
 		}
-		return true;
 	}
+	return true;
 }
 
 function emitValue(original,entry,iterator,type,name,scope='',visitIt){
 	const location = original.referenced;
 	const context = location.referenced.contextNoSearch;
-	const emitType = calcTemplate(entry.type,context);
+	const emitType = calcTemplate(entry.type,context);//TODO handle object types that cannot be described as text
 	const emitName = calcTemplate(entry.name,context);
 	if(!emitName || emitName.length===0||!emitType||emitType.length===0){
 		//if name or type are empty then don't emit
