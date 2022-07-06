@@ -3,7 +3,7 @@
  *   All rights reserved.
  */
 import {JsonPointer} from 'json-ptr'
-import { mergeSpec, specProperties } from './spec.js';
+import { mergeSpec, specProperties, Spec } from './spec.js';
 import calc, { isExpression, calcValue } from './calc.js';
 import {entityValue,cloneEntity, generateNewEntity} from './entity.js'
 import {patternText} from './pattern.js'
@@ -135,6 +135,12 @@ class Location{
 			return this.type;
 		}
 	}
+
+	get valueTypeSpec(){
+		const valueType = this.spec.valueType || this.type;
+		return Spec(this.dictionary.getTypeSpec(valueType),this.dictionary);
+	}
+
 	get type(){
 		if(!this._cache.type){
 			this._cache.type = this.calcType();			

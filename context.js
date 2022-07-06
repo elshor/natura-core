@@ -492,8 +492,7 @@ export function locationContext(location,contextLocation=location){
 				return spec.valueType || location.type;
 			}
 			if(prop==='$valueTypeSpec'){
-				const valueType = location.spec.valueType || location.type;
-				return Spec(location.dictionary.getTypeSpec(valueType),location.dictionary);
+				return location.valueTypeSpec;
 			}
 			if(prop==='$type'){
 				return location.type;

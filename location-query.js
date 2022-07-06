@@ -12,17 +12,23 @@ export default function locationQuery(location,path){
 	const parts = path.split('/');
 	parts.forEach(part=>{
 		const now = [];
-		current.forEach(l=>follow(l,part,now));
+		current.forEach(l=>follow(l,part,now,location.dictionary));
 		current = now;
 	})
 	return current;
 }
 
-function follow(location,part,current){
+function follow(location,part,current,dictionary){
+	//TODO add other meta properties such as spec etc.
 	if(!location){
 		return;
 	}
-	location = location.referenced;
+	if(!location.isLocation){
+		//current object is not a location - wrap it in a location
+		location = createLocation(location,dictionary);
+	}else{
+		location = location.referenced;
+	}
 	switch(part){
 		case '':
 		case '.':
@@ -40,6 +46,9 @@ function follow(location,part,current){
 			return;
 		case '$previous':
 			current.push(location.previous);
+			return;
+		case '$valueTypeSpec':
+			current.push(createLocation(location.valueTypeSpec,dictionary));
 			return;
 	}
 	//check if this is a filter
