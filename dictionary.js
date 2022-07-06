@@ -434,7 +434,7 @@ export default class Dictionary{
 		if(!valueType){
 			return;
 		}
-		valueType = Type(valueType).toString();//turn type objects into strings
+		valueType = Type(valueType,null,this).toString();//turn type objects into strings
 		this._ensureSpecializedIsRegistered(valueType);
 		if(this.valueTypeRepo[valueType] === undefined){
 			this.valueTypeRepo[valueType] = []
@@ -484,7 +484,7 @@ export default class Dictionary{
 		return this._registerSpecializedType(
 			matched[2],
 			matched[1],
-			{[generic.genericProperties[0]]:matched[2]}
+			{[generic.genericProperties[0]]:Type(matched[2],null,this)}//assuming this is a type
 		)
 	}
 }

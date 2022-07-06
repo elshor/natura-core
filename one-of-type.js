@@ -2,8 +2,10 @@
  *   Copyright (c) 2022 DSAS Holdings LTD.
  *   All rights reserved.
  */
-export default class OneOf{
-	constructor(types,collection=false){
+import SuperType from './super-type.js'
+export default class OneOf extends SuperType{
+	constructor(types,dictionary,collection=false,){
+		super('one of',dictionary)
 		this.types = types;
 		this.collection = collection;
 	}

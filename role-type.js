@@ -3,11 +3,12 @@
  *   All rights reserved.
  */
 import Type from './type.js'
+import SuperType from './super-type.js'
 
-export default class RoleType{
-	constructor(type,role){
-		this.$type="role type",
-		this.type = Type(type);
+export default class RoleType extends SuperType{
+	constructor(type,role,dictionary){
+		super('role type',dictionary);
+		this.type = Type(type,null,dictionary);
 		this.role = role;
 	}
 	
@@ -26,7 +27,7 @@ export default class RoleType{
 	}
 	
 	get singular(){
-		return new RoleType(this.type.singular,this.role);
+		return new RoleType(this.type.singular,this.role,this.dictionary);
 	}
 
 	get isCollection(){

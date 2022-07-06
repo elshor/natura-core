@@ -130,7 +130,7 @@ class Location{
 
 	get valueType(){
 		if(this.dictionary.isa(this.type,'expression')){
-			return Type(this.spec.valueType);
+			return Type(this.spec.valueType,this);
 		}else{
 			return this.type;
 		}
@@ -145,21 +145,21 @@ class Location{
 		const thisValue = this.value;
 		if(this._isReference(thisValue)){
 			//type is stored in the reference object
-			return Type(thisValue.valueType);
+			return Type(thisValue.valueType,this);
 		}else if(thisValue && typeof thisValue ==='object' && thisValue.$type){
 			//value is set with an object that has explicit type
-			return Type(thisValue.$type);
+			return Type(thisValue.$type,this);
 		}
 		const parent = this.parent;
 
 		if(typeof thisValue === 'string'){
 			//TODO handle situations where expected type is a typedef of string
-			return Type('string');
+			return Type('string',this);
 		}else if(typeof thisValue === 'number'){
 			//TODO handle situations where expected type is a typedef of number
-			return Type('number');
+			return Type('number',this);
 		}else if(typeof thisValue === 'boolean'){
-			return Type('boolean');
+			return Type('boolean',this);
 		}
 
 		if(this._cache.parentType === undefined){
@@ -176,7 +176,7 @@ class Location{
 		}
 		if(this._cache.parentSpec.hashSpec){
 			//this is a hashSpec
-			return Type(this._cache.parentSpec.hashSpec.type);
+			return Type(this._cache.parentSpec.hashSpec.type,this);
 		}else if(
 			this._cache.parentSpec.properties && 
 			this._cache.parentSpec.properties[this.property]
@@ -184,7 +184,7 @@ class Location{
 			return Type(this._cache.parentSpec.properties[this.property].type,this);
 		}else{
 			//no type information - return any
-			return Type('any');
+			return Type('any',this);
 		}
 	}
 
@@ -195,7 +195,7 @@ class Location{
 		const spec = this.spec;
 		if(spec.valueType){
 			//this spec is probably an expression, the valueSpec is the spec of its valueType
-			return this.dictionary.getTypeSpec(Type(spec.valueType))
+			return this.dictionary.getTypeSpec(Type(spec.valueType,this))
 		}else{
 			return spec;
 		}
