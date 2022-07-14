@@ -111,6 +111,7 @@ function visitScopeEntry(referenced,entry,iterator,type,name,scope='',scopeName,
  * @param {String} entry.type
  * @param {String} entry.name
  * @param {String} entry.access
+ * @param {String} entry.key
  * @returns 
  */
 function scopeEntry(referenced,entry,iterator,type,name,scope,scopeName,visitIt){
