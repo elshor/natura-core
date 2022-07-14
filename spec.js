@@ -15,6 +15,15 @@ export function Spec(json,dictionary){
 			if(json.$specialized && json.$specialized[prop] !== undefined){
 				return json.$specialized[prop];
 			}
+			if(prop === 'toJSON'){
+				return ()=>json;
+			}
+			if(prop === '$json'){
+				return json;
+			}
+			if(prop === '$value'){
+				return json;
+			}
 			return undefined;
 		}
 	})
