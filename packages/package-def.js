@@ -141,6 +141,9 @@ function registerComponent(component,dictionary,pkg){
 				screenshot:component.screenshot
 			}
 		}
+		//copy context and scope from component
+		ret.context.push(...(component.context||[]));
+		Object.assign(ret.scope,component.scope);
 
 		const events  = generateEvents(dictionary,component,pkg);
 		if(childrenProperty){
