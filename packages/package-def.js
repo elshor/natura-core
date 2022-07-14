@@ -432,21 +432,43 @@ function registerProperty(objectType, access, def, dictionary){
 	const name = objectType.toString() + '.' + propertyName;
 	const description = def.description || `${propertyName} property of ${objectType.toString()}`
 	const basicValueType = Type(getType(def.type));
-	const valueType = basicValueType.isCollection?
-		Type(`dataset<${basicValueType.singular.toString()}>`) :
-		basicValueType
-	dictionary._registerType(name,{
-		name,
-		title:propertyName + ' of a ' + objectType.toString(),
-		description,
-		pattern: propertyName + ' of <<object>>',
-		properties:{
-			object:{type:objectType},
-			access:{init:access}
-		},
-		valueType,
-		isa:['data property']
-	})
+	if(basicValueType.isCollection){
+		dictionary._registerType(name,{
+			name,
+			$generic: 'xget',
+			title:propertyName + ' of a ' + objectType.toString(),
+			description,
+			inlineDetails:'collapsed',
+			pattern: propertyName + ' of <<object>>',
+			properties:{
+				object:{type:objectType},
+				access:{init:access},
+				itemCount: {
+					type:'number',
+					title: 'number of items',
+					placeholder:'number of items',
+					description: 'specify number of items to retreive. This cancels any paging capabilities of the property. i.e. the property value will be an array with max. number of items as the specified number.'
+				}
+			},
+			show:['itemCount'],
+			valueType: Type(`dataset<${basicValueType.singular.toString()}>`),
+			isa:['data property']
+		})
+	}else{
+		//property is not a collection
+		dictionary._registerType(name,{
+			name,
+			title:propertyName + ' of a ' + objectType.toString(),
+			description,
+			pattern: propertyName + ' of <<object>>',
+			properties:{
+				object:{type:objectType},
+				access:{init:access}
+			},
+			valueType: basicValueType,
+			isa:['data property']
+		})
+	}
 	dictionary._registerInstance({
 		value:propertyName,
 		label: propertyName,
