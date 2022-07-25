@@ -16,7 +16,16 @@ import { calcTemplate } from './template.js';
 import locationQuery from './location-query.js'
 import { assume } from './error.js';
 const locationMap = new Map();
-export function createLocation(data,dictionary=new Dictionary(),path=''){
+
+/**
+ * Create a location object, representing a specific location in a JSON using a schema defined in a dictionary
+ * @param {Any} data The base data the location is located in
+ * @param {Dictionary} dictionary The dictionary to be used to identify types and schema
+ * @param {String} path path to location from base data
+ * @param {Type} type type of the data top (when path is empty)
+ * @returns Location
+ */
+export function createLocation(data,dictionary=new Dictionary(),path='',type=null){
 	const segments = JsonPointer.decode(uriHash(path));
 	let top;
 	if(locationMap.has(data)){
@@ -24,7 +33,7 @@ export function createLocation(data,dictionary=new Dictionary(),path=''){
 		//we assume for a single data object there can only be one URI and one dictionary
 		top = locationMap.get(data);
 	}else{
-		top = new Location(data,dictionary,'',null,uriResource(path));
+		top = new Location(data,dictionary,'',null,uriResource(path),type);
 		locationMap.set(data,top);
 	}
 
@@ -35,7 +44,10 @@ export function createLocation(data,dictionary=new Dictionary(),path=''){
 	return current;
 }
 class Location{
-	constructor(data,dictionary,path,lang,uri){
+	constructor(data,dictionary,path,lang,uri,type){
+		if(type){
+			this._type = Type(type,this);
+		}
 		this.data = data;
 		this.uri = uri
 		this.dictionary = dictionary;
@@ -142,6 +154,10 @@ class Location{
 	}
 
 	get type(){
+		if(this._type){
+			//type was set explicitly
+			return this._type;
+		}
 		if(!this._cache.type){
 			this._cache.type = this.calcType();			
 		}
@@ -149,6 +165,9 @@ class Location{
 	}
 	calcType(){
 		const thisValue = this.value;
+		if(Array.isArray(thisValue) && this.expectedType.isCollection){
+			return this.expectedType;
+		}
 		if(this._isReference(thisValue)){
 			//type is stored in the reference object
 			return Type(thisValue.valueType,this);
@@ -230,9 +249,13 @@ class Location{
 
 	get expectedType(){
 		const parent = this.parent;
+		if(this._type){
+			//this is the type defined when creating the location
+			return this._type;
+		}
 		if(!parent){
 			//no parent - return any
-			return Type('any',this)
+				return Type('any',this)			
 		}else if(parent.type.isCollection){
 			//this is a list type
 			return parent.type.singular;
