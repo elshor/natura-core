@@ -1,0 +1,32 @@
+{
+	"$type": "notebook",
+	"packages": [
+		"base",
+		"interact@dev",
+		"dashboard@dev",
+		"twitter"
+	],
+	"interactions": [
+		{
+			"$type": "interaction",
+			"action": {
+				"$id": "$115v3nw3k6m",
+				"$type": "show chart",
+				"def": {
+					"$id": "$115v3r8jg98",
+					"$type": "pie chart",
+					"data": {
+						"$id": "$115v3vkiabqk",
+						"$type": "twitter user.followers",
+						"access": "followers",
+						"$generic": "xget",
+						"object": {
+							"$id": "$115v3ze9yy3",
+							"$type": "current user"
+						}
+					}
+				}
+			}
+		}
+	]
+}
