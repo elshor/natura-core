@@ -469,7 +469,7 @@ function registerProperty(objectType, access, def, dictionary){
 				access:{init:access}
 			},
 			valueType: basicValueType,
-			isa:['data property']
+			isa:['data property','property.'+objectType.toString()]
 		})
 	}
 	dictionary._registerInstance({
