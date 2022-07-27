@@ -5,10 +5,10 @@
 import { JsonPointer } from 'json-ptr';
 import {IllegalType} from './error.js'
 import calc from "./calc.js";
-import { calcTemplate } from './template.js';
 import OneOfType from './one-of-type.js'
 import BaseType from './base-type.js';
 import RoleType from './role-type.js'
+import TemplateType from './template-type.js';
 
 export default function Type(type,location=null,dictionary=null){
 	dictionary = dictionary || (location? location.dictionary : null);
@@ -35,8 +35,7 @@ export default function Type(type,location=null,dictionary=null){
 			const baseType = typeof result === 'string'? result : Type(result,location);
 			return new BaseType(baseType,dictionary);
 		case 'template type':
-			const calculatedType = calcTemplate(type.template,location.contextNoSearch);
-			return new BaseType(calculatedType,dictionary);
+			return new TemplateType(type.template,location,dictionary);
 		case 'role type':
 			return new RoleType(Type(type.type,location,dictionary),type.role,dictionary);
 		case 'specialized type':
