@@ -7,7 +7,6 @@ import {calcTemplate} from './template.js'
 import Type from './type.js'
 import {createLocation,relativeLocations, shadowLocation} from './location.js'
 import { specContextType, Spec } from './spec.js';
-import {Role,matchRole} from './role.js'
 
 /**
  * @name ContextEntry
@@ -490,7 +489,7 @@ export function locationContext(location,contextLocation=location){
 			}
 			if(prop==='$valueType'){
 				const spec = location.spec;
-				return spec.valueType || location.type;
+				return Type(spec.valueType || location.type,location);
 			}
 			if(prop==='$valueTypeSpec'){
 				return location.valueTypeSpec;
