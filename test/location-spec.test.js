@@ -2,7 +2,7 @@
  *   Copyright (c) 2022 DSAS Holdings LTD.
  *   All rights reserved.
  */
-import pkg from './npkg-interact'
+import pkg from './docs/npkg-interact'
 import base from '../packages/base'
 import Dictionary from '../dictionary'
 import {createLocation} from '../location'
@@ -54,6 +54,33 @@ describe('location spec',()=>{
 		expect(action0.expectedType.toString()).toBe('action');
 		expect(action0.type.toString()).toBe('show chart');
 	})
-
-})
+	//it('should understand array item type when the array is defined as a template referencing current location',()=>{
+		it('should understand simple template type',()=>{
+			const doc = {
+				$type: 'test template',
+				a:{$type:'xyz'}
+			}
+			expect(createLocation(doc,dictionary,'/b').expectedType.toString()).toBe('xyz');
+		})
+		it('should understand array template type',()=>{
+			const doc = {
+				$type: 'test template',
+				a:{$type:'xyz'}
+			}
+			expect(createLocation(doc,dictionary,'/c').expectedType.toString()).toBe('xyz*');
+			expect(createLocation(doc,dictionary,'/c/0').expectedType.toString()).toBe('xyz');
+		})
+		it('should understand array template type after change',()=>{
+			const doc = {
+				$type: 'test template',
+			}
+			const l = createLocation(doc,dictionary);
+			l.child('a').set({$type:'abc'})
+			expect(l.child('c').expectedType.toString()).toBe('abc*');
+			expect(l.child('c').child('0').expectedType.toString()).toBe('abc');
+			l.child('a').set({$type:'def'})
+			expect(l.child('c').expectedType.toString()).toBe('def*');
+			expect(l.child('c').child('0').expectedType.toString()).toBe('def');
+		})
+	})
 
