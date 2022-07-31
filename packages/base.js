@@ -397,11 +397,6 @@ const entities = 	[
 		}
 	},
 	{
-		name:'emit property',
-		isa:['context entry'],
-		pattern:'emit <<property>> referenced as <<name>>'
-	},
-	{
 		name:'emit component',
 		isa:['scope entry'],
 		description:'emit all child components of this component'
@@ -666,34 +661,6 @@ const entities = 	[
 			}
 		},
 		show:['isa']
-	},
-	{
-		name:'entity definition group',
-		title:'entity folder',
-		isa:['definition group','entity definition'],
-		inlineClass:'folder',//class used to display inline value
-		properties:{
-			name:{
-				type:'text',
-				placeholder:'category name (plural)',
-				description:'The category name as plural of member type. E.g. mouse events or collection fields'
-			},
-			model:{
-				type:'definition model',
-				default:defaultDefinitionModel
-			},
-			members:{
-				type:'entity definition*',
-				expanded:true,
-				hideName:true,
-				childSpec:{
-					placeholder:'Define new entity type'
-				}
-			}
-		},
-		show:['members'],
-		additional:['model'],
-		pattern:'<<name>>'
 	},
 	{
 		name:'atom',

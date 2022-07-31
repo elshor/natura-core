@@ -74,7 +74,6 @@ function registerComponent(component,dictionary,pkg){
 		const pattern = component.pattern || `${component.title||component.name} named <<ref>>`;
 		const childrenProperty = generateChildrenProperty(component);
 		const name = component.name;
-		dictionary._registerType(props.name,props,pkg);
 		const ret = {
 			name,
 			title:component.title,
