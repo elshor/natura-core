@@ -44,7 +44,6 @@ export default class SuperType{
 		return true;
 	}
 	get spec(){
-		console.log('get spec',dictionary,type);
 		return this.dictionary? this.dictionary.getTypeSpec(this) : {}
 	}
 
