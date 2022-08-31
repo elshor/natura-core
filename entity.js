@@ -72,7 +72,7 @@ export function generateNewEntity(location, type=location.expectedType){
 		}
 		if(spec.$specialized){
 			//if this type is specialized then we need to copy $specialized into the generated object
-			Object.assign(ret,spec.$specialized);
+			Object.assign(ret,asJSON(spec.$specialized));
 		}
 
 		//if a generic type is specified then copy it to the generated object. This will be used to associate a funtion with this object
@@ -83,7 +83,7 @@ export function generateNewEntity(location, type=location.expectedType){
 	}
 }
 
-function uid(){
+export function uid(){
 	const ret = '$'+(Number(new Date()) - new Date('2020-01-01')+Math.random()).toString(36).replace('.','');
 	return ret;
 }
@@ -125,4 +125,27 @@ function setID(entity){
 	}
 	entity.$id = uid();
 	Object.values(entity).forEach(value=>setID(value));
+}
+
+function asJSON(x){
+	if(typeof x !== 'object'){
+		return x;
+	}
+	if(Array.isArray(x)){
+		return x.map(asJSON);
+	}
+
+	if(typeof x.toJSON === 'function'){
+		return x.toJSON();
+	}
+
+	return Object.fromEntries(
+		Object.entries(x).map(([key,value])=>{
+			if(value.isTypeObject){
+				//this is a type - return a string version
+				return [key,value.toString()];
+			}
+			return [key,asJSON(value)]
+		})
+	)
 }
