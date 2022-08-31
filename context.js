@@ -467,6 +467,10 @@ export function locate(location,type,name){
 export function locationContext(location,contextLocation=location){
 	return new Proxy(location,{
 		get(location,prop){
+			if(typeof prop !== 'string'){
+				//only string properties are supported
+				return undefined;
+			}
 			if(prop === '$'){
 				//$ just returns itself. This is done so we can start any path with $. (used in natura-pkg)
 				return locationContext(location,contextLocation);
