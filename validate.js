@@ -33,6 +33,9 @@ export function isValid(location,value){
 }
 
 function isValidType(location,value,expectedType){
+	//disabling type validation because we fail many types and this is too expensive. Should only be applied when copying or pasting etc.
+	//TODO work out when to validate type
+	return true;
 	if(value===undefined){
 		//undefined is always ok
 		return true;
