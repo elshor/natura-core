@@ -431,7 +431,7 @@ function registerActions(dictionary,pkg){
 
 function registerProperty(objectType, access, def, dictionary){
 	const propertyName = (def.title || def.name || key);
-	const name = objectType.toString() + '.' + propertyName;
+	const name = 'get ' + objectType.toString() + '.' + propertyName;
 	const description = def.description || `${propertyName} property of ${objectType.toString()}`
 	const basicValueType = Type(getType(def.type));
 	if(basicValueType.isCollection){
@@ -468,15 +468,9 @@ function registerProperty(objectType, access, def, dictionary){
 				access:{init:access}
 			},
 			valueType: basicValueType,
-			isa:['data property','property.'+objectType.toString()]
+			isa:['data property']
 		})
 	}
-	dictionary._registerInstance({
-		value:propertyName,
-		label: propertyName,
-		valueType: 'property.' + objectType.toString(),
-		description
-	})
 }
 
 function generateEvents(dictionary,component,pkg){
