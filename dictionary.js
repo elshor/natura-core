@@ -45,6 +45,11 @@ export default class Dictionary{
 		return this.initiated === true;
 	}
 
+	isTypeGeneric(type){
+		const spec = this.getTypeSpec(type);
+		return specIsGeneric(spec);
+	}
+
 	isa(type,className){
 		if(className.isa){
 			return className.isa(this,type);
@@ -152,8 +157,8 @@ export default class Dictionary{
 		}
 		//get all valueTypes
 		let current = Object.keys(this.valueTypeRepo);
-		//only keep valueTypes where valueType isa type
-		current = current.filter(key=>this.isa(key,type));
+		//TODO this next line doesn't make sense but it works. We need to work out the isa relationship with valueTypes
+		current = current.filter(key=>this.isa(type,key)||this.isa(key,type));
 		//get list of all entities that their valueType is in current
 		current = current.map(key=>this.valueTypeRepo[key])
 		//flatten the list
@@ -165,7 +170,15 @@ export default class Dictionary{
 			}
 			return allowCalc || role !== 'calc';
 		});
-		current = current.map(({type})=>type);
+		current = current.map((entry)=>{
+			const entryType = entry.type;
+			if(this.isTypeGeneric(entryType)){
+				//if the retreived type is generic then assume the instantiation of the type takes the searched for valueType as first template argument
+				return `${entryType}<${type}>`
+			}else{
+				return entryType;
+			}
+		});
 		return unique(current);
 	}
 
@@ -382,11 +395,7 @@ export default class Dictionary{
 			console.debug('[dictionary] Adding an entity to the dictionary with a name that already exists',JSON.stringify(type))
 		}
 		this.repo[type]=spec;
-
-		if(!specIsGeneric(spec)){
-			//for generic types we do not register isa and valueType - only for their specializations
-			this._registerValueType(spec.valueType,type,spec.role);
-		}
+		this._registerValueType(spec.valueType,type,spec.role);
 		this._registerFunction(type,spec.fn,pkg);
 	}
 /**
@@ -464,8 +473,8 @@ export default class Dictionary{
 	 * @param {Type} type type to test
 	 */
 	_ensureSpecializedIsRegistered(type){
-		const matched = (searchString(type)).match(/^([^\.\<\>]+)\.?\<(.+)\>$/);
-		if(!matched){
+		const {generic,specialized} = getSpecializedType(type)
+		if(!generic){
 			//this is not a specialized generic
 			return;
 		}
@@ -474,17 +483,21 @@ export default class Dictionary{
 			//this is already registered
 			return current;
 		}
-		const generic = this.getTypeSpec(matched[1]);
-		if(!generic){
+		const genericSpec = this.getTypeSpec(generic);
+		if(!genericSpec){
 			throw new Error('Trying to use a generic that is not defined: '+searchString(type));
 		}
-		if(!Array.isArray(generic.genericProperties)|| generic.genericProperties.length < 1){
+		if(
+			!Array.isArray(genericSpec.genericProperties)|| 
+			genericSpec.genericProperties.length < 1){
 			throw new Error('Trying to use a non-generic as a generic: '+searchString(type));
 		}
 		return this._registerSpecializedType(
-			matched[2],
-			matched[1],
-			{[generic.genericProperties[0]]:Type(matched[2],null,this)}//assuming this is a type
+			specialized,
+			generic,
+			{
+				//assuming this is a type
+				[genericSpec.genericProperties[0]]:Type(specialized,null,this)}
 		)
 	}
 }
@@ -501,4 +514,9 @@ function unique(arr){
 
 function searchString(str){
 	return str? (str.searchString || str.toString()) : 'any';
+}
+
+function getSpecializedType(type){
+	const matched = (searchString(type)).match(/^([^\.\<\>]+)\.?\<(.+)\>$/);
+	return matched? {generic:matched[1],specialized:matched[2]} : {};
 }
