@@ -3,6 +3,11 @@
  *   All rights reserved.
  */
 import SuperType from './super-type.js'
+
+/**
+ * A type that is a union of several types
+ * NOTE: It is not possible to have role types as subtypes
+ */
 export default class OneOf extends SuperType{
 	constructor(types,dictionary,collection=false,){
 		super('one of',dictionary)
