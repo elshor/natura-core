@@ -3,7 +3,7 @@
  *   All rights reserved.
  */
 import { LoadError, assume, ParamValue } from "./error.js";
-import { specType,specIsGeneric } from "./spec.js";
+import { specType,isSpecGeneric } from "./spec.js";
 import { parsePattern } from "./pattern.js";
 import Type from './type.js';
 import {entityType,entityIsArray} from './entity.js'
@@ -47,7 +47,7 @@ export default class Dictionary{
 
 	isTypeGeneric(type){
 		const spec = this.getTypeSpec(type);
-		return specIsGeneric(spec);
+		return isSpecGeneric(spec);
 	}
 
 	isa(type,className){
@@ -73,8 +73,26 @@ export default class Dictionary{
 		
 		this._ensureSpecializedIsRegistered(type);
 		
-		if(this.isaRepo[className]){
-			return this.isaRepo[className].includes(type)
+		if((this.isaRepo[className]||[]).includes(type)){
+			return true;
+		}
+		const {specialized,generic} = getSpecializedType(type);
+		
+		if(!generic){
+			return false;
+		}
+
+		//check generics
+		if(generic === className.toString()){
+			//class includes all specializations of generic
+			return true;
+		}
+		const specializedClass = getSpecializedType(className);
+		if(generic === specializedClass.generic){
+			//class and type are both specializations of generic
+			//NOTE we reverse here className and type looking for
+			//className.specialized isa type.specialized
+			return this.isa(specializedClass.specialized,specialized);
 		}
 		return false;
 	}
@@ -148,7 +166,27 @@ export default class Dictionary{
 		if(type.getClassMembers){
 			return type.getClassMembers(this);
 		}
-		return this.isaRepo[type]||[];
+		const isaList = this.isaRepo[type.toString()]||[];
+		const {generic,specialized} = getSpecializedType(type);
+		if(!generic){
+			return isaList;
+		}
+		//this is a generic type - generate isa based on specialized type
+		const specializedSpec = this.getTypeSpec(specialized);
+		const members = (specializedSpec.isa||[])
+			.map(t=>this.getClassMembers(`${generic}<${t}>`));
+		members.push(this.isaRepo[`${generic}<any>`])
+		members.push(isaList);
+		return unique(members.flat())
+			.map(type=>{
+				if(this.isTypeGeneric(type)){
+					//this is a generic - specialized using the specialied value
+					return `${type.toString()}<${specialized}>`
+				}else{
+					return type;
+				}
+			})
+			.filter(type=>!this.isSet(type));
 	}
 
 	getExpressionsByValueType(type,allowCalc=true,expectedRole){
@@ -414,22 +452,12 @@ export default class Dictionary{
 		const sSpec = Object.create(spec);
 		sSpec.$specialized = specializedValue;
 		sSpec.$generic = generic;
-		sSpec.role = Role.abstract;
-
+		
 		//calculate title, pattern and description values
 		sSpec.title = calcTemplate(spec.title,specializedValue);
 		sSpec.description = calcTemplate(spec.description,specializedValue);
 		sSpec.pattern = calcTemplate(spec.pattern,specializedValue);
 	
-		//inherit isa from generic and add generic to list
-		sSpec.isa = [...spec.isa,generic];
-
-		//register isa for specialized subtypes ==> if s1 isa s2 then g<s2> isa g<s1>. Notice the type-subtype is the opposite.
-		(specializedSpec.isa||[]).forEach(s=>{
-			this._registerIsa(`${generic}<${s}>`,`${generic}<${specialized}>`)
-		});
-		this._registerIsa(`${generic}<any>`,`${generic}<${specialized}>`)
-
 		//assign the override properties to this spec
 		Object.assign(sSpec,override);
 		
@@ -478,10 +506,15 @@ export default class Dictionary{
 			//this is not a specialized generic
 			return;
 		}
+		if(this.isSet(specialized) || !this.repo[generic]){
+			//specialized value is a set hense the specialized instance is a set
+			return;
+		}
+
 		const current = this.repo[searchString(type)];
 		if(current){
 			//this is already registered
-			return current;
+			return;
 		}
 		const genericSpec = this.getTypeSpec(generic);
 		if(!genericSpec){
@@ -497,8 +530,21 @@ export default class Dictionary{
 			generic,
 			{
 				//assuming this is a type
-				[genericSpec.genericProperties[0]]:Type(specialized,null,this)}
+				[genericSpec.genericProperties[0]]:Type(specialized,null,this)
+			}
 		)
+	}
+
+	/** a set is a definition of collection of types. It can be a category that does not have a spec or a generic
+	 */
+	isSet(type){
+		const spec = this.getTypeSpec(type);
+		if(!spec.name){
+			return true;
+		}
+		if(isSpecGeneric(spec)){
+			return true;
+		}
 	}
 }
 

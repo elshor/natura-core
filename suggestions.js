@@ -64,14 +64,11 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 	//category types suggestions
 	////////////////////////////
 	if(role === Role.type){
-		dictionary.getClassMembers(expectedType).forEach(type=>{
+		const members = dictionary.getClassMembers(expectedType);
+		members.forEach(type=>{
 			const spec = dictionary.getTypeSpec(type);
 			if(matchRole(spec.role,Role.type) && !matchRole(role,Role.type)){
 				//ignore types unless specifically requested
-				return;
-			}
-			if(spec.role===Role.abstract){
-				//ignore abstract types
 				return;
 			}
 			//TODO generate value before insert to doc - currently, the same $id can be used several times
