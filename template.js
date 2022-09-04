@@ -5,6 +5,17 @@
 import HB from 'handlebars';
 import { specContextType } from './spec.js';
 
+const cacheMap = new Map();
+//TODO handle situations when cache overflows - use LRU cache
+function getCompiled(text){
+	if(cacheMap.has(text)){
+		return cacheMap.get(text);
+	}
+	const compiled = HB.compile(text,{noEscape:true});
+	cacheMap.set(text,compiled);
+	return compiled;
+}
+
 /**
  * 
  * @param {String} templateText template text
@@ -18,7 +29,7 @@ export function calcTemplate(templateText,context,safe){
 		return null;
 	}
 	try{
-		const template = HB.compile(templateText,{noEscape:true});
+		const template = getCompiled(templateText);
 		return template(context,{allowProtoPropertiesByDefault:true});
 	}catch(e){
 		if(safe){
