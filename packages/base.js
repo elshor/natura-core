@@ -212,7 +212,7 @@ const entities = 	[
 					}
 					return {
 						$type:'role type',
-						type:'trait.' + valueType.searchString,
+						type:`trait<${valueType.searchString}>`,
 						role:'type'
 					}
 				}
