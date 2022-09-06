@@ -773,55 +773,6 @@ const entities = 	[
 		additional:['model']
 	},
 	{
-		name:'property',
-		description:'a property of an object. This is used to define setters and getters',
-		pattern:'<<name>> of <<objectType>> (<<valueType>>)',
-		show:['description'],
-		properties:{
-			name:{type:'string',description:'name of the property'},
-			objectType:{type:'type',description:'the type of the object the property refers to'},
-			pattern:{type:'pattern',description:'the pattern for displaying the property of the object. E.g. name of <<element>>. If pattern is not specified then use the format "<<property name>> of <<object>>'},
-			valueType:{type:'type',description:'the value type of the property'},
-			description:{type:'richtext',description:'Description of the property'},
-			access:{type:'string',description:'The path to the property using > instead of . like in reference access'}
-		},
-		register(dictionary,_,spec,pkg){
-			//get the pattern
-			const pattern = `${spec.name} of <<object>>`;
-			const name = 'property.' + pattern;
-			const title = spec.name + ' of ...';
-
-			//add the pattern if does not exist
-			//TODO need to fix this. valuetype should be'value.'+name and it shoule be a subtupe of valueType
-			const existingSpec = dictionary.getTypeSpec(name);
-			if(existingSpec.access && spec.objectType){
-				//getter already exists - add access of this spec
-				existingSpec.access[spec.objectType.searchString||spec.objectType.toString()] = spec.access;
-			}else{
-				const access = spec.objectType? {
-					[spec.objectType.searchString||spec.objectType.toString()]:spec.access
-				} : undefined;
-				dictionary._registerType(name,{
-					name,
-					$generic:'get',
-					pattern,
-					title,
-					isa:['expression','property accessor','application type'],
-					valueType:spec.valueType,
-					role:Role.calc,
-					description:spec.description,
-					access,
-					properties:{
-						object:{type:'object.'+name,placeholder:'the object'},
-					}
-				},pkg);
-			}
-
-			//tag object type
-			dictionary._registerIsa(spec.objectType,'object.' + name);
-		}
-	},
-	{
 		name:'js instance',
 		register:function(dictionary,type,spec){
 			dictionary._registerInstance({

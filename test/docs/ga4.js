@@ -172,7 +172,7 @@ export default {
       "pattern": "id",
       "valueType": "string",
       "isa": [
-        "property.product"
+        "property<product>"
       ]
     },
     {
@@ -200,7 +200,7 @@ export default {
       "pattern": "name",
       "valueType": "string",
       "isa": [
-        "property.product"
+        "property<product>"
       ]
     },
     {
@@ -228,7 +228,7 @@ export default {
       "pattern": "title",
       "valueType": "string",
       "isa": [
-        "property.product"
+        "property<product>"
       ]
     },
     {
@@ -256,7 +256,7 @@ export default {
       "pattern": "category",
       "valueType": "string",
       "isa": [
-        "property.product"
+        "property<product>"
       ]
     },
     {
@@ -304,7 +304,7 @@ export default {
       "pattern": "name",
       "valueType": "string",
       "isa": [
-        "property.category"
+        "property<category>"
       ]
     },
     {
@@ -349,7 +349,7 @@ export default {
       "title": "date",
       "pattern": "date",
       "isa": [
-        "property.transaction"
+        "property<transaction>"
       ]
     },
     {
@@ -374,7 +374,7 @@ export default {
       "title": "label",
       "pattern": "label",
       "isa": [
-        "property.transaction"
+        "property<transaction>"
       ]
     },
     {
@@ -399,7 +399,7 @@ export default {
       "title": "timestamp",
       "pattern": "timestamp",
       "isa": [
-        "property.transaction"
+        "property<transaction>"
       ]
     },
     {
