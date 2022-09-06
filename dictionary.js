@@ -174,7 +174,9 @@ export default class Dictionary{
 		//this is a generic type - generate isa based on specialized type
 		const specializedSpec = this.getTypeSpec(specialized);
 		const members = (specializedSpec.isa||[])
-			.map(t=>this.getClassMembers(`${generic}<${t}>`));
+			.map(t=>{
+				return this.getClassMembers(`${generic}<${t}>`);
+			});
 		members.push(this.isaRepo[`${generic}<any>`])
 		members.push(isaList);
 		return unique(members.flat())
