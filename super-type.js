@@ -16,6 +16,9 @@ export default class SuperType{
 	}
 
 	get typeString(){
+		if(typeof this.type === 'string'){
+			return this.type;
+		}
 		return this.type.typeString || this.type.toString();
 	}
 	/** A search string is always the singular of a type */
