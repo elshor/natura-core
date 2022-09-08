@@ -17,6 +17,6 @@ export default class TemplateType extends SuperType{
 	}
 
 	get type(){
-		return calcTemplate(this.template,this.location.contextNoSearch);
+		return calcTemplate(this.template,this.location.contextNoSearch,true) || 'cannot calculate type';
 	}
 }
