@@ -33,6 +33,14 @@ function locationAsText(location){
 		})
 		.join('');
 	}
+	if(Array.isArray(location.value)){
+		const length = location.value.length;
+		const array = [];
+		for(let i=0;i<length;++i){
+			array.push(locationAsText(location.child(i)));
+		}
+		return array.join(', ');
+	}
 	if(spec.show){
 		//generate a list of show properties 
 		return '(' +
