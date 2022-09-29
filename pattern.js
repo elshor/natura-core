@@ -15,11 +15,13 @@ export function parsePattern(text=''){
 		return ret;
 	}
 	parsed.forEach(element=>{
-		const parsed = element.match(/^<<(.+)>>$/);
+		const parsed = element.match(/^<<([^:]+)(?:\:(.+))?>>$/);
 		if(parsed){
 			//this is a field
 			const field = {type:parsed[1]};
-			if(numerators[field.type] === undefined){
+			if(parsed[2]){
+				field.name = parsed[2];
+			}else	if(numerators[field.type] === undefined){
 				numerators[field.type] = 0;
 				field.name = field.type;
 			}else{
@@ -42,6 +44,10 @@ export function parsePattern(text=''){
 
 export function patternFields(pattern){
 	return parsePattern(pattern).fields;
+}
+
+export function patternProperties(pattern){
+	return Object.fromEntries(patternFields(pattern).map(field=>([field.name,{type:field.type}])));
 }
 
 /**
