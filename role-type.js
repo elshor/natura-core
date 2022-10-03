@@ -13,7 +13,7 @@ export default class RoleType extends SuperType{
 	}
 	
 	toString(){
-		return this.role + '.' + this.type.toString();
+		return this.role + ':' + this.type.toString();
 	}
 	get isTypeObject(){
 		return true;
