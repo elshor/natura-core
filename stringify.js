@@ -15,6 +15,10 @@ export default function stringify(location){
 
 function locationAsText(location){
 	const spec = location.spec;
+	if(location.type.isCollection){
+		//this is an array. need to generate text for its children and join them
+		return location.children.map(locationAsText).join(', ');
+	}
 	if(spec.template){
 		//use template to generate string
 		const text = calcTemplate(spec.template,location.context);
