@@ -456,6 +456,9 @@ class Location{
 		if(val === null || typeof val !== 'object'){
 			return [];
 		}
+		if(Array.isArray(val)){
+			return Array.from(val.keys()).map(key=>this.child(key));
+		}
 		return Object.keys(val).map(key=>this.child(key));
 	}
 	
