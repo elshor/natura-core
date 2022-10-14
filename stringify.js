@@ -27,15 +27,7 @@ function locationAsText(location){
 	
 	const pattern = specComputedPattern(spec);
 	if(pattern){
-		return parsePattern(pattern).elements
-		.map(el=>{
-			if(typeof el === 'string'){
-				return el;
-			}else{
-				return locationAsText(location.child(el.name));
-			}
-		})
-		.join('');
+		return processPattern(location, pattern)
 	}
 	if(Array.isArray(location.value)){
 		const length = location.value.length;
@@ -68,5 +60,35 @@ function propTitle(location,prop){
 }
 
 function normalizeSpaces(text){
-	return text.replace(/  */g,' ');
+	return text
+		.replace(/  */g,' ')
+		.replace(/ *,/g,',');
+}
+
+function processPattern(location, pattern){
+	return pattern.split(',')
+		.map((fragment, index)=>processFragment(location, fragment, index !== 0))
+		.filter(item=>item !== null)
+		.join(',')
+}
+
+function processFragment(location, pattern, nullIfEmpty){
+	let hasEmpty = false;
+	const ret = parsePattern(pattern).elements
+	.map(el=>{
+		if(typeof el === 'string'){
+			return el;
+		}else{
+			if(isEmpty(location.child(el.name).value)){
+				hasEmpty = true;
+			}
+			return locationAsText(location.child(el.name));
+		}
+	})
+	.join('');
+	return (hasEmpty && nullIfEmpty)? null : ret;
+}
+
+function isEmpty(x){
+	return x === null || x === undefined
 }
