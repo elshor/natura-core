@@ -12,7 +12,6 @@ import base from './packages/base.js'
 import reference from "./reference.js";
 import { calcTemplate } from "./template.js";
 import { matchRole,Role } from "./role.js";
-
 export default class Dictionary{
 	constructor(packages=[base]){
 		assume(entityIsArray(packages),'packages should be an array. It is '+JSON.stringify(packages));
@@ -206,7 +205,7 @@ export default class Dictionary{
 		//if allowCal is false then only allow if role is not calc
 		current = current.filter(({role})=>{
 			if(expectedRole){
-				return matchRole(role,expectedRole);
+				return matchRole(role||Role.calc,expectedRole);
 			}
 			return allowCalc || role !== 'calc';
 		});
