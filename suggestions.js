@@ -56,7 +56,6 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 	//options suggestions
 	/////////////////////
 	if(itsExpectedSpec.options){
-		getOptionSuggestions(ret,location,itsExpectedSpec);
 		return ret;//when options are set then no need to look further
 	}
 
@@ -412,51 +411,6 @@ function isPrimitive(x){
 	return ['boolean','string','number'].includes(typeof x);
 }
 
-function getOptionSuggestions(ret,location,spec){
-	if(!spec.options || typeof spec.options !== 'object'){
-		console.error('Error in options format - expected object',spec.options);
-		return;
-	}
-	if(spec.options.$type === 'path options'){
-		const locations = relativeLocations(
-			shadowLocation(location),
-			spec.options.path
-		);
-		locations.forEach(option=>{
-			const value = option.value;
-			if(value === undefined || value === null){
-				//value does not exist, cannot do anything with it
-				return;
-			}
-			const label = value.name||value.label||value.toString()
-			ret.list.push({
-				value: {
-					$type:'reference',
-					label,
-					valueType:value.$type,
-					description:value.description,
-					path:option.path,
-					role:'instance'
-				},
-				description: value.description,
-				source:'option',
-				text: label
-			})
-		})
-	}else if(Array.isArray(spec.options)){
-		spec.options.forEach(option=>{
-			ret.list.push({
-				value:option,
-				label:option,
-				valueType:'string',
-				path:location.path,
-				role:'value'
-			})
-		})
-	}else{
-		console.error('Unknown options definition',spec.options);
-	}
-}
 
 function entityScore(spec){
 	if(!spec || !spec.suggest || !spec.suggest.score){
