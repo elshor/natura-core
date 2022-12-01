@@ -29,8 +29,14 @@ function locationAsText(location){
 	if(pattern){
 		return processPattern(location, pattern)
 	}
-	if(Array.isArray(location.value)){
-		const length = location.value.length;
+
+	const value = location.value;
+	//handle references
+	if(typeof value === 'object' && value !== null && value.$type === 'reference'){
+		return value.label
+	}
+	if(Array.isArray(value)){
+		const length = value.length;
 		const array = [];
 		for(let i=0;i<length;++i){
 			array.push(locationAsText(location.child(i)));
@@ -43,8 +49,8 @@ function locationAsText(location){
 			spec.show.map(prop=>`${propTitle(location,prop)}: ${locationAsText(location.child(prop))}`)
 	}
 	
-	if(['string','number','boolean'].includes(typeof location.value)){
-		return location.value.toString();
+	if(['string','number','boolean'].includes(typeof value)){
+		return JSON.stringify(value);
 	}
 
 	return ''
