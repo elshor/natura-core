@@ -202,12 +202,14 @@ export default class Dictionary{
 		current = current.map(key=>this.valueTypeRepo[key])
 		//flatten the list
 		current = current.flat();
-		//if allowCal is false then only allow if role is not calc
+		//if allowCalc is false then only allow if role is not calc
 		current = current.filter(({role})=>{
+			role  = role || Role.calc;//defalt role is calc
 			if(expectedRole){
-				return matchRole(role||Role.calc,expectedRole);
+				//if expectedRole is specified then ignore allowCalc
+				return matchRole(role, expectedRole);
 			}
-			return allowCalc || role !== 'calc';
+			return allowCalc? true : (role !== Role.calc);
 		});
 		current = current.map((entry)=>{
 			const entryType = entry.type;
