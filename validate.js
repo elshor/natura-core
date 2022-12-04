@@ -131,7 +131,7 @@ export const validators = [
 
 export function isValidBasicType(location,type){
 	const expectedType = location.expectedType;
-	if(expectedType.toString() === type.toString()){
+	if(expectedType.typeString === type.toString()){
 		return true;
 	}
 	const dictionary = location.dictionary;
