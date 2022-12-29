@@ -45,3 +45,14 @@ HB.registerHelper('the',function(type){
 	const spec = dictionary?dictionary.getTypeSpec(type) : {};
 	return 'the ' + (spec.name? specContextType(spec) : type)
 })
+
+/**
+ * returns today as iso string in the format of 2022-12-22
+ */
+HB.registerHelper('today',function(){
+	return new Date().toISOString().substring(0,10);
+})
+
+HB.registerHelper('todayBefore',function(n, unit){
+	return sub(new Date(),{[unit]:n}).toISOString().substring(0,10);
+})

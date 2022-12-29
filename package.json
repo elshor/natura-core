@@ -16,6 +16,7 @@
   "author": "Elchanan Shor",
   "dependencies": {
     "clone": "^2.1.2",
+    "date-fns": "^2.29.3",
     "deepmerge": "^4.2.2",
     "handlebars": "^4.7.7",
     "json-ptr": "^3.1.1",
