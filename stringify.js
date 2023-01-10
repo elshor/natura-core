@@ -44,6 +44,11 @@ function locationAsText(location, options){
 	if(typeof value === 'object' && value !== null && value.$type === 'reference'){
 		return value.label
 	}
+	if(typeof value === 'object' && value !== null && value.$type && spec.title){
+		//use title
+		return spec.title;
+	}
+	
 	if(Array.isArray(value)){
 		const length = value.length;
 		const array = [];
