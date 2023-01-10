@@ -2,15 +2,15 @@
  *   Copyright (c) 2021 DSAS Holdings LTD.
  *   All rights reserved.
  */
-import { relativeLocations, shadowLocation } from "./location.js";
+import { shadowLocation } from "./location.js";
 import { specComputedPattern} from "./spec.js";
 import { assume } from "./error.js";
 import {calcTemplate} from './template.js'
 import { calcValue } from "./calc.js";
 import {contextEntries, contextSearch} from './context.js'
-import { cloneEntity } from "./entity.js";
+import { cloneEntity, generateNewEntity } from "./entity.js";
 import {Role,matchRole} from './role.js'
-import Type from './type.js'
+import stringify from "./stringify.js";
 
 const NumberOfUntaggedAtTop = 3;
 const MaxSuggestionCount = 7;
@@ -85,6 +85,9 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				suggest.screenshot = spec.suggest.screenshot;
 			}
 			ret.list.push(suggest);
+			if(spec.suggest && spec.suggest.expand){
+				expandSuggestions(suggest, ret, location, spec.suggest.expand);
+			}
 		});
 	}
 
@@ -426,4 +429,39 @@ function entityScore(spec){
 		default:
 			return 1;
 	}
+}
+
+/**
+ * Generate a specialization of the suggestion by suggesting filling-up its expand property with suggestions
+ * @param {*} suggestion 
+ * @param {*} ret 
+ * @param {*} location 
+ * @returns 
+ */
+function expandSuggestions(suggestion, ret, location, expandProperty){
+
+	//first generate the location with suggestion.
+	const parentValue = suggestion.value || generateNewEntity(location, suggestion.valueType)
+	const parentLocation = shadowLocation(location, parentValue);
+	const propertyLocation = parentLocation.child(expandProperty);
+
+	//get suggestions for the expand property
+	const propertySuggestions = getUnfilteredSuggestions(
+		propertyLocation, false);
+	propertySuggestions.list.forEach(propertySuggestion=>{
+		const value = cloneEntity(parentValue);
+		const propertyValue = propertySuggestion.value
+			? cloneEntity(propertySuggestion.value)
+			: generateNewEntity(propertyLocation, propertySuggestion.valueType)
+		value[expandProperty] = propertyValue;
+		const text = stringify(
+			shadowLocation(location, value),
+			{replaceEmptyWithEllipsis: true}
+		);
+		ret.list.push({
+			source: 'expand',
+			text,
+			value
+		})
+	})
 }
