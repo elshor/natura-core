@@ -8,6 +8,7 @@ import Type from './type.js'
 import { contextEntries } from './context.js';
 import { relativeLocation } from './location.js';
 import locationQuery from './location-query.js';
+import Dictionary from './dictionary.js';
 
 export function entityType(data){
 	if(typeof data === 'object' && data !== null && data.$isProxy===true){
@@ -35,8 +36,13 @@ export function entityValue(entity){
 	}
 }
 
-export function generateNewEntity(location, type=location.expectedType){
-	const dictionary = location.dictionary;
+export function generateNewEntity(location, type){
+	const dictionary = (location instanceof Dictionary)
+		? location : location.dictionary;
+	location = (location instanceof Dictionary)? null : location;
+	if(!location){
+	}
+	type = type || (location? location.expectedType : null)
 	assume(dictionary,MissingParam,'dictionary');
 	switch(type.searchString || type){
 	case 'string':
@@ -59,7 +65,10 @@ export function generateNewEntity(location, type=location.expectedType){
 		if(spec.properties){
 			Object.keys(spec.properties).forEach(prop=>{
 				if(spec.properties[prop].initType !== undefined){
-					ret[prop] = generateNewEntity(location.child(prop),spec.properties[prop].initType)
+					ret[prop] = generateNewEntity(
+						location? location.child(prop) : dictionary,
+						spec.properties[prop].initType
+					)
 				}
 				if(spec.properties[prop].init !== undefined){
 					ret[prop] = cloneEntity(spec.properties[prop].init);
@@ -90,6 +99,7 @@ export function uid(){
 
 function generateUniqueValue(location,{base,path,type,query}){
 	const names = {}
+	assume(location,'Missing location for generating unique values.',path,type);
 	assume(query,'Missing query for generating unique values.',path,type);
 	//using query to find existing values
 	locationQuery(location,query).forEach(l=>{

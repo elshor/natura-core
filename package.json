@@ -5,13 +5,11 @@
   "description": "Core functionality needed to work with natura. This package contains the natura logic without UI. It should be used by the client and server",
   "scripts": {
     "build": "node dev/src2package.mjs \"c:\\Users\\eshor\\Dropbox (Arza Winery)\\dev\\natura-core\\lib\\wix poc.js\"",
-    "test": "jest --testMatch **/test/*.test.js"
+    "test": "jest --testMatch **/test/*.test.js",
+    "test-parse": "node test-it.cjs"
   },
   "sideEffects": [
     "./src/data.js"
-  ],
-  "pre-commit": [
-    "test"
   ],
   "author": "Elchanan Shor",
   "dependencies": {
@@ -20,6 +18,8 @@
     "deepmerge": "^4.2.2",
     "handlebars": "^4.7.7",
     "json-ptr": "^3.1.1",
+    "moo": "^0.5.2",
+    "nearley": "^2.20.1",
     "no-case": "^3.0.4",
     "pluralize": "^8.0.0"
   },

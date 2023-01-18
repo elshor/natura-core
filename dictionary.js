@@ -12,6 +12,7 @@ import base from './packages/base.js'
 import reference from "./reference.js";
 import { calcTemplate } from "./template.js";
 import { matchRole,Role } from "./role.js";
+import { Parser } from "./parser.js";
 export default class Dictionary{
 	constructor(packages=[base]){
 		assume(entityIsArray(packages),'packages should be an array. It is '+JSON.stringify(packages));
@@ -30,6 +31,7 @@ export default class Dictionary{
 		this.instances = {};
 		this.instancesByType = {};
 		this.functions = {};
+		this.parser = new Parser(this);
 
 		//initialization registerations
 		this._registerType('entity definition group',{isa:['definition group']});
@@ -118,13 +120,25 @@ export default class Dictionary{
 		const loaded = packagesToLoad.map(pkg=>this._loadPackage(pkg))
 		this.reset();
 		try{
-		loaded.forEach(pkg=>{
-			this._processPackage(pkg);
-		});
-	}catch(e){
-		console.error('Exception',e);
-	}
+			loaded.forEach(pkg=>{
+				this._processPackage(pkg);
+			});
+		}catch(e){
+			console.error('Exception',e);
+		}
+		this.parser.endTypes();
 		this.resetVersion();
+	}
+
+	parse(text, target){
+		return this.parser.parse(text, target);
+	}
+
+	_dumpParseRules(target){
+		this.parser._dumpParseRules(target);
+	}
+	_dumpUsedBy(target){
+		this.parser._dumpUsedBy(target);
 	}
 
 	setPackages(packages=[base]){
@@ -264,6 +278,7 @@ export default class Dictionary{
 				this.instancesByType[valueType] = [];
 			}
 			this.instancesByType[valueType].push(entry);
+			this.parser.addInstance(entry);
 			this.instances[name] = value;
 			return reference(
 				label||name,
@@ -436,6 +451,7 @@ export default class Dictionary{
 			console.debug('[dictionary] Adding an entity to the dictionary with a name that already exists',JSON.stringify(type))
 		}
 		this.repo[type]=spec;
+		this.parser.addType(spec, pkg);
 		this._registerValueType(spec.valueType,type,spec.role);
 		this._registerFunction(type,spec.fn,pkg);
 	}

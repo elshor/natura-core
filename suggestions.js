@@ -76,6 +76,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				description: spec.description,
 				source:'class',
 				text: suggestionText(undefined,spec,dictionary,true),
+				pattern: spec.pattern || spec.title || spec.name,
 				alt:spec.suggest? spec.suggest.alt : undefined,
 				tag: spec.suggest? spec.suggest.tag : undefined,
 				entityScore:entityScore(spec)
@@ -102,6 +103,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 		ret.list.push({
 			value: cloneEntity(entry),
 			text:entry.label,
+			pattern: entry.label,
 			source:'instance',
 			description:entry.description,
 			alt:entry.alt,
@@ -119,6 +121,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 					value: cloneEntity(entry.value),
 					source:'context',
 					text:entry.label,
+					pattern: entry.label,
 					path:entry.path,
 					description:entry.description,
 					alt:entry.alt
@@ -156,6 +159,7 @@ export function getUnfilteredSuggestions(location,allowExpressions,externalConte
 				value: cloneEntity(entry.value||entry.name),//if value not specified then treat the name as value
 				source:'context',
 				text:entry.name,
+				pattern: entry.name,
 				path:entry.path,
 				description:entry.description,
 				alt:entry.alt
@@ -325,7 +329,8 @@ types.forEach(type=>{
 		tag: spec.suggest? spec.suggest.tag : undefined,
 		requiredContext:spec.suggest? spec.suggest.requiredContext : undefined,
 		entityScore:entityScore(spec),
-		text:suggestionText(undefined,spec,dictionary,true)
+		text:suggestionText(undefined,spec,dictionary,true),
+		pattern: spec.pattern || spec.title || spec.name
 	});
 });
 }

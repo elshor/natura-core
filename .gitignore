@@ -2,3 +2,8 @@ node_modules/*
 .vscode/*
 dev/credentials.js
 packages/jquery-ui.js
+test-grammer.cjs
+test-grammer.js
+temp.js
+test-it.cjs
+test.ne
