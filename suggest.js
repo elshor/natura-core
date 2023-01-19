@@ -1,28 +1,24 @@
 import {Parser} from './parsely.js'
+const MAX_GENERATION = 5;
 
 export default function suggest(dictionary, text, target='type:interact action'){
+	console.log('suggest:',JSON.stringify(text));
 	const grammer = dictionary.getGrammer();
 	grammer.ParserStart = target;
-	const parser = new Parser(grammer);
-	try{
-		parser.feed(text);
-	}catch(e){
-		console.log('parser got exception. Suggestions will be given based on current state');
-	}
-	const column = parser.table[parser.current];
-	const scannable = column.scannable;
-	if(scannable.length === 1){
-		//start suggestions from after the expected token
-		text = text + pathItemAsText(scannable[0].rule.symbols[scannable[0].dot]);
-		return suggest(dictionary, text, target);
-	}
 	const tree = new SequenceTree(dictionary);
-	for (let w = scannable.length; w--; ) {
-			const state = scannable[w];
-			tree.add(state.rule.symbols.slice(state.dot), state.rule.name)
-	}
+	addScannableToTree(grammer, text, '', tree);
 	const paths = tree.getPaths();
-	const ret = {
+	let generation = 0;
+	while(generation < MAX_GENERATION){
+		if(paths.length > 1 || paths.length === 0 || paths[0].text.startsWith('^')){
+			//we have enought suggestions - return them
+			break;
+		}
+		++ generation;
+		const prolog = paths[0].text.match(/^[^\^]/)[0]
+		addScannableToTree(grammer, text + prolog, prolog,tree);
+	}
+	return {
 		backText: '',
 		list: paths
 		.map(path=>{
@@ -33,10 +29,36 @@ export default function suggest(dictionary, text, target='type:interact action')
 				description: path.info.description
 			}
 		}) 
-	}
-	return ret;
+	}		
 }
 
+function textShouldBeExtended(text){
+	return text.match(/^[ ,]*$/)
+}
+function addScannableToTree(grammer, text, prolog='', tree){
+	const parser = new Parser(grammer);
+	try{
+		parser.feed(text);
+	}catch(e){
+		console.log('parser got exception. Suggestions will be given based on current state');
+	}
+	const scannable = parser.table[parser.current].scannable;
+	for (let w = scannable.length; w--; ) {
+		const state = scannable[w];
+		if(isExpendableState(state)){
+			//this state is manifested in a different state - we can ignore it
+			continue;
+		}
+		const pathText = tree.add(
+			state.rule.symbols.slice(state.dot), 
+			state.rule.name,
+			prolog
+		)
+		if(textShouldBeExtended(pathText)){
+			addScannableToTree(grammer, text + pathText, prolog + pathText,  tree);
+		}
+	}
+}
 function labelFromPath(path){
 	return path
 		.replace(/\s*\^[ \^]*/g,' ... ');
@@ -68,21 +90,34 @@ class SequenceTree{
 		}
 		return ret;
 	}
-	add(path, name){
+	add(path, name, prolog = ''){
 		const description = this.dictionary.getTypeSpec(searchName(name)).description;
 		let current = this.head;
+		if(prolog.length > 0){
+			current = this._nextText(current, prolog);
+		}
+
+		let pathText = prolog;
 		for(let i = 0;i < path.length; ++i){
 			const item = path[i];
 			if(item.literal){
 				current = this._nextText(current, item.literal)
+				pathText += item.literal;
 			}else if(item === '_'){
 				current = this._nextText(current, ' ');
+				pathText += ' ';
+			}else if(item.startsWith('value:string')){
+				current = this._nextText(current, '"^"');
+				pathText += '"^"';
 			}else if(typeof item === 'string'){
 				current = this._nextSymbol(current, item);
+				pathText += '^';
 			}else if(item.type === 'SP'){
 				current = this._nextText(current, ' ');
+				pathText += ' ';
 			}else if(item.type === 'COMMA'){
 				current = this._nextText(current, ', ');
+				pathText += ', '
 			}else{
 				console.log('unidentified item',path[i])
 			}
@@ -91,6 +126,7 @@ class SequenceTree{
 			//add info in the end of the path
 			current.info = mergeInfo(current.info,{description});
 		}
+		return pathText;
 	}
 	getPaths(node){
 		node = node || this.head;
@@ -153,11 +189,24 @@ function pathItemAsText(item){
 }
 
 function pathAsSnippet(path){
-	return path.replace(/\s*\^[ \^]*/g,' ${} ')
+	return path
+		.replace(/\s*\^[ \^]*/g,' ${} ')
+		.replace(/\" \$\{\} \"/g, '"${}"${}')
 }
 
 function searchName(name){
 	return name
 		.replace(/<.*>$/,'')
 		.replace(/^type\:/,'');
+}
+
+function isExpendableState(state){
+	if(
+		state.wantedBy && 
+		state.wantedBy.length === 1 && 
+		state.wantedBy[0].rule.name === 'FRAGMENT_SEP'
+	){
+		return true;
+	}
+	return false;
 }
