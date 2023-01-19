@@ -7,7 +7,7 @@ export default function suggest(dictionary, text, target='type:interact action')
 	try{
 		parser.feed(text);
 	}catch(e){
-		console.log('got exception',e);
+		console.log('parser got exception. Suggestions will be given based on current state');
 	}
 	const column = parser.table[parser.current];
 	const scannable = column.scannable;
@@ -21,17 +21,16 @@ export default function suggest(dictionary, text, target='type:interact action')
 			const state = scannable[w];
 			tree.add(state.rule.symbols.slice(state.dot), state.rule.name)
 	}
-	tree.dumpPaths();
 	const paths = tree.getPaths();
-	console.log(paths);
 	const ret = {
 		backText: '',
 		list: paths
 		.map(path=>{
 			return {
-				text: path,
-				label: labelFromPath(path),
-				snippet: pathAsSnippet(path)
+				text: path.text,
+				label: labelFromPath(path.text),
+				snippet: pathAsSnippet(path.text),
+				description: path.info.description
 			}
 		}) 
 	}
@@ -70,7 +69,7 @@ class SequenceTree{
 		return ret;
 	}
 	add(path, name){
-		console.log('add',this.dictionary.getTypeSpec(searchName(name)).description,'=>', path);
+		const description = this.dictionary.getTypeSpec(searchName(name)).description;
 		let current = this.head;
 		for(let i = 0;i < path.length; ++i){
 			const item = path[i];
@@ -82,9 +81,15 @@ class SequenceTree{
 				current = this._nextSymbol(current, item);
 			}else if(item.type === 'SP'){
 				current = this._nextText(current, ' ');
+			}else if(item.type === 'COMMA'){
+				current = this._nextText(current, ', ');
 			}else{
 				console.log('unidentified item',path[i])
 			}
+		}
+		if(description){
+			//add info in the end of the path
+			current.info = mergeInfo(current.info,{description});
 		}
 	}
 	getPaths(node){
@@ -97,18 +102,44 @@ class SequenceTree{
 		if(node.type === 'symbol'){
 		}
 		if(values.length === 0){
-			//this is a terminal node
-			return current;
+			if(node.type === 'head'){
+				return []
+			}
+			return [{
+				text: current,
+				info: node.info || {}
+			}]
 		}
-		const children = values.map(childNode=>this.getPaths(childNode))
-		return children.flat().map(child=>current + child);
+		const children = values.map(childNode=>this.getPaths(childNode)).flat();
+		if(node.type === 'head'){
+			//head has nothing to add - just pass childern
+			return children;
+		}
+		return children.map(child=>{
+			return {
+				text: current + child.text,
+				info: mergeInfo(node.info, child.info)
+			}
+		});
 	}
 	dumpPaths(){
 		const paths = this.getPaths(this.head);
-		paths.forEach(path=>console.log(path));
+		paths.forEach(path=>console.info(path));
 	}
 }
 
+function mergeInfo(target, source){
+	if(!target){
+		return source;
+	}
+	if(!source){
+		return target;
+	}
+	if(source.description !== target.description){
+		console.log('info conflict',source, target);
+	}
+	return source || {};
+}
 function pathItemAsText(item){
 	if(item.literal){
 		return item.literal;
