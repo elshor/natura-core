@@ -13,6 +13,7 @@ import reference from "./reference.js";
 import { calcTemplate } from "./template.js";
 import { matchRole,Role } from "./role.js";
 import { Parser } from "./parser.js";
+import suggest from './suggest.js'
 export default class Dictionary{
 	constructor(packages=[base]){
 		assume(entityIsArray(packages),'packages should be an array. It is '+JSON.stringify(packages));
@@ -132,6 +133,13 @@ export default class Dictionary{
 
 	parse(text, target){
 		return this.parser.parse(text, target);
+	}
+
+	getGrammer(){
+		return this.parser.getGrammer();
+	}
+	suggest(text, target){
+		return suggest(this, text, target);
 	}
 
 	_dumpParseRules(target){

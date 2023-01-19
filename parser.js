@@ -1,9 +1,8 @@
 import { patternAsGrammer } from "./pattern.js";
 import stringify from "./stringify.js";
-import nearley from 'nearley'
 import moo from 'moo'
 import { createLocation } from "./location.js";
-
+import { Parser as Parsley } from "./parsely.js";
 const lexer = moo.compile({
 	SP: /[ \t]+/,
 	COMMA: /,/,
@@ -58,6 +57,7 @@ export class Parser {
 	addInstance(spec){
 		this._addRule({
 			name: spec.valueType,
+			description: spec.description,
 			symbols: tokenize.bind(lexer)(spec.label).map(token=>({literal: token}))
 		}, spec)
 	}
@@ -168,33 +168,17 @@ export class Parser {
 		})
 		this._ensurePlurals()
 	}
+
+	getGrammer(){
+		return this.grammer;
+	}
+
 	parse(text, target='type:interact action'){
 		this.grammer.ParserStart = target;
-		const parser = new nearley.Parser(this.grammer);
+		const parser = new Parsley(this.grammer);
 		try{
 			const res = parser.feed(text);
-			
-			console.log(markStringPos(res.lexer.buffer, res.lexer.col), '==>',res);
-			const hasResults = res.results.length > 0;
-			if(hasResults){
-				console.log('RESULTS:');
-				res.results.forEach(result=>{
-					console.log(stringify(createLocation(result, this.dictionary)), result);
-				})	
-			}
-			const column = res.table[res.current];
-			column.states.forEach(state=>{
-				if(state.wantedBy.length > 0){
-					return;
-				}
-				console.log(
-					'  ',
-					state.dot, 
-					state.rule.postprocess? (state.rule.postprocess.typeName || '') +':': '?', 
-					ruleText(state.rule)
-				)
-				printStateDependant(state, column.states, 3, hasResults);
-			})
+			console.log('parser',parser);
 			if(res.results){
 				return res.results;
 			}else{
@@ -204,6 +188,8 @@ export class Parser {
 			console.log('got exception',e);
 		}
 	}
+
+	
 	_dumpParseRules(target){
 		console.log('dumping rules for',target);
 		this.grammer.ParserRules.forEach(rule=>{
@@ -250,6 +236,7 @@ function ruleText(rule){
 	}).join(',');
 	return ret;
 }
+
 
 function addBaseRules(grammer){
 	grammer.ParserRules.push(
@@ -336,3 +323,29 @@ function listPush(data){
 function takeFirst(data){
 	return data[0];
 }
+
+function dumpParser(res, dictionary){
+	console.log(markStringPos(res.lexer.buffer, res.lexer.col), '==>',res);
+	const hasResults = res.results.length > 0;
+	if(hasResults){
+		console.log('RESULTS:');
+		res.results.forEach(result=>{
+			console.log(stringify(createLocation(result, dictionary)), result);
+		})	
+	}
+	const column = res.table[res.current];
+	column.states.forEach(state=>{
+		if(state.wantedBy.length > 0){
+			return;
+		}
+		console.log(
+			'  ',
+			state.dot, 
+			state.rule.postprocess? (state.rule.postprocess.typeName || '') +':': '?', 
+			ruleText(state.rule)
+		)
+		printStateDependant(state, column.states, 3, hasResults);
+	})
+}
+
+

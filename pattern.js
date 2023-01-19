@@ -130,7 +130,11 @@ export function patternAsGrammer(
 		}
 	})
 	
-	const base = {name: typeAsString(target), symbols: []};
+	const base = {
+		name: typeAsString(target), 
+		symbols: [],
+		description: spec.description
+	};
 	const rules = [base];
 	const converterData = {};
 	parsed.elements.forEach(el=>{
@@ -175,7 +179,6 @@ function typeAsString(type){
 
 function generateConverter(converterData, typeName, dictionary, packageName){
 	let ret = function(data){
-		console.log('convert',typeName||'partial', data);
 		const ret = typeName? generateNewEntity(dictionary, typeName) : {$partial:true}
 		Object.entries(converterData).forEach(([key, value])=>{
 			ret[value] = data[key];
