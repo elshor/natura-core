@@ -262,6 +262,18 @@ export default class Dictionary{
 		this.reload();
 	}
 
+	/**
+	 * add a package as text string. This function will parse it as JSON and add it to packages.
+	 * @param {String} text 
+	 * @param {Boolean} shouldReload reload the dictionary after adding the package. If false then the package will not be updated until next reload call.
+	 */
+	addPackageText(text, shouldReload){
+		const json = JSON.stringify(text);
+		this.packages.push(json);
+		if(shouldReload){
+			this.reload();
+		}
+	}
 	_isDefinitionGroup(entity){
 		if(typeof entity !== 'object' || entity === null){
 			return false;
