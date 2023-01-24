@@ -129,7 +129,7 @@ export class Parser {
 			try{
 				parser._addRule(typeRule, spec)
 			}catch(e){
-				console.error('addRule got exception',e);
+				this.dictionary.error('addRule got exception',e);
 			}
 
 			//add isa rules
@@ -178,31 +178,30 @@ export class Parser {
 		const parser = new Parsley(this.grammer);
 		try{
 			const res = parser.feed(text);
-			console.log('parser',parser);
 			if(res.results){
 				return res.results;
 			}else{
 				return [];
 			}
 		}catch(e){
-			console.log('got exception',e);
+			this.dictionary.log('got exception',e);
 		}
 	}
 
 	
 	_dumpParseRules(target){
-		console.log('dumping rules for',target);
+		this.dictionary.log('dumping rules for',target);
 		this.grammer.ParserRules.forEach(rule=>{
 			if(rule.name === target){
-				console.log('  ', ruleText(rule));
+				this.dictionary.log('  ', ruleText(rule));
 			}
 		})
 	}
 	_dumpUsedBy(target){
-		console.log('dumping rules used by',target);
+		this.dictionary.log('dumping rules used by',target);
 		this.grammer.ParserRules.forEach(rule=>{
 			if(rule.symbols.find(symbol=>symbol=== target)){
-				console.log('  ', ruleText(rule));
+				this.dictionary.log('  ', ruleText(rule));
 			}
 		})
 	}
@@ -215,7 +214,7 @@ function printStateDependant(state, states, indent=1, includeCompleted=false){
 			if(s.isComplete && !includeCompleted){
 				return;
 			}
-			console.log(
+			this.dictionary.log(
 				''.padStart(indent*2,' '),
 				state.dot,
 				ruleText(s.rule)
@@ -325,12 +324,12 @@ function takeFirst(data){
 }
 
 function dumpParser(res, dictionary){
-	console.log(markStringPos(res.lexer.buffer, res.lexer.col), '==>',res);
+	dictionary.log(markStringPos(res.lexer.buffer, res.lexer.col), '==>',res);
 	const hasResults = res.results.length > 0;
 	if(hasResults){
-		console.log('RESULTS:');
+		dictionary.log('RESULTS:');
 		res.results.forEach(result=>{
-			console.log(stringify(createLocation(result, dictionary)), result);
+			dictionary.log(stringify(createLocation(result, dictionary)), result);
 		})	
 	}
 	const column = res.table[res.current];
@@ -338,7 +337,7 @@ function dumpParser(res, dictionary){
 		if(state.wantedBy.length > 0){
 			return;
 		}
-		console.log(
+		dictionary.log(
 			'  ',
 			state.dot, 
 			state.rule.postprocess? (state.rule.postprocess.typeName || '') +':': '?', 

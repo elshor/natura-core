@@ -1,11 +1,11 @@
 {
   "name": "natura",
-  "type": "module",
   "version": "0.0.1",
-  "main":"lib/index.js",
+  "main": "lib/index.js",
   "description": "Core functionality needed to work with natura. This package contains the natura logic without UI. It should be used by the client and server",
   "scripts": {
-    "build": "babel *.js --out-dir lib",
+    "build": "babel *.js --out-dir lib && babel packages/*.js --out-dir lib/packages",
+    "dev": " babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib -w",
     "test1": "jest --testMatch **/test/*.test.js",
     "test-parse": "node test-it.cjs"
   },
@@ -27,7 +27,7 @@
     "@babel/preset-env": "7.20.2",
     "@types/babel__core": "^7.20.0",
     "@types/babel__preset-env": "^7.9.2",
-    "axios": "^0.27.2",
+    "axios": "^1.2.3",
     "babel-jest": "^29.3.1",
     "babel-loader": "9.1.2",
     "change-case": "^4.1.2",

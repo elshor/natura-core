@@ -13,15 +13,29 @@ import reference from "./reference.js";
 import { calcTemplate } from "./template.js";
 import { matchRole,Role } from "./role.js";
 import { Parser } from "./parser.js";
-import suggest from './suggest.js'
+import {suggestCompletion, suggestTokens} from './suggest.js'
+import { loadPackage } from "./loader.js";
+import registerPackage from "./register-package.js";
 export default class Dictionary{
-	constructor(packages=[base]){
+	constructor(packages=[base], logger){
 		assume(entityIsArray(packages),'packages should be an array. It is '+JSON.stringify(packages));
 		this.packages = packages;
+		this.logger = logger;
+		this.log('how about that');
 		this.reset();
 		this.resetVersion();
 	}
 
+	log(...args){
+		if(this.logger){
+			this.logger(...args);
+		}
+	}
+	info(...args){
+		if(this.logger){
+			this.logger(...args);
+		}
+	}
 	reset(){
 		//clear old data
 		this.initiated = true;
@@ -40,7 +54,7 @@ export default class Dictionary{
 		this._registerIsa('definition group','property definition group')
 		this._registerIsa('definition group','event definition group')
 		this._registerIsa('definition group','expression definition group')
-		this._registerIsa('definition group','action definition group')
+		this._registerIsa('definition group','action definition group') 
 	}
 
 	isInitiated(){
@@ -106,26 +120,30 @@ export default class Dictionary{
 	/**
 	 * Initial load of packages to the dictionary. This must be called before the dictionary is used
 	 */
-	load(dynamicPackages){
-		return this.reload(dynamicPackages);
+	async load(dynamicPackages){
+		return await this.reload(dynamicPackages);
 	}
 
 	/**
 	 * Reload the packages. This should be called when the packages are changed and need to be reprocessed. All packages are reloaded. In addition, dynamicPackages are also loaded
 	 */
-	reload(dynamicPackages=[]){
+	async reload(dynamicPackages=[]){
 		dynamicPackages =	entityIsArray(dynamicPackages)?
 			dynamicPackages :
 			[dynamicPackages];
-		const packagesToLoad = this.packages.concat(dynamicPackages)
-		const loaded = packagesToLoad.map(pkg=>this._loadPackage(pkg))
+		const packagesToLoad = this.packages.concat(dynamicPackages);
+		const loading = packagesToLoad.map(pkg=>this._loadPackage(pkg))
+		this.log('before waiting for loading',loading);
+		const loaded = await Promise.all(loading);
+		this.log('loaded completed',loaded);
 		this.reset();
 		try{
 			loaded.forEach(pkg=>{
+				this.log('before process package',pkg.name);
 				this._processPackage(pkg);
 			});
 		}catch(e){
-			console.error('Exception',e);
+			this.error('Exception',e);
 		}
 		this.parser.endTypes();
 		this.resetVersion();
@@ -138,8 +156,11 @@ export default class Dictionary{
 	getGrammer(){
 		return this.parser.getGrammer();
 	}
-	suggest(text, target){
-		return suggest(this, text, target);
+	suggestCompletion(text, target){
+		return suggestCompletion(this, text, target, this.log.bind(this));
+	}
+	suggestTokens(text, target){
+		return suggestTokens(this, text, target);
 	}
 
 	_dumpParseRules(target){
@@ -257,23 +278,11 @@ export default class Dictionary{
 	 * Add a package to the dictionary. the package can either be a string identifying the package or the package object itself
 	 * @param {Object|String} pckg the package to add
 	 */
-	addPackage(pckg){
+	async addPackage(pckg){
 		this.packages.push(pckg);
-		this.reload();
+		await this.reload();
 	}
 
-	/**
-	 * add a package as text string. This function will parse it as JSON and add it to packages.
-	 * @param {String} text 
-	 * @param {Boolean} shouldReload reload the dictionary after adding the package. If false then the package will not be updated until next reload call.
-	 */
-	addPackageText(text, shouldReload){
-		const json = JSON.stringify(text);
-		this.packages.push(json);
-		if(shouldReload){
-			this.reload();
-		}
-	}
 	_isDefinitionGroup(entity){
 		if(typeof entity !== 'object' || entity === null){
 			return false;
@@ -404,19 +413,8 @@ export default class Dictionary{
 	}
 
 	_processPackage(pkg){
-		assume(pkg && typeof pkg === 'object','package must be an object');
-		const pkgSpec = this.getTypeSpec(pkg.$type);
-		if(typeof pkgSpec.register === 'function'){
-			//register function defined for the package - process it
-			pkgSpec.register(this,pkg.$type,pkg);
-		}else{
-			const pkgCopy = deepCopy(pkg);
-			for(let p in pkgCopy){
-				if(this._isDefinitionGroup(pkgCopy[p])){
-					this._processDefinition(pkgCopy[p],{},pkgCopy);
-				}
-			}
-		}
+		this.log('processing package',pkg.name);
+		registerPackage(this, pkg)
 	}
 
 	/**
@@ -468,7 +466,7 @@ export default class Dictionary{
 		});
 		if(this.repo[type]){
 			//an entity with this type already exists - warn
-			console.debug('[dictionary] Adding an entity to the dictionary with a name that already exists',JSON.stringify(type))
+			this.log('[dictionary] Adding an entity to the dictionary with a name that already exists',JSON.stringify(type))
 		}
 		this.repo[type]=spec;
 		this.parser.addType(spec, pkg);
@@ -530,6 +528,10 @@ export default class Dictionary{
 		this.isaRepo[parent].push(type);
 	}
 	_loadPackage(pckg){
+		if(typeof pckg === 'string'){
+			//need to load it
+			return loadPackage(pckg, this.log.bind(this));
+		}
 		assume(entityType(pckg) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");
 
 		//convert the raw package object to entity so we can use value functions defined in the specs

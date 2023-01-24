@@ -1,12 +1,15 @@
 import {Parser} from './parsely.js'
 const MAX_GENERATION = 5;
 
-export default function suggest(dictionary, text, target='type:interact action'){
-	console.log('suggest:',JSON.stringify(text));
+export function suggestCompletion(dictionary, text, target='type:interact action', logger){
+	logger('before loading grammer');
 	const grammer = dictionary.getGrammer();
+	logger('got grammer. number of rules',grammer.ParserRules.length);
 	grammer.ParserStart = target;
 	const tree = new SequenceTree(dictionary);
+	logger('start parsing');
 	addScannableToTree(grammer, text, '', tree);
+	logger('after addScannableToTree')
 	const paths = tree.getPaths();
 	let generation = 0;
 	while(generation < MAX_GENERATION){
@@ -40,7 +43,7 @@ function addScannableToTree(grammer, text, prolog='', tree){
 	try{
 		parser.feed(text);
 	}catch(e){
-		console.log('parser got exception. Suggestions will be given based on current state');
+		//console.log('parser got exception. Suggestions will be given based on current state');
 	}
 	const scannable = parser.table[parser.current].scannable;
 	for (let w = scannable.length; w--; ) {
@@ -119,7 +122,7 @@ class SequenceTree{
 				current = this._nextText(current, ', ');
 				pathText += ', '
 			}else{
-				console.log('unidentified item',path[i])
+				//console.log('unidentified item',path[i])
 			}
 		}
 		if(description){
@@ -172,7 +175,7 @@ function mergeInfo(target, source){
 		return target;
 	}
 	if(source.description !== target.description){
-		console.log('info conflict',source, target);
+		//console.log('info conflict',source, target);
 	}
 	return source || {};
 }
@@ -209,4 +212,37 @@ function isExpendableState(state){
 		return true;
 	}
 	return false;
+}
+
+export function suggestTokens(dictionary, text, target='type:interact action'){
+	dictionary.log('suggestTokens before loading grammer');
+	const grammer = dictionary.getGrammer();
+	dictionary.log('got grammer. number of rules',grammer.ParserRules.length);
+	grammer.ParserStart = target;
+	const parser = new Parser(grammer);
+	try{
+		dictionary.log('before feed');
+		parser.feed(text);
+		dictionary.log('after feed');
+	}catch(e){
+		dictionary.log('got exception');
+		//console.log('parser got exception. Suggestions will be given based on current state');
+	}
+	const ret =  unique(parser.table[parser.current].scannable
+		.map(state=>state.rule.symbols[state.dot])
+		.map(item=> item.literal || ('['+item.type+']')));
+	const sp = ret.indexOf('[SP]')
+	if(sp >= 0){
+		//need to add the tokens following the space
+		ret.splice(sp, 1);//delete the space
+		const additional = suggestTokens(dictionary, text + ' ', target);
+		ret.push(...additional.map(token=>' ' + token));
+	}
+	return ret;
+}
+
+function unique(items){
+	const obj = {};
+	items.forEach(key=>obj[key] = true);
+	return Object.keys(obj);
 }
