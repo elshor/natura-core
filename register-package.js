@@ -142,7 +142,9 @@ function generateProps(component,props,slots){
 
 function registerCategories(dictionary,categories){
 	Object.entries(categories).forEach(([category,members])=>{
-		(members||[]).forEach(member=>dictionary._registerIsa(member,category));
+		(members||[]).forEach(member=>{
+			dictionary._registerIsa(member, category, true);
+		});
 	})
 }
 
