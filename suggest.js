@@ -245,11 +245,14 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 					return '[SP]';
 				case 'string':
 					return '""';
+				case 'number':
+					return ['0','1','2','3','4','5','6','7','8','9','.']
 				default:
 					dictionary.log('unknown type',item.type);
 					return '[' + item.type + ']'
 			}
 		})
+		.flat()
 	)
 	const sp = ret.indexOf('[SP]')
 	if(sp >= 0){
