@@ -145,13 +145,12 @@ export class Parser {
 	}
 
 	addIsa(type, parent){
-		console.log('add isa',type, parent)
 		const isaRule = {
 			name: 'type:' + parent,
 			symbols: ['type:' + type],
 			postprocess: takeFirst
 		}
-		parser._addRule(isaRule)
+		this._addRule(isaRule)
 }
 
 	/**
