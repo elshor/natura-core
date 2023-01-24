@@ -21,7 +21,6 @@ export default class Dictionary{
 		assume(entityIsArray(packages),'packages should be an array. It is '+JSON.stringify(packages));
 		this.packages = packages;
 		this.logger = logger;
-		this.log('how about that');
 		this.reset();
 		this.resetVersion();
 	}
@@ -133,13 +132,10 @@ export default class Dictionary{
 			[dynamicPackages];
 		const packagesToLoad = this.packages.concat(dynamicPackages);
 		const loading = packagesToLoad.map(pkg=>this._loadPackage(pkg))
-		this.log('before waiting for loading',loading);
 		const loaded = await Promise.all(loading);
-		this.log('loaded completed',loaded);
 		this.reset();
 		try{
 			loaded.forEach(pkg=>{
-				this.log('before process package',pkg.name);
 				this._processPackage(pkg);
 			});
 		}catch(e){
@@ -413,7 +409,6 @@ export default class Dictionary{
 	}
 
 	_processPackage(pkg){
-		this.log('processing package',pkg.name);
 		registerPackage(this, pkg)
 	}
 
@@ -520,8 +515,9 @@ export default class Dictionary{
 	 * Register an isa relationship
 	 * @param {String} type
 	 * @param {String} parent type of the parent
+	 * @param {Booldan} notInType true if this isa relationship was defined separately and not derived from isa field. If true then need to register separaetly in grammer
 	 */
-	_registerIsa(type,parent){
+	_registerIsa(type,parent, notInType){
 		if(!Array.isArray(this.isaRepo[parent])){
 			this.isaRepo[parent] = [];
 		}

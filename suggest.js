@@ -1,5 +1,7 @@
 import {Parser} from './parsely.js'
 const MAX_GENERATION = 5;
+const PRECEDING_SPACE_TOKEN = '\u2581'
+const EOS_TOKEN = '</s>'
 
 export function suggestCompletion(dictionary, text, target='type:interact action', logger){
 	logger('before loading grammer');
@@ -215,34 +217,65 @@ function isExpendableState(state){
 }
 
 export function suggestTokens(dictionary, text, target='type:interact action'){
-	dictionary.log('suggestTokens before loading grammer');
 	const grammer = dictionary.getGrammer();
-	dictionary.log('got grammer. number of rules',grammer.ParserRules.length);
 	grammer.ParserStart = target;
 	const parser = new Parser(grammer);
+	//When last token was a part of a token, we need to identify the first part of the token. We assume the feed function will throw the partial token
+	let prolog = ''
 	try{
-		dictionary.log('before feed');
 		parser.feed(text);
-		dictionary.log('after feed');
 	}catch(e){
-		dictionary.log('got exception');
-		//console.log('parser got exception. Suggestions will be given based on current state');
+		if(e.token.text){
+			prolog = e.token.text;
+		}
 	}
 	const ret =  unique(parser.table[parser.current].scannable
 		.map(state=>state.rule.symbols[state.dot])
-		.map(item=> item.literal || ('['+item.type+']')));
+		.map(item=> {
+			if(item.literal){
+				if(!item.literal.startsWith(prolog)){
+					return null;
+				}
+				return item.literal.substr(prolog.length);
+			}
+			switch(item.type){
+				case 'COMMA':
+					return ',';
+				case 'SP':
+					return '[SP]';
+				case 'string':
+					return '""';
+				default:
+					dictionary.log('unknown type',item.type);
+					return '[' + item.type + ']'
+			}
+		})
+	)
 	const sp = ret.indexOf('[SP]')
 	if(sp >= 0){
 		//need to add the tokens following the space
 		ret.splice(sp, 1);//delete the space
 		const additional = suggestTokens(dictionary, text + ' ', target);
-		ret.push(...additional.map(token=>' ' + token));
+		ret.push(...additional.map(token=> PRECEDING_SPACE_TOKEN + token));
+	}
+	if(parser.results && parser.results.length > 0){
+		ret.push(EOS_TOKEN)
 	}
 	return ret;
 }
 
+/**
+ * Find unique items and get rid of nulls
+ * @param {*} items 
+ * @returns 
+ */
 function unique(items){
 	const obj = {};
-	items.forEach(key=>obj[key] = true);
+	items.forEach(key=>{
+		if(key === null || key === undefined){
+			return;
+		}
+		obj[key] = true;
+	});
 	return Object.keys(obj);
 }

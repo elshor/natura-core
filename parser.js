@@ -43,14 +43,13 @@ export class Parser {
 		if(Array.isArray(rule)){
 			return rule.forEach(r=>this._addRule(r, spec))
 		}
-		if(spec.specializedFor){
+		if(spec && spec.specializedFor){
 			//add for deferred expansion
 			this.specializedTypes.push({
 				rule, 
 				T: spec.specializedFor
 			});
 		}else{
-			rule.whatever = new Date().toISOString();
 			this.grammer.ParserRules.push(rule);
 		}
 	}
@@ -144,6 +143,16 @@ export class Parser {
 		}else{
 		}
 	}
+
+	addIsa(type, parent){
+		console.log('add isa',type, parent)
+		const isaRule = {
+			name: 'type:' + parent,
+			symbols: ['type:' + type],
+			postprocess: takeFirst
+		}
+		parser._addRule(isaRule)
+}
 
 	/**
 	 * Called after adding the last type. This is when macro expansion is done
