@@ -35,6 +35,11 @@ export default class Dictionary{
 			this.logger(...args);
 		}
 	}
+	error(...args){
+		if(this.logger){
+			this.logger(...args);
+		}
+	}
 	reset(){
 		//clear old data
 		this.initiated = true;
@@ -522,6 +527,9 @@ export default class Dictionary{
 			this.isaRepo[parent] = [];
 		}
 		this.isaRepo[parent].push(type);
+		if(notInType){
+			this.parser.addIsa(type, parent);
+		}
 	}
 	_loadPackage(pckg){
 		if(typeof pckg === 'string'){
