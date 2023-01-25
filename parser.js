@@ -136,6 +136,7 @@ export class Parser {
 				const isaRule = {
 					name: 'type:' + isa,
 					symbols: ['type:' + spec.name + (spec.specializedFor? '<t>' : '')],
+					source: spec.name + '$isa',
 					postprocess: takeFirst
 				}
 				parser._addRule(isaRule, spec)
@@ -146,6 +147,7 @@ export class Parser {
 			parser._addRule({
 				name: spec.name,
 				symbols: [spec.basicType],
+				source: spec.name + '$basic',
 				postprocess: takeFirst
 			})
 		}
@@ -155,6 +157,7 @@ export class Parser {
 		const isaRule = {
 			name: 'type:' + parent,
 			symbols: ['type:' + type],
+			source: 'isa',
 			postprocess: takeFirst
 		}
 		this._addRule(isaRule)

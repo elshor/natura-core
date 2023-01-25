@@ -133,7 +133,8 @@ export function patternAsGrammer(
 	const base = {
 		name: typeAsString(target), 
 		symbols: [],
-		description: spec.description
+		description: spec.description,
+		source: spec.name
 	};
 	const rules = [base];
 	const converterData = {};
@@ -151,12 +152,14 @@ export function patternAsGrammer(
 			rules.push({
 				name: el.name + '?',
 				symbols: ['FRAGMENT_SEP', el.name],
+				source: spec.name + '*',
 				postprocess(data){
 					return data[1];
 				}
 			},{
 				name: el.name + '?',
-				symbols: []
+				symbols: [],
+				source: spec.name + '*'
 			})
 			base.symbols.push(el.name + '?');
 		}else{

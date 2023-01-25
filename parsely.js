@@ -2,12 +2,13 @@
  * Adaptation of nearley parser
  */
 
-function Rule(name, symbols, postprocess, description) {
+function Rule(name, symbols, postprocess, description, source) {
 		this.id = ++Rule.highestId;
 		this.name = name;
 		this.symbols = symbols;        // a list of literal | regex class | nonterminal
 		this.postprocess = postprocess;
 		this.description = description;
+		this.source = source
 		return this;
 }
 Rule.highestId = 0;
@@ -170,7 +171,8 @@ Grammar.fromCompiled = function(rules, start) {
 			r.name, 
 			r.symbols, 
 			r.postprocess, 
-			r.description
+			r.description,
+			r.source
 		)); });
 		var g = new Grammar(rules, start);
 		g.lexer = lexer; // nb. storing lexer on Grammar is iffy, but unavoidable
