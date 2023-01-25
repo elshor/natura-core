@@ -142,6 +142,13 @@ export class Parser {
 			})
 		}else{
 		}
+		if(spec.basicType){
+			parser._addRule({
+				name: spec.name,
+				symbols: [spec.basicType],
+				postprocess: takeFirst
+			})
+		}
 	}
 
 	addIsa(type, parent){
