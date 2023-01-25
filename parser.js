@@ -3,13 +3,16 @@ import stringify from "./stringify.js";
 import moo from 'moo'
 import { createLocation } from "./location.js";
 import { Parser as Parsley } from "./parsely.js";
+
+const MAX_FLAT_DEPTH = 1000 //used to flatten strings
+
 const lexer = moo.compile({
 	SP: /[ \t]+/,
+	ESCAPED_DBQT: /\\"/,
 	COMMA: /,/,
 	WS:      /[ \t]+/,
 	DIGIT: /[0-9]/,
-	token: /[^\d\"\'\`\s,.\/#!$%\^&\*;:{}=\-_`~()]+/,
-	DBQT_CONTENT: /(?:[^\n"]|\\")+/,
+	token: /[^\\\d\"\'\`\s,.\/#!$%\^&\*;:{}=\-_`~()]+/,
 	DBQT: /"/,
 	NL:      { match: /\n/, lineBreaks: true },
 	ch: /./
@@ -264,19 +267,27 @@ function addBaseRules(grammer){
 			postprocess:data => Number.parseInt(data[0].text)
 		},
 		{
+			name: 'dbqt-text',
+			symbols: [/[^"]+|\\"/]
+		},
+		{
+			name: 'dbqt-text',
+			symbols: ['dbqt-text',/[^"]+|\\"/]
+		},
+		{
 			name: 'value:string',
-			symbols:[{type:'DBQT'},{type:'DBQT_CONTENT'},{type:'DBQT'}],
-			postprocess: data=> JSON.parse(data.join(''))
+			symbols:[{type:'DBQT'},'dbqt-text',{type:'DBQT'}],
+			postprocess: joinText
 		},
 		{
 			name: 'value:string',
 			symbols:[{type:'DBQT'},{type:'DBQT'}],
-			postprocess: data=> JSON.parse(data.join(''))
+			postprocess: joinText
 		},
 		{
 			name: 'string',
-			symbols:[{type:'DBQT'},{type:'DBQT_CONTENT'},{type:'DBQT'}],
-			postprocess: data=> JSON.parse(data.join(''))
+			symbols:[{type:'DBQT'}, 'dbqt-text', {type:'DBQT'}],
+			postprocess: joinText
 		},
 		{
 			name: 'string',
@@ -422,4 +433,7 @@ function dumpParser(res, dictionary){
 	})
 }
 
+function joinText(data){
+	return JSON.parse(data.flat(MAX_FLAT_DEPTH).map(item=>(item.value||item.text)).join(''))
+}
 

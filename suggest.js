@@ -2,7 +2,7 @@ import {Parser} from './parsely.js'
 const MAX_GENERATION = 5;
 const PRECEDING_SPACE_TOKEN = '\u2581'
 const EOS_TOKEN = '</s>'
-
+const DBQT_CONTENT_REGEX = '/[^"]+|\\\\"/'
 export function suggestCompletion(dictionary, text, target='type:interact action', logger){
 	logger('before loading grammer');
 	const grammer = dictionary.getGrammer();
@@ -240,6 +240,10 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 				}
 				return item.literal.substr(prolog.length);
 			}
+			if(item.toString() === DBQT_CONTENT_REGEX){
+				//this matches the inside of a double quoted string
+				return '[ANY]'
+			}
 			switch(item.type){
 				case 'COMMA':
 					return ',';
@@ -247,8 +251,6 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 					return '"';
 				case 'SP':
 					return '[SP]';
-				case 'DBQT_CONTENT':
-					return '[ANY]'
 				case 'DIGIT':
 					return ['0','1','2','3','4','5','6','7','8','9']
 				default:
