@@ -111,7 +111,7 @@ class SequenceTree{
 			}else if(item === '_'){
 				current = this._nextText(current, ' ');
 				pathText += ' ';
-			}else if(item.startsWith('value:string')){
+			}else if(typeof item === 'string' && item.startsWith('value:string')){
 				current = this._nextText(current, '"^"');
 				pathText += '"^"';
 			}else if(typeof item === 'string'){
@@ -243,10 +243,10 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 					return ',';
 				case 'SP':
 					return '[SP]';
-				case 'string':
-					return '""';
-				case 'number':
-					return ['0','1','2','3','4','5','6','7','8','9','.']
+				case 'DBQT_CONTENT':
+					return '[ANY]'
+				case 'DIGIT':
+					return ['0','1','2','3','4','5','6','7','8','9']
 				default:
 					dictionary.log('unknown type',item.type);
 					return '[' + item.type + ']'

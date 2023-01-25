@@ -7,9 +7,9 @@ const lexer = moo.compile({
 	SP: /[ \t]+/,
 	COMMA: /,/,
 	WS:      /[ \t]+/,
-	number:  /[+-]?(?:[0-9]*[.])?[0-9]+/,
+	DIGIT: /[0-9]/,
 	token: /[^\d\"\'\`\s,.\/#!$%\^&\*;:{}=\-_`~()]+/,
-	string:  /"(?:\\["\\]|[^\n"\\])*"/,
+	DBQT_CONTENT: /(?:[^\n"]|\\")+/,
 	NL:      { match: /\n/, lineBreaks: true },
 	ch: /./
 })
@@ -258,9 +258,61 @@ function ruleText(rule){
 function addBaseRules(grammer){
 	grammer.ParserRules.push(
 		{
+			name: 'digit',
+			symbols: [{type: 'DIGIT'}],
+			postprocess:data => Number.parseInt(data[0].text)
+		},
+		{
+			name: 'string',
+			symbols:[{literal:'"'},{type:'DBQT_CONTENT'},{literal:'"'}],
+			postprocess: data=> JSON.parse(data.join(''))
+		},
+		{
+			name: 'string',
+			symbols:[{literal:'"'},{literal:'"'}],
+			postprocess: data=> ''
+		},
+		{
+			name:'integer',
+			symbols:['digit'],
+			postprocess: takeFirst
+		},
+		{
+			name:'integer',
+			symbols:['integer','digit'],
+			postprocess: data=>data[0] * 10 + data[1]
+		},
+		{
 			name:'number',
-			symbols:[{type: 'number'}],
-			postprocess: data=>Number.parseFloat(data[0].text)},
+			symbols:['integer','fractional'],
+			postprocess: data=>data[0] + data[1].numerator / data[1].denominator
+		},
+		{
+			name:'number',
+			symbols:['fractional'],
+			postprocess: data=>data[0].numerator / data[0].denominator
+		},
+		{
+			name:'number',
+			symbols:['integer'],
+			postprocess: takeFirst
+		},
+		{
+			name:'fractional',
+			symbols:['fractional','digit'],
+			postprocess: data=>({
+				numerator: data[1] + data[0].numerator * 10,
+				denominator: data[0].denominator * 10
+			})
+		},
+		{
+			name:'fractional',
+			symbols:[{literal:'.'},'digit'],
+			postprocess: data=>({
+				numerator: data[1],
+				denominator: 10
+			})
+		},
 		{
 			name:'string',
 			symbols:[{type: 'string'}],
