@@ -226,7 +226,7 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 		parser.feed(text);
 	}catch(e){
 		dictionary.log('got exception. token is',JSON.stringify(e.token))
-		if(e.token.text){
+		if(e.token && e.token.text){
 			prolog = e.token.text;
 		}
 	}
