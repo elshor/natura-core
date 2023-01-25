@@ -260,7 +260,7 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 		.flat()
 	)
 	const sp = ret.indexOf('[SP]')
-	if(sp >= 0){
+	if(sp >= 0 && !text.endsWith(' ')){
 		//need to add the tokens following the space
 		ret.splice(sp, 1);//delete the space
 		const additional = suggestTokens(dictionary, text + ' ', target);
