@@ -10,6 +10,7 @@ const lexer = moo.compile({
 	DIGIT: /[0-9]/,
 	token: /[^\d\"\'\`\s,.\/#!$%\^&\*;:{}=\-_`~()]+/,
 	DBQT_CONTENT: /(?:[^\n"]|\\")+/,
+	DBQT: /"/,
 	NL:      { match: /\n/, lineBreaks: true },
 	ch: /./
 })
@@ -263,13 +264,23 @@ function addBaseRules(grammer){
 			postprocess:data => Number.parseInt(data[0].text)
 		},
 		{
-			name: 'string',
-			symbols:[{literal:'"'},{type:'DBQT_CONTENT'},{literal:'"'}],
+			name: 'value:string',
+			symbols:[{type:'DBQT'},{type:'DBQT_CONTENT'},{type:'DBQT'}],
+			postprocess: data=> JSON.parse(data.join(''))
+		},
+		{
+			name: 'value:string',
+			symbols:[{type:'DBQT'},{type:'DBQT'}],
 			postprocess: data=> JSON.parse(data.join(''))
 		},
 		{
 			name: 'string',
-			symbols:[{literal:'"'},{literal:'"'}],
+			symbols:[{type:'DBQT'},{type:'DBQT_CONTENT'},{type:'DBQT'}],
+			postprocess: data=> JSON.parse(data.join(''))
+		},
+		{
+			name: 'string',
+			symbols:[{type:'DBQT'},{type:'DBQT'}],
 			postprocess: data=> ''
 		},
 		{
@@ -312,12 +323,6 @@ function addBaseRules(grammer){
 				numerator: data[1],
 				denominator: 10
 			})
-		},
-		{
-			name:'string',
-			symbols:[{type: 'string'}],
-			postprocess: data=>JSON.parse(data[0].text)
-			//TODO make sure no edge cases here
 		},
 		{
 			name: 'SP',

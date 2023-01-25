@@ -225,6 +225,7 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 	try{
 		parser.feed(text);
 	}catch(e){
+		dictionary.log('got exception. token is',JSON.stringify(e.token))
 		if(e.token.text){
 			prolog = e.token.text;
 		}
@@ -232,6 +233,7 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 	const ret =  unique(parser.table[parser.current].scannable
 		.map(state=>state.rule.symbols[state.dot])
 		.map(item=> {
+			dictionary.log('got item',item);
 			if(item.literal){
 				if(!item.literal.startsWith(prolog)){
 					return null;
@@ -241,6 +243,8 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 			switch(item.type){
 				case 'COMMA':
 					return ',';
+				case 'DBQT':
+					return '"';
 				case 'SP':
 					return '[SP]';
 				case 'DBQT_CONTENT':
