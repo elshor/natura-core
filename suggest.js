@@ -216,7 +216,15 @@ function isExpendableState(state){
 	return false;
 }
 
-export function suggestTokens(dictionary, text, target='type:interact action'){
+export function suggestTokens(
+	dictionary, 
+	text, 
+	target='type:interact action', 
+	options = {}
+){
+	dictionary.log('got options',JSON.stringify(options));
+	const precedingSpace = options.precedingSpace || PRECEDING_SPACE_TOKEN;
+	const eosToken = options.eosToken || EOS_TOKEN;
 	const grammer = dictionary.getGrammer();
 	grammer.ParserStart = target;
 	const parser = new Parser(grammer);
@@ -232,7 +240,6 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 	const ret =  unique(parser.table[parser.current].scannable
 		.map(state=>state.rule.symbols[state.dot])
 		.map(item=> {
-			dictionary.log('got item',item);
 			if(item.literal){
 				if(!item.literal.startsWith(prolog)){
 					return null;
@@ -263,11 +270,11 @@ export function suggestTokens(dictionary, text, target='type:interact action'){
 	if(sp >= 0 && !text.endsWith(' ')){
 		//need to add the tokens following the space
 		ret.splice(sp, 1);//delete the space
-		const additional = suggestTokens(dictionary, text + ' ', target);
-		ret.push(...additional.map(token=> PRECEDING_SPACE_TOKEN + token));
+		const additional = suggestTokens(dictionary, text + ' ', target, options);
+		ret.push(...additional.map(token=> precedingSpace + token));
 	}
 	if(parser.results && parser.results.length > 0){
-		ret.push(EOS_TOKEN)
+		ret.push(eosToken)
 	}
 	return ret;
 }

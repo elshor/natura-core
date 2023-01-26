@@ -160,8 +160,8 @@ export default class Dictionary{
 	suggestCompletion(text, target){
 		return suggestCompletion(this, text, target, this.log.bind(this));
 	}
-	suggestTokens(text, target){
-		return suggestTokens(this, text, target);
+	suggestTokens(text, target, options){
+		return suggestTokens(this, text, target, options);
 	}
 
 	_dumpParseRules(target){
