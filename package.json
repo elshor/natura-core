@@ -5,7 +5,8 @@
   "description": "Core functionality needed to work with natura. This package contains the natura logic without UI. It should be used by the client and server",
   "scripts": {
     "build": "babel *.js --out-dir lib && babel packages/*.js --out-dir lib/packages",
-    "dev": " babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib -w",
+    "dev": "babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib -w",
+    "postinstall":"babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib",
     "test1": "jest --testMatch **/test/*.test.js",
     "test-parse": "node test-it.cjs"
   },
