@@ -1,7 +1,7 @@
 {
   "name": "natura",
   "version": "0.0.1",
-  "main": "lib/index.js",
+  "type": "module",
   "description": "Core functionality needed to work with natura. This package contains the natura logic without UI. It should be used by the client and server",
   "scripts": {
     "build": "babel *.js --out-dir lib && babel packages/*.js --out-dir lib/packages",
