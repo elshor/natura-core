@@ -16,6 +16,8 @@ import { Parser } from "./parser.js";
 import {suggestCompletion, suggestTokens} from './suggest.js'
 import { loadPackage } from "./loader.js";
 import registerPackage from "./register-package.js";
+import Logger from './logger.js'
+
 export default class Dictionary{
 	constructor(packages=[base], logger){
 		assume(entityIsArray(packages),'packages should be an array. It is '+JSON.stringify(packages));
@@ -24,21 +26,8 @@ export default class Dictionary{
 		this.reset();
 		this.resetVersion();
 	}
-
-	log(...args){
-		if(this.logger){
-			this.logger(...args);
-		}
-	}
-	info(...args){
-		if(this.logger){
-			this.logger(...args);
-		}
-	}
 	error(...args){
-		if(this.logger){
-			this.logger(...args);
-		}
+		this.logger.error(...args);
 	}
 	reset(){
 		//clear old data
@@ -150,18 +139,18 @@ export default class Dictionary{
 		this.resetVersion();
 	}
 
-	parse(text, target){
-		return this.parser.parse(text, target);
+	parse(text, target, verbosity){
+		return this.parser.parse(text, target, new Logger(this.logger, verbosity));
 	}
 
 	getGrammer(){
 		return this.parser.getGrammer();
 	}
-	suggestCompletion(text, target){
-		return suggestCompletion(this, text, target, this.log.bind(this));
+	suggestCompletion(text, target, verbosity){
+		return suggestCompletion(this, text, target, new Logger(this.logger, verbosity));
 	}
-	suggestTokens(text, target, options){
-		return suggestTokens(this, text, target, options);
+	suggestTokens(text, target, options, verbosity){
+		return suggestTokens(this, text, target, options, new Logger(this.logger, verbosity));
 	}
 
 	_dumpParseRules(target){
@@ -466,7 +455,7 @@ export default class Dictionary{
 		});
 		if(this.repo[type]){
 			//an entity with this type already exists - warn
-			this.log('[dictionary] Adding an entity to the dictionary with a name that already exists',JSON.stringify(type))
+			this.logger.warn('[dictionary] Adding an entity to the dictionary with a name that already exists',JSON.stringify(type))
 		}
 		this.repo[type]=spec;
 		this.parser.addType(spec, pkg);
@@ -534,7 +523,7 @@ export default class Dictionary{
 	_loadPackage(pckg){
 		if(typeof pckg === 'string'){
 			//need to load it
-			return loadPackage(pckg, this.log.bind(this));
+			return loadPackage(pckg);
 		}
 		assume(entityType(pckg) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");
 

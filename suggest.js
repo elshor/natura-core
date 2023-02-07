@@ -220,9 +220,9 @@ export function suggestTokens(
 	dictionary, 
 	text, 
 	target='type:interact action', 
-	options = {}
+	options = {},
+	logger
 ){
-	dictionary.log('got options',JSON.stringify(options));
 	const precedingSpace = options.precedingSpace || PRECEDING_SPACE_TOKEN;
 	const eosToken = options.eosToken || EOS_TOKEN;
 	const grammer = dictionary.getGrammer();
@@ -260,7 +260,7 @@ export function suggestTokens(
 				case 'DIGIT':
 					return ['0','1','2','3','4','5','6','7','8','9']
 				default:
-					dictionary.log('unknown type',item.type);
+					logger.log('unknown type',item.type);
 					return '[' + item.type + ']'
 			}
 		})

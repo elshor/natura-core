@@ -195,48 +195,51 @@ export class Parser {
 		return this.grammer;
 	}
 
-	parse(text, target='type:interact action'){
+	parse(text, target='type:interact action', logger){
 		this.grammer.ParserStart = target;
+		logger.debug('parsing text',JSON.stringify(text));
+		logger.debug('target is',target)
 		const parser = new Parsley(this.grammer);
 		try{
 			const res = parser.feed(text);
 			if(res.results){
 				return res.results;
 			}else{
+				logger.debug('... no results found.')
 				return [];
 			}
 		}catch(e){
-			this.dictionary.log('got exception',e);
+			logger.debug('parse failed at pos',e.offset,'unexpected token',JSON.stringify(e.token));
+			return [];
 		}
 	}
 
-	
-	_dumpParseRules(target){
-		this.dictionary.log('dumping rules for',target);
+	_dumpParseRules(target, logger){
+		logger.log('dumping rules for',target);
 		this.grammer.ParserRules.forEach(rule=>{
 			if(rule.name === target){
-				this.dictionary.log('  ', ruleText(rule));
+				logger.log('  ', ruleText(rule));
 			}
 		})
 	}
-	_dumpUsedBy(target){
-		this.dictionary.log('dumping rules used by',target);
+	_dumpUsedBy(target, logger){
+		logger.log('dumping rules used by',target);
 		this.grammer.ParserRules.forEach(rule=>{
 			if(rule.symbols.find(symbol=>symbol=== target)){
-				this.dictionary.log('  ', ruleText(rule));
+				logger.log('  ', ruleText(rule));
 			}
 		})
 	}
 }
 
-function printStateDependant(state, states, indent=1, includeCompleted=false){
+function printStateDependant(state, states, indent=1, includeCompleted=false, logger){
 	states
 		.filter(state1=>state1.wantedBy.includes(state))
 		.forEach(s=>{
 			if(s.isComplete && !includeCompleted){
 				return;
 			}
-			this.dictionary.log(
+			logger.log(
 				''.padStart(indent*2,' '),
 				state.dot,
 				ruleText(s.rule)
@@ -409,13 +412,13 @@ function takeFirst(data){
 	return data[0];
 }
 
-function dumpParser(res, dictionary){
-	dictionary.log(markStringPos(res.lexer.buffer, res.lexer.col), '==>',res);
+function dumpParser(res, dictionary, logger){
+	logger.log(markStringPos(res.lexer.buffer, res.lexer.col), '==>',res);
 	const hasResults = res.results.length > 0;
 	if(hasResults){
-		dictionary.log('RESULTS:');
+		logger.log('RESULTS:');
 		res.results.forEach(result=>{
-			dictionary.log(stringify(createLocation(result, dictionary)), result);
+			logger.log(stringify(createLocation(result, dictionary)), result);
 		})	
 	}
 	const column = res.table[res.current];
@@ -423,7 +426,7 @@ function dumpParser(res, dictionary){
 		if(state.wantedBy.length > 0){
 			return;
 		}
-		dictionary.log(
+		logger.log(
 			'  ',
 			state.dot, 
 			state.rule.postprocess? (state.rule.postprocess.typeName || '') +':': '?', 
