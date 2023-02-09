@@ -6,11 +6,14 @@
   "scripts": {
     "build": "babel *.js --out-dir lib && babel packages/*.js --out-dir lib/packages",
     "watch": "babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib -w",
-    "postinstall":"babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib",
+    "postinstall": "babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib",
     "test1": "jest --testMatch **/test/*.test.js",
     "test-parse": "node test-it.cjs"
   },
   "author": "Elchanan Shor",
+  "files": [
+    "*.js"
+  ],
   "dependencies": {
     "clone": "^2.1.2",
     "date-fns": "^2.29.3",

@@ -163,7 +163,12 @@ export default class Dictionary{
 	setPackages(packages=[base]){
 		this.packages = packages;
 	}
-
+	async getSpec(entity){
+		const type = entity.$type;
+		//assuming the package is loaded and no need to resolve type
+		return this.getTypeSpec(type);
+	}
+	
 	getTypeSpec(type){
 		if(!type){
 			return {};
