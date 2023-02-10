@@ -22,7 +22,7 @@ export default class Dictionary{
 	constructor(packages=[base], logger){
 		assume(entityIsArray(packages),'packages should be an array. It is '+JSON.stringify(packages));
 		this.packages = packages;
-		this.logger = logger;
+		this.logger = logger || new Logger(console, 'error');
 		this.reset();
 		this.resetVersion();
 	}
@@ -604,4 +604,19 @@ function searchString(str){
 function getSpecializedType(type){
 	const matched = (searchString(type)).match(/^([^\.\<\>]+)\.?\<(.+)\>$/);
 	return matched? {generic:matched[1],specialized:matched[2]} : {};
+}
+
+const dictionaries = {}
+/**
+ * get a dictionary from list of packages. If a dictionary with these packags already exists then return it
+ */
+export async function getDictionary(packages){
+	const id = packages.join(',');
+	if(dictionaries[id]){
+		return dictionaries[id];
+	}
+	const dictionary = new Dictionary(packages);
+	await dictionary.reload();
+	dictionaries[id] = dictionary;
+	return dictionary;
 }
