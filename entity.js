@@ -4,9 +4,6 @@
  */
 import {assume,MissingParam } from './error.js'
 import clone from 'clone'
-import Type from './type.js'
-import { contextEntries } from './context.js';
-import { relativeLocation } from './location.js';
 import locationQuery from './location-query.js';
 import Dictionary from './dictionary.js';
 
