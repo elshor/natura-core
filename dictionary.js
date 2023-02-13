@@ -147,7 +147,12 @@ export default class Dictionary{
 		return this.parser.getGrammer();
 	}
 	suggestCompletion(text, target, verbosity){
-		return suggestCompletion(this, text, target, new Logger(this.logger, verbosity));
+		return suggestCompletion(
+			this, 
+			text, 
+			target, 
+			new Logger(this.logger || console, verbosity)
+			);
 	}
 	suggestTokens(text, target, options, verbosity){
 		return suggestTokens(this, text, target, options, new Logger(this.logger, verbosity));

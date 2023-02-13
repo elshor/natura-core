@@ -4,14 +4,14 @@ const PRECEDING_SPACE_TOKEN = '\u2581'
 const EOS_TOKEN = '</s>'
 const DBQT_CONTENT_REGEX = '/[^"]+|\\\\"/'
 export function suggestCompletion(dictionary, text, target='type:interact action', logger){
-	logger('before loading grammer');
+	logger.debug('before loading grammer');
 	const grammer = dictionary.getGrammer();
-	logger('got grammer. number of rules',grammer.ParserRules.length);
+	logger.debug('got grammer. number of rules',grammer.ParserRules.length);
 	grammer.ParserStart = target;
 	const tree = new SequenceTree(dictionary);
-	logger('start parsing');
+	logger.debug('start parsing');
 	addScannableToTree(grammer, text, '', tree);
-	logger('after addScannableToTree')
+	logger.debug('after addScannableToTree')
 	const paths = tree.getPaths();
 	let generation = 0;
 	while(generation < MAX_GENERATION){
