@@ -104,7 +104,7 @@ export class Parser {
 					spec, 
 					tokenize.bind(lexer),
 					parser.dictionary,
-					pkg.name
+					pkg._id
 				);
 				parser._addRule(rules, spec);
 			}else{
@@ -115,7 +115,7 @@ export class Parser {
 				spec,
 				tokenize.bind(lexer),
 				this.dictionary,
-				pkg.name
+				pkg._id
 			) 
 			parser._addRule(basicRule, spec)
 			}
@@ -127,7 +127,7 @@ export class Parser {
 				spec,
 				tokenize.bind(lexer),
 				this.dictionary,
-				pkg.name
+				pkg._id
 			) 
 			try{
 				parser._addRule(typeRule, spec)
