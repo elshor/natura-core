@@ -6,7 +6,7 @@
   "scripts": {
     "build": "babel *.js --out-dir lib && babel packages/*.js --out-dir lib/packages",
     "watch": "babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib -w",
-    "postinstall": "babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib",
+    "postinstall1": "babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib",
     "test1": "jest --testMatch **/test/*.test.js",
     "test-parse": "node test-it.cjs"
   },
