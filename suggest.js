@@ -216,6 +216,20 @@ function isExpendableState(state){
 	return false;
 }
 
+/**
+ * Generate tokens. Options are:
+ * - precedingSpace
+ * - eosToken
+ * - ANY
+ * - DBQT
+ * - DIGIT
+ * @param {*} dictionary 
+ * @param {*} text 
+ * @param {*} target 
+ * @param {*} options 
+ * @param {*} logger 
+ * @returns 
+ */
 export function suggestTokens(
 	dictionary, 
 	text, 
@@ -248,17 +262,17 @@ export function suggestTokens(
 			}
 			if(item.toString() === DBQT_CONTENT_REGEX){
 				//this matches the inside of a double quoted string
-				return '[ANY]'
+				return defaultValue(options.ANY, '[ANY]')
 			}
 			switch(item.type){
 				case 'COMMA':
 					return ',';
 				case 'DBQT':
-					return '"';
+					return defaultValue(options.DBQT,'"');
 				case 'SP':
 					return '[SP]';
 				case 'DIGIT':
-					return ['0','1','2','3','4','5','6','7','8','9']
+					return defaultValue(options.DIGIT, ['0','1','2','3','4','5','6','7','8','9'])
 				default:
 					logger.log('unknown type',item.type);
 					return '[' + item.type + ']'
@@ -293,4 +307,9 @@ function unique(items){
 		obj[key] = true;
 	});
 	return Object.keys(obj);
+}
+
+function defaultValue(value, defaultValue){
+	//if value is null then return null, not the default value
+	return value === undefined? defaultValue : value;
 }

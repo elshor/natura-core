@@ -8,7 +8,8 @@
     "watch": "cp lib-package.json lib/package.json && babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib -w",
     "postinstall1": "babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib",
     "test1": "jest --testMatch **/test/*.test.js",
-    "test-parse": "node test-it.cjs"
+    "test-parse": "node test-it.cjs",
+    "generate-examples": "node tools/generate-examples "
   },
   "author": "Elchanan Shor",
   "files": [

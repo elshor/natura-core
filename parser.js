@@ -3,6 +3,8 @@ import stringify from "./stringify.js";
 import moo from 'moo'
 import { createLocation } from "./location.js";
 import { Parser as Parsley } from "./parsely.js";
+import Type from './type.js'
+import TemplateType from "./template-type.js";
 
 const MAX_FLAT_DEPTH = 1000 //used to flatten strings
 
@@ -26,7 +28,6 @@ function tokenize(text){
 	}
 	return ret;
 }
-
 export class Parser {
 	constructor(dictionary){
 		this.dictionary = dictionary;
@@ -70,7 +71,7 @@ export class Parser {
 		this.grammer.ParserRules.forEach(rule=>{
 			rule.symbols.forEach(symbol=>{
 				if(typeof symbol === 'string' && symbol.endsWith('*') && !plurals[symbol]){
-					//need to add a rule for this
+					//need to add a rule for this list
 					plurals[symbol] = true;
 					const singular = symbol.substring(0,symbol.length - 1);
 					this.grammer.ParserRules.push({
@@ -95,7 +96,7 @@ export class Parser {
 			//skip base pkg
 			return;
 		}
-		const pattern = spec.pattern || spec.title;
+		const pattern = spec.pattern;
 		if(pattern){
 			if(spec.valueType){
 				const rules = patternAsGrammer(
@@ -147,12 +148,58 @@ export class Parser {
 			})
 		}else{
 		}
-		if(spec.basicType){
+		if(spec.basicType && !spec.optionsOnly){
+			//if options are suggested, then we are limited to the options
 			parser._addRule({
 				name: spec.name,
-				symbols: [spec.basicType],
+				symbols: ['value:' + spec.basicType],
 				source: spec.name + '$basic',
 				postprocess: takeFirst
+			})
+		}
+
+		if(spec.examples){
+			//generate examples
+			spec.examples.forEach(example=>{
+				const literal = spec.basicType
+					? JSON.stringify(example) 
+					: example.toString();
+				this._addRule({
+					name: spec.name,
+					symbols:[{literal}],
+					source: spec.name + '$example',
+					postprocess: takeFirst
+				})
+			})
+		}
+
+		if(spec.isa.includes('data item')){
+			//generate types for all the properties
+			Object.entries(spec.properties || {}).forEach(([key,value])=>{
+				let type = typeAsString(value.type);
+				if(['string','number'].includes(type)){
+					type = 'value:' + type;
+				}
+				const ruleName = `string<${spec.name}.${key}>`;
+				this._addRule({
+					name: ruleName,
+					description: value.description,
+					symbols:[type],
+					source: spec.name,
+					postprocess: takeFirst
+				})
+				//if there are examples then generate them
+				if(value.examples){
+					value.examples.forEach(example=>{
+						const rule = {
+							name: ruleName,
+							symbols:[{literal:JSON.stringify(example)}],
+							source: spec.name,
+							postprocess: takeFirst
+						}
+						this._addRule(rule)
+					})
+				}
 			})
 		}
 	}
@@ -288,6 +335,11 @@ function addBaseRules(grammer){
 			postprocess: joinText
 		},
 		{
+			name: 'value:number',
+			symbols:['number'],
+			postprocess: takeFirst
+		},
+		{
 			name: 'string',
 			symbols:[{type:'DBQT'}, 'dbqt-text', {type:'DBQT'}],
 			postprocess: joinText
@@ -389,6 +441,11 @@ function addBaseRules(grammer){
 		},{
 			name: 'LIST_SEP',
 			symbols: ['SP?','COMMA','SP?']
+		},{
+			name: 'CONSTRAINT',
+			symbols:[],
+			postprocess(data, reference, fail, state){
+			}
 		}
 	)
 }
@@ -405,7 +462,8 @@ function parameterizeType(type, parameter){
 }
 
 function listPush(data){
-	return [...data[0], data[2]]
+	const ret = [...data[0], data[2]];
+	return ret;
 }
 
 function takeFirst(data){
@@ -440,3 +498,11 @@ function joinText(data){
 	return JSON.parse(data.flat(MAX_FLAT_DEPTH).map(item=>(item.value||item.text)).join(''))
 }
 
+function typeAsString(type){
+	const typeObject = Type(type);
+	if(typeObject instanceof TemplateType){
+		console.error('Template types are not supported', type);
+	}
+	const ret = typeObject.toString();
+	return ret;
+}

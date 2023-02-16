@@ -106,7 +106,9 @@ export function patternAsGrammer(
 	packageName,
 	isPartial=false){
 	const props = spec.properties;
-	const parts = pattern.split(',').map(item=>item.trim());
+	const parts = pattern
+		.split(/(?<!\\),/)
+		.map(item=>item.trim().replace(/\\,/g,','));
 	const parsed = parsePattern(parts[0], spec);
 	const typeName = spec.name;
 	parts.forEach((part, index) =>{
@@ -164,10 +166,30 @@ export function patternAsGrammer(
 			base.symbols.push(el.name + '?');
 		}else{
 			converterData[base.symbols.length] = el.name;
-			base.symbols.push(typeAsString(el.type));
+			let type = typeAsString(el.type);
+			if(props[el.name] && props[el.name].examples){
+				//this type has examples - generate a specific type for this and add examples
+				type = `${type}<${base.name}.${el.name}>`;
+				rules.push({
+					name: type,
+					symbols:[typeAsString(el.type)],
+					source: `${base.name}.${el.name}`,
+					postprocess: takeFirst
+				})
+
+				props[el.name].examples.forEach(example=>{
+					rules.push({
+						name: type,
+						symbols:[{literal: JSON.stringify(example)}],
+						source: `${base.name}.${el.name}$example`,
+						postprocess: takeFirst
+					})
+				})
+			}
+			base.symbols.push(type);
 		}
 	})
-	base.postprocess = generateConverter(converterData, isPartial? null : typeName, dictionary, packageName);
+	base.postprocess = generateConverter(converterData, isPartial? null : typeName, dictionary, spec);
 	return rules;
 }
 
@@ -180,8 +202,9 @@ function typeAsString(type){
 	return ret;
 }
 
-function generateConverter(converterData, typeName, dictionary, packageName){
-	let ret = function(data){
+function generateConverter(converterData, typeName, dictionary, spec){
+	const packageName = spec.$package._id;
+	let ret = function(data, reference, fail){
 		const ret = typeName? generateNewEntity(dictionary, typeName) : {$partial:true}
 		Object.entries(converterData).forEach(([key, value])=>{
 			ret[value] = data[key];
@@ -200,8 +223,69 @@ function generateConverter(converterData, typeName, dictionary, packageName){
 			})
 		})
 		ret.$pkg = packageName;
+		if(!processConstraint(spec, ret)){
+			return fail;
+		}
 		return ret;
 	}
 	ret.typeName = typeName;
 	return ret;
+}
+
+function takeFirst(data){
+	return data[0];
+}
+
+function processConstraint(spec, data){
+	if(!testConstraint(spec.constraint, data)){
+		return false;
+	}
+	const entries = Object.entries(spec.properties);
+	for(let i=0;i<entries.length;++i){
+		if(!testConstraint(entries[i][1].constraint, data[entries[i][0]])){
+			return false;
+		}
+	}
+	return true;
+}
+
+function testConstraint(constraint, data){
+	if(!constraint){
+		return true;
+	}
+	const props = Object.entries(constraint);
+	for(let i=0;i<props.length;++i){
+		switch(props[i][0]){
+			case 'noRepeatType':
+				if(!testNoRepeatType(data)){
+					return false;
+				}
+				break;
+			default:
+				//unknown constraint - fail
+				return false;
+		}
+	}
+	return true;
+}
+
+function testNoRepeatType(data){
+	const seen = {};
+	if(!Array.isArray(data)){
+		return true;
+	}
+	for(let i=0;i<data.length;++i){
+		if(!data[i]){
+			continue;
+		}
+		const current = data[i].$type;
+		if(!current){
+			continue;
+		}
+		if(seen[current]){
+			return false;
+		}
+		seen[current] = true;
+	}
+	return true;
 }

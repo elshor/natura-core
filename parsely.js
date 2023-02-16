@@ -2,13 +2,14 @@
  * Adaptation of nearley parser
  */
 
-function Rule(name, symbols, postprocess, description, source) {
+function Rule(name, symbols, postprocess, description, source, createContext) {
 		this.id = ++Rule.highestId;
 		this.name = name;
 		this.symbols = symbols;        // a list of literal | regex class | nonterminal
 		this.postprocess = postprocess;
 		this.description = description;
-		this.source = source
+		this.source = source;
+		this.createContext = createContext;
 		return this;
 }
 Rule.highestId = 0;
@@ -31,6 +32,10 @@ function State(rule, dot, reference, wantedBy) {
 		this.data = [];
 		this.wantedBy = wantedBy;
 		this.isComplete = this.dot === rule.symbols.length;
+		this.context = null;
+		if(this.rule.createContext){
+			this.context = this.rule.createContext(this);
+		}
 }
 
 State.prototype.toString = function() {
@@ -63,7 +68,7 @@ State.prototype.build = function() {
 
 State.prototype.finish = function() {
 		if (this.rule.postprocess) {
-				this.data = this.rule.postprocess(this.data, this.reference, Parser.fail);
+				this.data = this.rule.postprocess(this.data, this.reference, Parser.fail, this);
 		}
 };
 
@@ -136,6 +141,9 @@ Column.prototype.predict = function(exp) {
 
 		for (var i = 0; i < rules.length; i++) {
 				var r = rules[i];
+				//TODO add here constrainst that prevents rule checking based on context
+				//this should be based on the context of wantedBy
+				//implement as preprocess that returns true for stopping processing
 				var wantedBy = this.wants[exp];
 				var s = new State(r, 0, this.index, wantedBy);
 				this.states.push(s);
@@ -172,7 +180,8 @@ Grammar.fromCompiled = function(rules, start) {
 			r.symbols, 
 			r.postprocess, 
 			r.description,
-			r.source
+			r.source,
+			r.createContext
 		)); });
 		var g = new Grammar(rules, start);
 		g.lexer = lexer; // nb. storing lexer on Grammar is iffy, but unavoidable
@@ -493,16 +502,6 @@ Parser.prototype.restore = function(column) {
 
 		// Incrementally keep track of results
 		this.results = this.finish();
-};
-
-// nb. deprecated: use save/restore instead!
-Parser.prototype.rewind = function(index) {
-		if (!this.options.keepHistory) {
-				throw new Error('set option `keepHistory` to enable rewinding')
-		}
-		// nb. recall column (table) indicies fall between token indicies.
-		//        col 0   --   token 0   --   col 1
-		this.restore(this.table[index]);
 };
 
 Parser.prototype.finish = function() {
