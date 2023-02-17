@@ -456,9 +456,9 @@ function markStringPos(text, pos){
 
 function parameterizeType(type, parameter){
 	return type
-	.replace(/^t<(.*)>([\*\?]*)$/,parameter + '<$1>$2')
-	.replace(/^(.*)<t>([\*\?]*)$/,'$1<' + parameter + '>$2')
-	.replace(/^t([\*\?]*)$/,parameter + '$2')
+	.replace(/^(?:t|T)<(.*)>([\*\?]*)$/,parameter + '<$1>$2')
+	.replace(/^(.*)<(?:t|T)>([\*\?]*)$/,'$1<' + parameter + '>$2')
+	.replace(/^(?:t|T)([\*\?]*)$/,parameter + '$2')
 }
 
 function listPush(data){
