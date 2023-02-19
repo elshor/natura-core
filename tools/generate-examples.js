@@ -2,9 +2,9 @@ import { getDictionary } from "../dictionary.js";
 const MAX_TOKENS = 100;
 const ITERATIONS_FACTOR = 5
 async function main(){
-	const packages = ["interact@dev", "ga@dev", "date-time@dev"];
+	const packages = ["interact@dev", "ga@dev", "date-time@dev","core@dev"];
 	const target = 'type:interact action';
-	const startText = 'show a table of events where'
+	const startText = ''
 	const numberOfExamples = 50;
 	const examples = {};
 	const dictionary = await getDictionary(packages)
