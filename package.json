@@ -9,7 +9,8 @@
     "postinstall1": "babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib",
     "test1": "jest --testMatch **/test/*.test.js",
     "test-parse": "node test-it.cjs",
-    "generate-examples": "node tools/generate-examples "
+    "generate-examples": "node tools/generate-examples ",
+    "test-examples": "node tools/test-examples examples/a.json"
   },
   "author": "Elchanan Shor",
   "files": [
@@ -40,6 +41,7 @@
     "jest": "^29.0.2",
     "jsdoc": "^3.6.11",
     "jsdoc-api": "^7.1.1",
+    "p-limit": "^4.0.0",
     "pre-commit": "^1.2.2",
     "webpack": "^5.75.0",
     "webpack-cli": "5.0.1"
