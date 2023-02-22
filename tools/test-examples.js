@@ -2,7 +2,7 @@ import pLimit from 'p-limit';
 import axios from 'axios';
 import {readFileSync} from 'fs'
 const API_CALL = 'http://localhost:8000/translate'
-const MAX_CONCURRENT = 1
+const MAX_CONCURRENT = 10
 const filename = process.argv[2];
 if(!filename){
 	console.info('You must specify file name')
