@@ -1,11 +1,12 @@
 import { getDictionary } from "../dictionary.js";
+import {writeFileSync} from 'fs'
 const MAX_TOKENS = 100;
 const ITERATIONS_FACTOR = 5
 async function main(){
 	const packages = ["interact@dev", "ga@dev", "date-time@dev","core@dev"];
 	const target = 'type:interact action';
 	const startText = ''
-	const numberOfExamples = 50;
+	const numberOfExamples = 100;
 	const examples = {};
 	const dictionary = await getDictionary(packages)
 	let count = 0;
@@ -21,6 +22,19 @@ async function main(){
 	for(let i=0;i<list.length; ++i){
 		console.log(i+1,':',list[i]);
 	}
+
+	//generate json file
+	const output = {
+		created: new Date(),
+		packages,
+		target,
+		startText,
+		examples: Object.keys(examples).map(key=>({
+			input: key.replace(/\.$/,''),
+			output: key.replace(/\.$/,'')
+		}))
+	}
+	writeFileSync(`examples/${output.created.toISOString().replace(/\:|\./g,'_')}.json`, JSON.stringify(output, null, '  '));
 }
 
 main();
@@ -51,7 +65,7 @@ function nextToken(dictionary, text, target){
 		eosToken: '[EOS]',
 		DBQT: null,
 		ANY: null,
-		DIGIT: null
+		DIGIT: null,
 	}).filter(t=>t !== null)
 	if(tokens.length === 0){
 		return null;

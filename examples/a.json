@@ -1,0 +1,413 @@
+{
+  "created": "2023-02-21T20:27:17.069Z",
+  "packages": [
+    "interact@dev",
+    "ga@dev",
+    "date-time@dev",
+    "core@dev"
+  ],
+  "target": "type:interact action",
+  "startText": "",
+  "examples": [
+    {
+      "input": "update setting for facebook ads account",
+      "output": "update setting for facebook ads account"
+    },
+    {
+      "input": "show a table of events where sub continent starts with \"some text\" displaying country, channel grouping, event name",
+      "output": "show a table of events where sub continent starts with \"some text\" displaying country, channel grouping, event name"
+    },
+    {
+      "input": "update setting for google project",
+      "output": "update setting for google project"
+    },
+    {
+      "input": "show a pie chart of average price between July 8, 2020 and September 8, 2020 by currency",
+      "output": "show a pie chart of average price between July 8, 2020 and September 8, 2020 by currency"
+    },
+    {
+      "input": "update setting for bigquery events tables",
+      "output": "update setting for bigquery events tables"
+    },
+    {
+      "input": "show a pie chart of number of sessions in the last 7 days by year",
+      "output": "show a pie chart of number of sessions in the last 7 days by year"
+    },
+    {
+      "input": "show a chart of number of page views between Christmas Day 2021 and September 5, 2023, in the last 30 days, on new year this year, after American Independence Day 2022, where event params not equal to \"some text\", named \"remove_from_cart\" by continent",
+      "output": "show a chart of number of page views between Christmas Day 2021 and September 5, 2023, in the last 30 days, on new year this year, after American Independence Day 2022, where event params not equal to \"some text\", named \"remove_from_cart\" by continent"
+    },
+    {
+      "input": "show a pie chart of average price of product \"XYZ\" by browser version",
+      "output": "show a pie chart of average price of product \"XYZ\" by browser version"
+    },
+    {
+      "input": "show a pie chart of engaged sessions before January 8, 2022 by engaged session",
+      "output": "show a pie chart of engaged sessions before January 8, 2022 by engaged session"
+    },
+    {
+      "input": "show a table of transactions, after November 20, 2023",
+      "output": "show a table of transactions, after November 20, 2023"
+    },
+    {
+      "input": "show a pie chart of item views in the last 7 days by country",
+      "output": "show a pie chart of item views in the last 7 days by country"
+    },
+    {
+      "input": "show a chart of item views after August 9, 2020, where channel grouping not equal to \"some text\", on August 5, last year by sub continent",
+      "output": "show a chart of item views after August 9, 2020, where channel grouping not equal to \"some text\", on August 5, last year by sub continent"
+    },
+    {
+      "input": "show a table of products, displaying brand",
+      "output": "show a table of products, displaying brand"
+    },
+    {
+      "input": "show a table of traffic sources where source name starts with \"some text\" displaying medium",
+      "output": "show a table of traffic sources where source name starts with \"some text\" displaying medium"
+    },
+    {
+      "input": "show a table of sessions, where mobile model starts with \"some text\" displaying engaged session",
+      "output": "show a table of sessions, where mobile model starts with \"some text\" displaying engaged session"
+    },
+    {
+      "input": "show a pivot table of engaged sessions in the last 3 days, where operating system starts with \"some text\" by purchase session",
+      "output": "show a pivot table of engaged sessions in the last 3 days, where operating system starts with \"some text\" by purchase session"
+    },
+    {
+      "input": "show a chart of average price before June 15, this year by traffic source",
+      "output": "show a chart of average price before June 15, this year by traffic source"
+    },
+    {
+      "input": "show a table of item purchases of product \"XYZ\"",
+      "output": "show a table of item purchases of product \"XYZ\""
+    },
+    {
+      "input": "show a pie chart of item views in the last 7 days, before January 9, 2023 by referrer domain",
+      "output": "show a pie chart of item views in the last 7 days, before January 9, 2023 by referrer domain"
+    },
+    {
+      "input": "show a chart of bounce rate between Christmas Day last year and June 7, this year by year",
+      "output": "show a chart of bounce rate between Christmas Day last year and June 7, this year by year"
+    },
+    {
+      "input": "show a table of product categories displaying name",
+      "output": "show a table of product categories displaying name"
+    },
+    {
+      "input": "show a table of sessions in the last 3 days",
+      "output": "show a table of sessions in the last 3 days"
+    },
+    {
+      "input": "show a bar chart of unengaged sessions after today, before June 30, 2019, where region starts with \"some text\" by year",
+      "output": "show a bar chart of unengaged sessions after today, before June 30, 2019, where region starts with \"some text\" by year"
+    },
+    {
+      "input": "show a pivot table of engagement rate where channel grouping equals \"some text\", in the last 7 days by continent, continent, purchase session, channel grouping",
+      "output": "show a pivot table of engagement rate where channel grouping equals \"some text\", in the last 7 days by continent, continent, purchase session, channel grouping"
+    },
+    {
+      "input": "show a table of transactions before August 5, 2019 displaying total items quantity",
+      "output": "show a table of transactions before August 5, 2019 displaying total items quantity"
+    },
+    {
+      "input": "show a chart of checkouts before January 6, 2019 by browser",
+      "output": "show a chart of checkouts before January 6, 2019 by browser"
+    },
+    {
+      "input": "show a table of sessions",
+      "output": "show a table of sessions"
+    },
+    {
+      "input": "show a pie chart of average price of product \"XYZ\", on April 4, 2021 by variant",
+      "output": "show a pie chart of average price of product \"XYZ\", on April 4, 2021 by variant"
+    },
+    {
+      "input": "show a pivot table of events per sessions on March 29, this year by city",
+      "output": "show a pivot table of events per sessions on March 29, this year by city"
+    },
+    {
+      "input": "show a pie chart of item views in the last 30 days by metro",
+      "output": "show a pie chart of item views in the last 30 days by metro"
+    },
+    {
+      "input": "show a table of products displaying total items revenue in the last 7 days",
+      "output": "show a table of products displaying total items revenue in the last 7 days"
+    },
+    {
+      "input": "show a pie chart of total items refund between August 31, this year and November 8, 2020 by continent",
+      "output": "show a pie chart of total items refund between August 31, this year and November 8, 2020 by continent"
+    },
+    {
+      "input": "show a pivot table of bounce rate before new year 2021, where metro equals \"some text\" by browser, sub continent, metro, sub continent",
+      "output": "show a pivot table of bounce rate before new year 2021, where metro equals \"some text\" by browser, sub continent, metro, sub continent"
+    },
+    {
+      "input": "show a chart of number of sessions before end of this year by first page location",
+      "output": "show a chart of number of sessions before end of this year by first page location"
+    },
+    {
+      "input": "show a bar chart of checkouts between today and Christmas Day 2023, in the last 30 days, on May 8, 2022 by browser",
+      "output": "show a bar chart of checkouts between today and Christmas Day 2023, in the last 30 days, on May 8, 2022 by browser"
+    },
+    {
+      "input": "show a pie chart of item list views on Christmas Day 2019 by date",
+      "output": "show a pie chart of item list views on Christmas Day 2019 by date"
+    },
+    {
+      "input": "show a table of item purchases in the last 3 days displaying product, creative name, user id, currency",
+      "output": "show a table of item purchases in the last 3 days displaying product, creative name, user id, currency"
+    },
+    {
+      "input": "show a table of transactions before Christmas Day 2019 displaying month in year, currency, total items quantity, refund value in usd, date, total items quantity, total items quantity, month in year, purchase revenue, purchase revenue",
+      "output": "show a table of transactions before Christmas Day 2019 displaying month in year, currency, total items quantity, refund value in usd, date, total items quantity, total items quantity, month in year, purchase revenue, purchase revenue"
+    },
+    {
+      "input": "show a pie chart of engaged sessions in the last 3 days by first page location",
+      "output": "show a pie chart of engaged sessions in the last 3 days by first page location"
+    },
+    {
+      "input": "show a pivot table of total items sold on February 25, 2021, after today, in the last 7 days by variant, creative name, region, metro, mobile brand",
+      "output": "show a pivot table of total items sold on February 25, 2021, after today, in the last 7 days by variant, creative name, region, metro, mobile brand"
+    },
+    {
+      "input": "show a chart of engagement rate before American Independence Day this year by country",
+      "output": "show a chart of engagement rate before American Independence Day this year by country"
+    },
+    {
+      "input": "show a pie chart of number of events in the last 7 days by campaign",
+      "output": "show a pie chart of number of events in the last 7 days by campaign"
+    },
+    {
+      "input": "show a table of transactions displaying currency, refund value",
+      "output": "show a table of transactions displaying currency, refund value"
+    },
+    {
+      "input": "show a pivot table of average session duration after September 11, 2019 by date",
+      "output": "show a pivot table of average session duration after September 11, 2019 by date"
+    },
+    {
+      "input": "show a pivot table of sessions with purchase after September 5, 2020 by first page title",
+      "output": "show a pivot table of sessions with purchase after September 5, 2020 by first page title"
+    },
+    {
+      "input": "show a bar chart of engaged sessions where metro ends with \"some text\" by city",
+      "output": "show a bar chart of engaged sessions where metro ends with \"some text\" by city"
+    },
+    {
+      "input": "show a table of product categories where name equals \"some text\"",
+      "output": "show a table of product categories where name equals \"some text\""
+    },
+    {
+      "input": "show a table of events between March 16, last year and February 3, last year",
+      "output": "show a table of events between March 16, last year and February 3, last year"
+    },
+    {
+      "input": "show a pie chart of checkouts on September 11, 2020, where operating system equals \"some text\" by operating system version",
+      "output": "show a pie chart of checkouts on September 11, 2020, where operating system equals \"some text\" by operating system version"
+    },
+    {
+      "input": "show a pivot table of total items sold after December 7, 2019, where list name equals \"some text\" by creative name",
+      "output": "show a pivot table of total items sold after December 7, 2019, where list name equals \"some text\" by creative name"
+    },
+    {
+      "input": "show a pivot table of sessions with purchase before end of 2022, where referrer domain equals \"some text\" by channel grouping, city, city",
+      "output": "show a pivot table of sessions with purchase before end of 2022, where referrer domain equals \"some text\" by channel grouping, city, city"
+    },
+    {
+      "input": "show a pie chart of item views in the last 7 days, where referrer domain ends with \"some text\" by country",
+      "output": "show a pie chart of item views in the last 7 days, where referrer domain ends with \"some text\" by country"
+    },
+    {
+      "input": "show a table of events on today displaying event params, month in year",
+      "output": "show a table of events on today displaying event params, month in year"
+    },
+    {
+      "input": "show a pie chart of total items revenue where mobile model starts with \"some text\" by country",
+      "output": "show a pie chart of total items revenue where mobile model starts with \"some text\" by country"
+    },
+    {
+      "input": "show a chart of bounce rate in the last 3 days, on end of 2022 by browser",
+      "output": "show a chart of bounce rate in the last 3 days, on end of 2022 by browser"
+    },
+    {
+      "input": "show a bar chart of unengaged sessions after Christmas Day 2020, between November 30, 2021 and November 8, 2023 by date",
+      "output": "show a bar chart of unengaged sessions after Christmas Day 2020, between November 30, 2021 and November 8, 2023 by date"
+    },
+    {
+      "input": "show a pie chart of checkouts where user id not equal to \"some text\" by mobile model marketing name",
+      "output": "show a pie chart of checkouts where user id not equal to \"some text\" by mobile model marketing name"
+    },
+    {
+      "input": "show a pivot table of engaged sessions on January 6, 2022 by sub continent, year, engaged session",
+      "output": "show a pivot table of engaged sessions on January 6, 2022 by sub continent, year, engaged session"
+    },
+    {
+      "input": "show a chart of engaged sessions in the last 30 days by browser version",
+      "output": "show a chart of engaged sessions in the last 30 days by browser version"
+    },
+    {
+      "input": "show a pivot table of engaged sessions where channel grouping starts with \"some text\", before November 4, this year by year, first page referrer, city, mobile brand, first page title",
+      "output": "show a pivot table of engaged sessions where channel grouping starts with \"some text\", before November 4, this year by year, first page referrer, city, mobile brand, first page title"
+    },
+    {
+      "input": "show a table of item purchases between June 5, last year and new year 2020, before July 7, 2022",
+      "output": "show a table of item purchases between June 5, last year and new year 2020, before July 7, 2022"
+    },
+    {
+      "input": "show a bar chart of engagement rate in the last 3 days by sub continent",
+      "output": "show a bar chart of engagement rate in the last 3 days by sub continent"
+    },
+    {
+      "input": "show a table of product categories where name not equal to \"some text\", where name not equal to \"some text\", displaying name, name, name",
+      "output": "show a table of product categories where name not equal to \"some text\", where name not equal to \"some text\", displaying name, name, name"
+    },
+    {
+      "input": "show a table of product categories, displaying name, name, name, name, name, name, name",
+      "output": "show a table of product categories, displaying name, name, name, name, name, name, name"
+    },
+    {
+      "input": "show a chart of unengaged sessions on February 9, 2020 by mobile model marketing name",
+      "output": "show a chart of unengaged sessions on February 9, 2020 by mobile model marketing name"
+    },
+    {
+      "input": "show a pie chart of item list views after April 7, last year, on today by purchase session",
+      "output": "show a pie chart of item list views after April 7, last year, on today by purchase session"
+    },
+    {
+      "input": "show a chart of engagement rate in the last 30 days by channel grouping",
+      "output": "show a chart of engagement rate in the last 30 days by channel grouping"
+    },
+    {
+      "input": "show a bar chart of checkouts on December 7, 2020, where region equals \"some text\" by device category",
+      "output": "show a bar chart of checkouts on December 7, 2020, where region equals \"some text\" by device category"
+    },
+    {
+      "input": "show a chart of engagement rate in the last 7 days by purchase session",
+      "output": "show a chart of engagement rate in the last 7 days by purchase session"
+    },
+    {
+      "input": "show a chart of bounce rate where region not equal to \"some text\", before American Independence Day 2022 by continent",
+      "output": "show a chart of bounce rate where region not equal to \"some text\", before American Independence Day 2022 by continent"
+    },
+    {
+      "input": "show a bar chart of unengaged sessions on April 4, 2020 by country",
+      "output": "show a bar chart of unengaged sessions on April 4, 2020 by country"
+    },
+    {
+      "input": "show a table of item purchases on end of this year",
+      "output": "show a table of item purchases on end of this year"
+    },
+    {
+      "input": "show a bar chart of total items refund between December 9, 2019 and American Independence Day 2021, after new year 2019, on today by variant",
+      "output": "show a bar chart of total items refund between December 9, 2019 and American Independence Day 2021, after new year 2019, on today by variant"
+    },
+    {
+      "input": "show a pie chart of unengaged sessions on July 2, 2019 by purchase session",
+      "output": "show a pie chart of unengaged sessions on July 2, 2019 by purchase session"
+    },
+    {
+      "input": "show a table of events on July 30, 2021",
+      "output": "show a table of events on July 30, 2021"
+    },
+    {
+      "input": "show a table of transactions before September 25, last year, in the last 7 days, in the last 30 days",
+      "output": "show a table of transactions before September 25, last year, in the last 7 days, in the last 30 days"
+    },
+    {
+      "input": "show a chart of total items revenue after September 4, last year by list name",
+      "output": "show a chart of total items revenue after September 4, last year by list name"
+    },
+    {
+      "input": "show a table of product categories, where name not equal to \"some text\"",
+      "output": "show a table of product categories, where name not equal to \"some text\""
+    },
+    {
+      "input": "show a chart of number of page views named \"add_shipping_info\" by traffic source source",
+      "output": "show a chart of number of page views named \"add_shipping_info\" by traffic source source"
+    },
+    {
+      "input": "show a bar chart of average price after February 6, 2023 by creative name",
+      "output": "show a bar chart of average price after February 6, 2023 by creative name"
+    },
+    {
+      "input": "show a pie chart of number of events in the last 30 days, before new year 2023, after June 2, this year, on today by operating system",
+      "output": "show a pie chart of number of events in the last 30 days, before new year 2023, after June 2, this year, on today by operating system"
+    },
+    {
+      "input": "show a pivot table of engaged sessions before American Independence Day last year by year, date",
+      "output": "show a pivot table of engaged sessions before American Independence Day last year by year, date"
+    },
+    {
+      "input": "show a pivot table of checkouts on February 11, 2022, before December 23, 2023, after September 11, last year, where engaged session is true, in the last 3 days by mobile model",
+      "output": "show a pivot table of checkouts on February 11, 2022, before December 23, 2023, after September 11, last year, where engaged session is true, in the last 3 days by mobile model"
+    },
+    {
+      "input": "show a table of product categories where name equals \"some text\" displaying name, name, name",
+      "output": "show a table of product categories where name equals \"some text\" displaying name, name, name"
+    },
+    {
+      "input": "show a chart of total items refund in usd where sub continent equals \"some text\" by operating system version",
+      "output": "show a chart of total items refund in usd where sub continent equals \"some text\" by operating system version"
+    },
+    {
+      "input": "show a pie chart of checkouts where city ends with \"some text\" by month in year",
+      "output": "show a pie chart of checkouts where city ends with \"some text\" by month in year"
+    },
+    {
+      "input": "show a table of events on end of last year displaying page title",
+      "output": "show a table of events on end of last year displaying page title"
+    },
+    {
+      "input": "show a bar chart of events per sessions on today, after end of last year, before today by region",
+      "output": "show a bar chart of events per sessions on today, after end of last year, before today by region"
+    },
+    {
+      "input": "show a table of products where name equals \"some text\", where id not equal to \"some text\"",
+      "output": "show a table of products where name equals \"some text\", where id not equal to \"some text\""
+    },
+    {
+      "input": "show a pivot table of bounce rate between October 4, 2022 and new year 2023 by city, engaged session",
+      "output": "show a pivot table of bounce rate between October 4, 2022 and new year 2023 by city, engaged session"
+    },
+    {
+      "input": "show a pivot table of engaged sessions between end of this year and December 7, 2023 by city, operating system, continent, operating system, city",
+      "output": "show a pivot table of engaged sessions between end of this year and December 7, 2023 by city, operating system, continent, operating system, city"
+    },
+    {
+      "input": "show a table of transactions displaying refund value, number of unique items",
+      "output": "show a table of transactions displaying refund value, number of unique items"
+    },
+    {
+      "input": "show a table of traffic sources",
+      "output": "show a table of traffic sources"
+    },
+    {
+      "input": "show a table of traffic sources, displaying name, facebook spend, source name, facebook spend",
+      "output": "show a table of traffic sources, displaying name, facebook spend, source name, facebook spend"
+    },
+    {
+      "input": "show a table of item purchases, displaying mobile brand",
+      "output": "show a table of item purchases, displaying mobile brand"
+    },
+    {
+      "input": "show a pivot table of sessions with purchase before August 19, 2023 by month in year, channel grouping",
+      "output": "show a pivot table of sessions with purchase before August 19, 2023 by month in year, channel grouping"
+    },
+    {
+      "input": "show a chart of checkouts where continent equals \"some text\" by metro",
+      "output": "show a chart of checkouts where continent equals \"some text\" by metro"
+    },
+    {
+      "input": "show a chart of bounce rate on March 1, 2021 by date",
+      "output": "show a chart of bounce rate on March 1, 2021 by date"
+    },
+    {
+      "input": "show a chart of events per sessions on March 6, 2020 by browser",
+      "output": "show a chart of events per sessions on March 6, 2020 by browser"
+    },
+    {
+      "input": "show a chart of number of events in the last 7 days, on today by operating system",
+      "output": "show a chart of number of events in the last 7 days, on today by operating system"
+    }
+  ]
+}
