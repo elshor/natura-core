@@ -273,6 +273,8 @@ export function suggestTokens(
 					return '[SP]';
 				case 'DIGIT':
 					return defaultValue(options.DIGIT, ['0','1','2','3','4','5','6','7','8','9'])
+				case 'DIGITS':
+					return defaultValue(options.DIGITS,'[DIGITS]')
 				default:
 					logger.log('unknown type',item.type);
 					return '[' + item.type + ']'
@@ -284,7 +286,13 @@ export function suggestTokens(
 	if(sp >= 0 && !text.endsWith(' ')){
 		//need to add the tokens following the space
 		ret.splice(sp, 1);//delete the space
-		const additional = suggestTokens(dictionary, text + ' ', target, options);
+		const additional = suggestTokens(
+			dictionary, 
+			text + ' ', 
+			target, 
+			options, 
+			logger
+		);
 		ret.push(...additional.map(token=> precedingSpace + token));
 	}
 	if(parser.results && parser.results.length > 0){

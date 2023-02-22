@@ -59,10 +59,17 @@ export class Parser {
 		}
 	}
 	addInstance(spec){
+		//first add the value tokenized
 		this._addRule({
 			name: spec.valueType,
 			description: spec.description,
 			symbols: tokenize.bind(lexer)(spec.label).map(token=>({literal: token}))
+		}, spec)
+		//add value not tokenized - used for suggestTokens
+		this._addRule({
+			name: spec.valueType,
+			description: spec.description,
+			symbols: [{literal: spec.label}]
 		}, spec)
 	}
 	_ensurePlurals(){
@@ -356,7 +363,17 @@ function addBaseRules(grammer){
 		},
 		{
 			name:'integer',
+			symbols:[{type:'DIGITS'}],
+			postprocess: takeFirst
+		},
+		{
+			name:'integer',
 			symbols:['integer','digit'],
+			postprocess: data=>data[0] * 10 + data[1]
+		},
+		{
+			name:'integer',
+			symbols:['integer',{type:'DIGITS'}],
 			postprocess: data=>data[0] * 10 + data[1]
 		},
 		{
