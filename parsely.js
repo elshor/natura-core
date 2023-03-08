@@ -1,15 +1,16 @@
 /**
- * Adaptation of nearley parser
+ * Adaptation of nearley parser. 
+ * @argument preprocess - an optional preprocess function . If returns false then the rule cannot be used. This rule can add or change context
  */
 
-function Rule(name, symbols, postprocess, description, source, createContext) {
+function Rule(name, symbols, postprocess, description, source, preprocess) {
 		this.id = ++Rule.highestId;
 		this.name = name;
 		this.symbols = symbols;        // a list of literal | regex class | nonterminal
 		this.postprocess = postprocess;
 		this.description = description;
 		this.source = source;
-		this.createContext = createContext;
+		this.preprocess = preprocess;
 		return this;
 }
 Rule.highestId = 0;
@@ -33,9 +34,6 @@ function State(rule, dot, reference, wantedBy) {
 		this.wantedBy = wantedBy;
 		this.isComplete = this.dot === rule.symbols.length;
 		this.context = null;
-		if(this.rule.createContext){
-			this.context = this.rule.createContext(this);
-		}
 }
 
 State.prototype.toString = function() {
@@ -146,6 +144,12 @@ Column.prototype.predict = function(exp) {
 				//implement as preprocess that returns true for stopping processing
 				var wantedBy = this.wants[exp];
 				var s = new State(r, 0, this.index, wantedBy);
+
+				//if the rule has a preprocessor and calling it returns false, skip that rule
+				if(r.preprocess && r.preprocess(s) === false){
+					continue;
+				}
+				
 				this.states.push(s);
 		}
 }
@@ -181,7 +185,7 @@ Grammar.fromCompiled = function(rules, start) {
 			r.postprocess, 
 			r.description,
 			r.source,
-			r.createContext
+			r.preprocess
 		)); });
 		var g = new Grammar(rules, start);
 		g.lexer = lexer; // nb. storing lexer on Grammar is iffy, but unavoidable

@@ -142,6 +142,7 @@ export function patternAsGrammer(
 	const converterData = {};
 	parsed.elements.forEach(el=>{
 		if(typeof el === 'string'){
+			//this is a text - tokenize it and add to pattern
 			tokenizer(el).forEach(token=>{
 				if(token === ' '){
 					base.symbols.push('_');
@@ -185,6 +186,10 @@ export function patternAsGrammer(
 						postprocess: takeFirst
 					})
 				})
+			}
+			if(props[el.name].constraint && props[el.name].constraint.noRepeatType){
+				//this is a list with noRepeatType constraint - add it (without the ending *)
+				type = `no-repeat-type-list<${type.match(/^(.*)\*$/)[1]}>`
 			}
 			base.symbols.push(type);
 		}

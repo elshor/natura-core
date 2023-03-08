@@ -8,9 +8,10 @@
     "watch": "cp lib-package.json lib/package.json && babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib -w",
     "postinstall1": "babel packages/*.js --out-dir lib/packages && babel *.js --out-dir lib",
     "test1": "jest --testMatch **/test/*.test.js",
-    "test-parse": "node test-it.cjs",
+    "test-parse": "node tools/parse-text.js",
     "generate-examples": "node tools/generate-examples ",
-    "test-examples": "node tools/test-examples examples/a.json"
+    "test-examples": "node tools/test-examples examples/a.json",
+    "test-suggest-tokens": "node tools/suggest-tokens"
   },
   "author": "Elchanan Shor",
   "files": [

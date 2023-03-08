@@ -90,6 +90,33 @@ export class Parser {
 						symbols: [ singular ]
 					})
 				}
+				if(
+					typeof symbol === 'string' &&
+					symbol.match(/^no-repeat-type-list\<(.*)\>$/) && 
+					!plurals[symbol]
+				){
+					//need to add a list with no-repeat-type constraint
+					plurals[symbol] = true;
+					const singular = symbol.match(/^no-repeat-type-list\<(.*)\>$/)[1]
+					this.grammer.ParserRules.push({
+						name: symbol,
+						symbols: [symbol, 'LIST_SEP', singular],
+						postprocess: noRepeatTypeListPush,
+						preprocess(state){
+							//traceContext('noRepeatType',state)
+						}
+					},{
+						name: symbol,
+						symbols: [ singular ],
+						preprocess(state){
+							//console.log('start no-repeat-list',singular)
+							//traceContext('noRepeatType',state)
+							//state.context = {
+							//	noRepeatType:true
+							//}
+						}
+					})
+				}
 			})
 		})
 	}
@@ -231,13 +258,7 @@ export class Parser {
 				const sRule = {
 					name: parameterizeType(rule.name, s),
 					postprocess: rule.postprocess,
-					symbols: rule.symbols.map(item=>{
-						if(typeof item === 'string'){
-							return parameterizeType(item, s);
-						}else{
-							return item;
-						}
-					})
+					symbols: expandSymbols(rule.symbols, s, this.dictionary)
 				}
 				this.grammer.ParserRules.push(sRule);
 			})
@@ -478,11 +499,37 @@ function parameterizeType(type, parameter){
 	.replace(/^(?:t|T)([\*\?]*)$/,parameter + '$2')
 }
 
+function expandSymbols(source, s, dictionary){
+	const ret = [];
+	source.forEach(item=>{
+		if(typeof item !== 'string'){
+			ret.push(item)
+		}else{
+			const matched = item.match(/^\s*T\s*\|(.+)$/);
+			if(matched){
+				//this is an expansion item. Replace with literal and tokenize
+				const spec = dictionary.getTypeSpec(s)
+				const text = spec[matched[1]];
+				const tokens = tokenize.call(lexer, text);
+				ret.push(...tokens.map(token=>({literal:token})));
+			}else{
+				ret.push(parameterizeType(item, s));
+			}
+		}
+	})
+	return ret;
+}
+//first check if the value can be translated
+
 function listPush(data){
 	const ret = [...data[0], data[2]];
 	return ret;
 }
 
+function noRepeatTypeListPush(data){
+	//console.log('noRepeatTypeListPush',data);
+	return listPush(data);
+}
 function takeFirst(data){
 	return data[0];
 }
@@ -522,4 +569,17 @@ function typeAsString(type){
 	}
 	const ret = typeObject.toString();
 	return ret;
+}
+
+function traceContext(contextName, state, path = []){
+	if(!state){
+		return;
+	}
+	const newPath = path.concat(state)
+	if(state.context){//db} && state.context[contextName]){
+		console.log('got it', newPath)
+	}else{
+		state.wantedBy.forEach(state=>traceContext(contextName, state, newPath));
+		traceContext(contextName, state.left, newPath)
+	}
 }
