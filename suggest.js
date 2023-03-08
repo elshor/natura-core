@@ -1,15 +1,13 @@
-import {Parser} from './parsely.js'
+import parseText from './parsely-parse.js';
 const MAX_GENERATION = 5;
 const PRECEDING_SPACE_TOKEN = '\u2581'
 const EOS_TOKEN = '</s>'
 const DBQT_CONTENT_REGEX = '/[^"]+|\\\\"/'
+
 export function suggestCompletion(dictionary, text, target='type:interact action', logger){
-	logger.debug('before loading grammer');
 	const grammer = dictionary.getGrammer();
-	logger.debug('got grammer. number of rules',grammer.ParserRules.length);
 	grammer.ParserStart = target;
 	const tree = new SequenceTree(dictionary);
-	logger.debug('start parsing');
 	addScannableToTree(grammer, text, '', tree);
 	logger.debug('after addScannableToTree')
 	const paths = tree.getPaths();
@@ -37,15 +35,34 @@ export function suggestCompletion(dictionary, text, target='type:interact action
 	}		
 }
 
-function textShouldBeExtended(text){
-	return text.match(/^[ ,]*$/)
+function textShouldBeExtended(text, prolog){
+	if(prolog.endsWith(' ') && text.match(/^ *$/)){
+		//prolog ends with space - no need to add space
+		return false;
+	}
+	if(prolog.endsWith(',') && text.match(/^ $/)){
+		//add space after comma
+		return true;
+	}
+	if(prolog.match(/, +$/)){
+		//prolog already ends with comma, no need to add comma
+		return false;
+	}
+	//by now we established that prolog does not end with comma
+	if(text.match(/^, +$/)){
+		//add comma
+		return true;
+	}
+	return false;
 }
+
 function addScannableToTree(grammer, text, prolog='', tree){
-	const parser = new Parser(grammer);
+	let parser;
 	try{
-		parser.feed(text);
+		parser = parseText(text, grammer)
 	}catch(e){
-		//console.log('parser got exception. Suggestions will be given based on current state');
+		console.log('parser got exception. Suggestions will be given based on current state');
+		parser = e.parser
 	}
 	const scannable = parser.table[parser.current].scannable;
 	for (let w = scannable.length; w--; ) {
@@ -59,7 +76,8 @@ function addScannableToTree(grammer, text, prolog='', tree){
 			state.rule.name,
 			prolog
 		)
-		if(textShouldBeExtended(pathText)){
+		if(textShouldBeExtended(pathText, prolog)){
+			//if we need to add a comma or space then add it
 			addScannableToTree(grammer, text + pathText, prolog + pathText,  tree);
 		}
 	}
@@ -241,15 +259,16 @@ export function suggestTokens(
 	const eosToken = options.eosToken || EOS_TOKEN;
 	const grammer = dictionary.getGrammer();
 	grammer.ParserStart = target;
-	const parser = new Parser(grammer);
+	let parser;
 	//When last token was a part of a token, we need to identify the first part of the token. We assume the feed function will throw the partial token
 	let prolog = ''
 	try{
-		parser.feed(text);
+		parser = parseText(text, grammer)
 	}catch(e){
 		if(e.token && e.token.text){
 			prolog = e.token.text;
 		}
+		parser = e.parser;
 	}
 	const ret =  unique(parser.table[parser.current].scannable
 		.map(state=>state.rule.symbols[state.dot])
