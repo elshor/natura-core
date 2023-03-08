@@ -1,26 +1,22 @@
 import { getDictionary } from "../dictionary.js";
 import {writeFileSync} from 'fs'
 const MAX_TOKENS = 100;
+const NUMBER_OF_EXAMPLES = 500;
 const ITERATIONS_FACTOR = 5
 async function main(){
 	const packages = ["interact@dev", "ga@dev", "date-time@dev","core@dev"];
 	const target = 'type:interact action';
 	const startText = ''
-	const numberOfExamples = 100;
 	const examples = {};
 	const dictionary = await getDictionary(packages)
 	let count = 0;
-	while(Object.keys(examples).length < numberOfExamples && count <= ITERATIONS_FACTOR * numberOfExamples){
+	while(Object.keys(examples).length < NUMBER_OF_EXAMPLES && count <= ITERATIONS_FACTOR * NUMBER_OF_EXAMPLES){
 		const example = generateExample(dictionary, target, startText);
 		count++;
+		console.log(count,example)
 		if(example){
 			examples[example] = true;
 		}
-	}
-	console.log('examples:\n');
-	const list = Object.keys(examples);
-	for(let i=0;i<list.length; ++i){
-		console.log(i+1,':',list[i]);
 	}
 
 	//generate json file
@@ -66,7 +62,8 @@ function nextToken(dictionary, text, target){
 		DBQT: null,
 		ANY: null,
 		DIGIT: null,
-	}).filter(t=>t !== null)
+		DIGITS: null
+	}).filter(t=>t !== null && !t.includes('[SP]'))
 	if(tokens.length === 0){
 		return null;
 	}
