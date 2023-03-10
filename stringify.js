@@ -14,6 +14,10 @@ export default async function stringify(def, specInterface){
 }
 
 async function defAsText(def, specInterface){
+	if(!def){
+		//no def - return an empty string - nothing to return
+		return '';
+	}
 	const spec = await specInterface.getSpec(def);
 	if(Array.isArray(def)){
 		const list = await Promise.all(def.map(item=>defAsText(item, specInterface)));
