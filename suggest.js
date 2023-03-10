@@ -61,7 +61,6 @@ function addScannableToTree(grammer, text, prolog='', tree){
 	try{
 		parser = parseText(text, grammer)
 	}catch(e){
-		console.log('parser got exception. Suggestions will be given based on current state');
 		parser = e.parser
 	}
 	const scannable = parser.table[parser.current].scannable;

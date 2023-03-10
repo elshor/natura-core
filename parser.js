@@ -577,7 +577,6 @@ function traceContext(contextName, state, path = []){
 	}
 	const newPath = path.concat(state)
 	if(state.context){//db} && state.context[contextName]){
-		console.log('got it', newPath)
 	}else{
 		state.wantedBy.forEach(state=>traceContext(contextName, state, newPath));
 		traceContext(contextName, state.left, newPath)
