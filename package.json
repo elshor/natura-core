@@ -10,7 +10,6 @@
     "test1": "jest --testMatch **/test/*.test.js",
     "test-parse": "node tools/parse-text.js",
     "generate-examples": "node tools/generate-examples ",
-    "test-examples": "node tools/test-examples examples/a.json",
     "test-suggest-tokens": "node tools/suggest-tokens"
   },
   "author": "Elchanan Shor",
