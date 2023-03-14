@@ -61,7 +61,9 @@ export function patternFields(pattern){
 }
 
 export function patternProperties(pattern){
-	return Object.fromEntries(patternFields(pattern).map(field=>([field.name,{type:field.type}])));
+	return Object.fromEntries(patternFields(pattern)
+		.filter(field=>!field.name.includes('|'))//filter out pipe expansions
+		.map(field=>([field.name,{type:field.type}])));
 }
 
 /**
@@ -187,7 +189,7 @@ export function patternAsGrammer(
 					})
 				})
 			}
-			if(props[el.name].constraint && props[el.name].constraint.noRepeatType){
+			if(props[el.name] && props[el.name].constraint && props[el.name].constraint.noRepeatType){
 				//this is a list with noRepeatType constraint - add it (without the ending *)
 				type = `no-repeat-type-list<${type.match(/^(.*)\*$/)[1]}>`
 			}

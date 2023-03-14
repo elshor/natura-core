@@ -445,7 +445,7 @@ export default class Dictionary{
 		//pattern
 		if(spec.pattern){
 			parsePattern(spec.pattern).fields.forEach(field=>{
-				if(spec.properties[field.name] === undefined){
+				if(spec.properties[field.name] === undefined && !field.name.includes('|')){
 					spec.properties[field.name] = {type:field.type};
 				}
 			});
