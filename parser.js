@@ -257,8 +257,12 @@ export class Parser {
 			sList.forEach(s=>{
 				const sRule = {
 					name: parameterizeType(rule.name, s),
-					postprocess: rule.postprocess,
-					symbols: expandSymbols(rule.symbols, s, this.dictionary)
+					postprocess: generatePostprocessSpecialized(
+						rule.postprocess,
+						s
+					),
+					symbols: expandSymbols(rule.symbols, s, this.dictionary),
+					specializedFor: s
 				}
 				this.grammer.ParserRules.push(sRule);
 			})
@@ -510,6 +514,9 @@ function markStringPos(text, pos){
 }
 
 function parameterizeType(type, parameter){
+	if(type.toLowerCase() === 't'){
+		return parameter;
+	}
 	return type
 	.replace(/^(?:t|T)<(.*)>([\*\?]*)$/,parameter + '<$1>$2')
 	.replace(/^(.*)<(?:t|T)>([\*\?]*)$/,'$1<' + parameter + '>$2')
@@ -598,4 +605,18 @@ function traceContext(contextName, state, path = []){
 		state.wantedBy.forEach(state=>traceContext(contextName, state, newPath));
 		traceContext(contextName, state.left, newPath)
 	}
+}
+
+/** postprocess function that calls wrap function and ads $specializedFor property to output object */
+function postprocessSpecialized(data, reference, fail){
+	const {fn, specializedFor} = this;
+	const ret = fn(data, reference, fail);
+	if(ret && typeof ret === 'object'){
+		ret.$specializedFor = specializedFor;
+	}
+	return ret;
+}
+
+function generatePostprocessSpecialized(fn, specializedFor){
+	return postprocessSpecialized.bind({fn, specializedFor});
 }
