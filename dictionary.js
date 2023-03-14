@@ -143,6 +143,10 @@ export default class Dictionary{
 		return this.parser.parse(text, target, new Logger(this.logger, verbosity));
 	}
 
+	parseWants(text, target){
+		return this.parser.parseWants(text, target);
+	}
+
 	getGrammer(){
 		return this.parser.getGrammer();
 	}

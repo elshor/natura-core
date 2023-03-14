@@ -289,6 +289,23 @@ export class Parser {
 		}
 	}
 
+	parseWants(text, target='type:interact action'){
+		this.grammer.ParserStart = target;
+		const parser = new Parsley(this.grammer);
+		try{
+			const res = parser.feed(text);
+			return {
+				completed: true,
+				wants: parser.table[parser.current].wants
+			}
+		}catch(e){
+			return {
+				completed: false,
+				wants: parser.table[parser.current].wants
+			}
+		}
+	}
+
 	_dumpParseRules(target, logger){
 		logger.log('dumping rules for',target);
 		this.grammer.ParserRules.forEach(rule=>{
