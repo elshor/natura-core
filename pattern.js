@@ -183,7 +183,7 @@ export function patternAsGrammer(
 				props[el.name].examples.forEach(example=>{
 					rules.push({
 						name: type,
-						symbols:[{literal: JSON.stringify(example)}],
+						symbols:[{example: JSON.stringify(example)}],
 						source: `${base.name}.${el.name}$example`,
 						postprocess: takeFirst
 					})

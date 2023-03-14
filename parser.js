@@ -200,7 +200,7 @@ export class Parser {
 					: example.toString();
 				this._addRule({
 					name: spec.name,
-					symbols:[{literal}],
+					symbols:[{example:literal}],
 					source: spec.name + '$example',
 					postprocess: takeFirst
 				})
@@ -227,7 +227,7 @@ export class Parser {
 					value.examples.forEach(example=>{
 						const rule = {
 							name: ruleName,
-							symbols:[{literal:JSON.stringify(example)}],
+							symbols:[{example:JSON.stringify(example)}],
 							source: spec.name,
 							postprocess: takeFirst
 						}

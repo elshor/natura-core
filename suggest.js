@@ -272,6 +272,12 @@ export function suggestTokens(
 	const ret =  unique(parser.table[parser.current].scannable
 		.map(state=>state.rule.symbols[state.dot])
 		.map(item=> {
+			if(item.example){
+				if(!item.example.startsWith(prolog)){
+					return null;
+				}
+				return item.example.substr(prolog.length);
+			}
 			if(item.literal){
 				if(!item.literal.startsWith(prolog)){
 					return null;
