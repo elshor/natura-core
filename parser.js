@@ -405,17 +405,7 @@ function addBaseRules(grammer){
 		},
 		{
 			name:'integer',
-			symbols:[{type:'DIGITS'}],
-			postprocess: takeFirst
-		},
-		{
-			name:'integer',
 			symbols:['integer','digit'],
-			postprocess: data=>data[0] * 10 + data[1]
-		},
-		{
-			name:'integer',
-			symbols:['integer',{type:'DIGITS'}],
 			postprocess: data=>data[0] * 10 + data[1]
 		},
 		{
