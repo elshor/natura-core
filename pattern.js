@@ -214,6 +214,10 @@ function generateConverter(converterData, typeName, dictionary, spec){
 	let ret = function(data, reference, fail){
 		const ret = typeName? generateNewEntity(dictionary, typeName) : {$partial:true}
 		Object.entries(converterData).forEach(([key, value])=>{
+			if(value.includes('|')){
+				//this is an expansion item - it generates template text - ignore this
+				return;
+			}
 			ret[value] = data[key];
 		})
 
