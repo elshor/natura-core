@@ -252,24 +252,25 @@ export class Parser {
 	 * Called after adding the last type. This is when macro expansion is done
 	 */
 	endTypes(){
-		this.specializedTypes.forEach(({rule, T})=>{
-			const sList = this.dictionary.getClassMembers(T);
-			sList.forEach(s=>{
-				const sRule = {
-					name: parameterizeType(rule.name, s),
-					postprocess: generatePostprocessSpecialized(
-						rule.postprocess,
-						s
-					),
-					symbols: expandSymbols(rule.symbols, s, this.dictionary),
-					specializedFor: s
-				}
-				this.grammer.ParserRules.push(sRule);
-			})
-		})
+		this.specializedTypes.forEach(st=>this.expandTemplateRule(st))
 		this._ensurePlurals()
 	}
 
+	expandTemplateRule({rule, T}){
+		const sList = this.dictionary.getClassMembers(T);
+		sList.forEach(s=>{
+			const {symbols, mapping} = expandSymbols(rule.symbols, s, this.dictionary)
+			const sRule = {
+				name: parameterizeType(rule.name, s),
+				postprocess: rule.postprocess
+					? generatePostprocessSpecialized(rule.postprocess,s, mapping)
+					: null,
+				symbols,
+				specializedFor: s
+			}
+			this.grammer.ParserRules.push(sRule);
+		})
+	}
 	getGrammer(){
 		return this.grammer;
 	}
@@ -504,8 +505,9 @@ function markStringPos(text, pos){
 }
 
 function parameterizeType(type, parameter){
-	if(type.toLowerCase() === 't'){
-		return parameter;
+	const match1 = type.match(/^((?:type|value)\:)?(t|T)$/)
+	if(match1){
+		return (match1[1]||'') + parameter;
 	}
 	return type
 	.replace(/^(?:t|T)<(.*)>([\*\?]*)$/,parameter + '<$1>$2')
@@ -513,11 +515,20 @@ function parameterizeType(type, parameter){
 	.replace(/^(?:t|T)([\*\?]*)$/,parameter + '$2')
 }
 
+/**
+ * Expand template expansion items. Provide the new symbols list and the mapping from current symbol list to previous symbol list so we can pass to the postprocess function the data array it expects
+ * @param {*} source 
+ * @param {*} s 
+ * @param {*} dictionary 
+ * @returns 
+ */
 function expandSymbols(source, s, dictionary){
-	const ret = [];
+	const symbols = [];
+	const mapping = [];
 	source.forEach(item=>{
 		if(typeof item !== 'string'){
-			ret.push(item)
+			mapping.push(symbols.length);
+			symbols.push(item)
 		}else{
 			const matched = item.match(/^\s*T\s*\|(.+)$/);
 			if(matched){
@@ -525,13 +536,15 @@ function expandSymbols(source, s, dictionary){
 				const spec = dictionary.getTypeSpec(s)
 				const text = spec[matched[1]];
 				const tokens = tokenize.call(lexer, text);
-				ret.push(...tokens.map(token=>({literal:token})));
+				mapping.push(symbols.length);
+				symbols.push(...tokens.map(token=>({literal:token})));
 			}else{
-				ret.push(parameterizeType(item, s));
+				mapping.push(symbols.length);
+				symbols.push(parameterizeType(item, s));
 			}
 		}
 	})
-	return ret;
+	return {symbols, mapping};
 }
 //first check if the value can be translated
 
@@ -599,14 +612,16 @@ function traceContext(contextName, state, path = []){
 
 /** postprocess function that calls wrap function and ads $specializedFor property to output object */
 function postprocessSpecialized(data, reference, fail){
-	const {fn, specializedFor} = this;
-	const ret = fn(data, reference, fail);
+	const {fn, specializedFor, mapping} = this;
+	const mappedData = mapping.map(pos=>data[pos]);
+	const ret = fn(mappedData, reference, fail);
 	if(ret && typeof ret === 'object'){
 		ret.$specializedFor = specializedFor;
 	}
 	return ret;
 }
 
-function generatePostprocessSpecialized(fn, specializedFor){
-	return postprocessSpecialized.bind({fn, specializedFor});
+function generatePostprocessSpecialized(fn, specializedFor, mapping){
+	return postprocessSpecialized.bind({fn, specializedFor, mapping});
 }
+
