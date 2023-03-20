@@ -1,6 +1,6 @@
 import { getDictionary } from "../dictionary.js";
 const packages = ["interact@dev", "ga@dev", "date-time@dev","core@dev","define@dev"];
-const text = 'define number of sessions where exit page is the web page';
+const text = 'show a table of the top 10 web pages by number of landings displaying url, number of landings';
 const target = 'type:interact action'
 
 async function parse(text, packages){
