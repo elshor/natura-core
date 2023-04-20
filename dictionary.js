@@ -629,3 +629,20 @@ export async function getDictionary(packages){
 	dictionaries[id] = dictionary;
 	return dictionary;
 }
+
+
+/**
+ * A function that can be used to invalidate a package based on its id
+ * @param {*} id package id
+ */
+export function changeListener(id){
+	//invalidate all dictionaries that include the package id
+	if(id.startsWith('public:')){
+		id = id.substr('public:'.length);
+	}
+	Object.keys(dictionaries).forEach(key=>{
+		if(key.split(',').includes(id)){
+			delete dictionaries[key];
+		}
+	})
+}
