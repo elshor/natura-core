@@ -2,7 +2,7 @@ import { getDictionary } from "../dictionary.js";
 import {writeFileSync} from 'fs'
 const MAX_TOKENS = 100;
 const NUMBER_OF_EXAMPLES = 500;
-const ITERATIONS_FACTOR = 5
+const ITERATIONS_FACTOR = 20
 async function main(){
 	const packages = ["interact@dev", "ga@dev", "date-time@dev","core@dev"];
 	const target = 'type:interact action';
@@ -10,10 +10,14 @@ async function main(){
 	const examples = {};
 	const dictionary = await getDictionary(packages)
 	let count = 0;
+	let uniqueCount = 0;
 	while(Object.keys(examples).length < NUMBER_OF_EXAMPLES && count <= ITERATIONS_FACTOR * NUMBER_OF_EXAMPLES){
 		const example = generateExample(dictionary, target, startText);
 		count++;
-		console.log(count,example)
+		if(typeof example === 'string' && !examples[example]){
+			uniqueCount++;
+			console.log(count,example, '(' + uniqueCount + ')')
+		}
 		if(example){
 			examples[example] = true;
 		}
