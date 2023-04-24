@@ -78,6 +78,7 @@ function Column(grammar, index) {
 		this.wants = {}; // states indexed by the non-terminal they expect
 		this.scannable = []; // list of states that expect a token
 		this.completed = {}; // states that are nullable
+		this.stateHash = {}; //used to make sure we there are no duplicate states
 }
 
 
@@ -156,7 +157,11 @@ Column.prototype.predict = function(exp) {
 
 Column.prototype.complete = function(left, right) {
 		var copy = left.nextState(right);
-		this.states.push(copy);
+		if(!this.stateHash[copy.toString()]){
+			//make sure state does not exist already
+			this.stateHash[copy.toString()] = true;
+			this.states.push(copy);
+			}
 }
 
 
