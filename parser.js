@@ -149,18 +149,45 @@ export class Parser {
 				);
 				parser._addRule(rules, spec);
 			}else{
-			//add the basic rule
-			const basicRule = patternAsGrammer(
-				spec.name + (spec.specializedFor? '<t>' : ''), 
-				pattern, 
-				spec,
-				tokenize.bind(lexer),
-				this.dictionary,
-				pkg._id
-			) 
-			parser._addRule(basicRule, spec)
+				//add the basic rule
+				const basicRule = patternAsGrammer(
+					spec.name + (spec.specializedFor? '<t>' : ''), 
+					pattern, 
+					spec,
+					tokenize.bind(lexer),
+					this.dictionary,
+					pkg._id
+				) 
+				parser._addRule(basicRule, spec)
 			}
 			
+			//add altPattern if exists
+			if(spec.altPatterns){
+				spec.altPatterns.forEach(pattern=>{
+					if(spec.valueType){
+						const rules = patternAsGrammer(
+							spec.valueType,
+							pattern, 
+							spec, 
+							tokenize.bind(lexer),
+							parser.dictionary,
+							pkg._id
+						);
+						parser._addRule(rules, spec);
+					}else{
+						//add the basic rule
+						const basicRule = patternAsGrammer(
+							spec.name + (spec.specializedFor? '<t>' : ''), 
+							pattern, 
+							spec,
+							tokenize.bind(lexer),
+							this.dictionary,
+							pkg._id
+						) 
+						parser._addRule(basicRule, spec)
+					}
+				})
+			}
 			//add the type rule
 			const typeRule = patternAsGrammer(
 				'type:' + spec.name + (spec.specializedFor? '<t>' : ''), 
