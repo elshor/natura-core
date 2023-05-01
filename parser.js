@@ -63,12 +63,18 @@ export class Parser {
 		this._addRule({
 			name: spec.valueType,
 			description: spec.description,
+			postprocess(){
+				return spec.value;
+			},
 			symbols: tokenize.bind(lexer)(spec.label).map(token=>({literal: token}))
 		}, spec)
 		//add value not tokenized - used for suggestTokens
 		this._addRule({
 			name: spec.valueType,
 			description: spec.description,
+			postprocess(){
+				return spec.value;
+			},
 			symbols: [{literal: spec.label}]
 		}, spec)
 	}
