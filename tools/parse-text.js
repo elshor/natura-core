@@ -10,7 +10,10 @@ async function parse(text, packages){
 		const wants = dictionary.parseWants(text, target);
 		console.info('No parse found');
 		const tokens = dictionary.suggestTokens(text);
-		console.info('suggestedTokens:',tokens.length > 0?tokens.info(',') : 'no suggestions')
+		console.info(
+			'suggestedTokens:',
+			tokens.length > 0 && tokens.info
+				? tokens.info(',') : 'no suggestions')
 		console.info(
 			'WANTS',
 			Object.entries(wants.wants).map(([key,value])=>{
