@@ -571,7 +571,8 @@ export default class Dictionary{
 		if(
 			!Array.isArray(genericSpec.genericProperties)|| 
 			genericSpec.genericProperties.length < 1){
-			throw new Error('Trying to use a non-generic as a generic: '+searchString(type));
+				//set default generic property to type
+				genericSpec.genericProperties = ['type'];
 		}
 		return this._registerSpecializedType(
 			specialized,
