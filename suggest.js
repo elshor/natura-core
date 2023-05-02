@@ -8,7 +8,7 @@ export function suggestCompletion(dictionary, text, target='type:interact action
 	const grammer = dictionary.getGrammer();
 	grammer.ParserStart = target;
 	const tree = new SequenceTree(dictionary);
-	addScannableToTree(grammer, text, '', tree);
+	addScannableToTree(grammer, text, '', tree, dictionary);
 	logger.debug('after addScannableToTree')
 	const paths = tree.getPaths();
 	let generation = 0;
@@ -19,7 +19,7 @@ export function suggestCompletion(dictionary, text, target='type:interact action
 		}
 		++ generation;
 		const prolog = paths[0].text.match(/^[^\^]/)[0]
-		addScannableToTree(grammer, text + prolog, prolog,tree);
+		addScannableToTree(grammer, text + prolog, prolog,tree, dictionary);
 	}
 	return {
 		backText: '',
@@ -56,7 +56,7 @@ function textShouldBeExtended(text, prolog){
 	return false;
 }
 
-function addScannableToTree(grammer, text, prolog='', tree){
+function addScannableToTree(grammer, text, prolog='', tree, dictionary){
 	let parser;
 	try{
 		parser = parseText(text, grammer)
@@ -70,6 +70,11 @@ function addScannableToTree(grammer, text, prolog='', tree){
 			//this state is manifested in a different state - we can ignore it
 			continue;
 		}
+		//check if rule has noSuggest property
+		const spec = dictionary.getTypeSpec(state.rule.source);
+		if(spec.noSuggest){
+			continue;
+		}
 		const pathText = tree.add(
 			state.rule.symbols.slice(state.dot), 
 			state.rule.name,
@@ -77,7 +82,7 @@ function addScannableToTree(grammer, text, prolog='', tree){
 		)
 		if(textShouldBeExtended(pathText, prolog)){
 			//if we need to add a comma or space then add it
-			addScannableToTree(grammer, text + pathText, prolog + pathText,  tree);
+			addScannableToTree(grammer, text + pathText, prolog + pathText,  tree, dictionary);
 		}
 	}
 }
