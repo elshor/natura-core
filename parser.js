@@ -66,8 +66,22 @@ export class Parser {
 			postprocess(){
 				return spec.value;
 			},
-			symbols: tokenize.bind(lexer)(spec.label).map(token=>({literal: token}))
+			symbols: tokenize.bind(lexer)(spec.pattern || spec.label).map(token=>({literal: token}))
 		}, spec)
+		
+		//add altPattern if exists
+		const parser = this;
+		(spec.altPatterns || []).forEach(pattern=>{
+			//TODO make sure pattern is text only without fields
+			parser._addRule({
+				name: spec.valueType,
+				description: spec.description,
+				postprocess(){
+					return spec.value;
+				},
+				symbols: tokenize.bind(lexer)(pattern).map(token=>({literal: token}))
+			}, spec)
+			})
 		//add value not tokenized - used for suggestTokens
 		this._addRule({
 			name: spec.valueType,
