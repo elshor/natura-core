@@ -48,6 +48,9 @@ export class Parser {
 		if(Array.isArray(rule)){
 			return rule.forEach(r=>this._addRule(r, spec))
 		}
+		if(spec?.noSuggest === true){
+			rule.noSuggest = true
+		}
 		if(spec && spec.specializedFor){
 			//add for deferred expansion
 			this.specializedTypes.push({
@@ -66,6 +69,7 @@ export class Parser {
 			postprocess(){
 				return spec.value;
 			},
+			noSuggest: spec.noSuggest,
 			symbols: tokenize.bind(lexer)(spec.pattern || spec.label).map(token=>({literal: token}))
 		}, spec)
 		
@@ -76,9 +80,11 @@ export class Parser {
 			parser._addRule({
 				name: spec.valueType,
 				description: spec.description,
+				noSuggest: true,
 				postprocess(){
 					return spec.value;
 				},
+				noSuggest: true,//altPatterns should not be suggested
 				symbols: tokenize.bind(lexer)(pattern).map(token=>({literal: token}))
 			}, spec)
 			})
@@ -89,6 +95,7 @@ export class Parser {
 			postprocess(){
 				return spec.value;
 			},
+			noSuggest: spec.noSuggest,
 			symbols: [{literal: spec.label}]
 		}, spec)
 	}
@@ -233,7 +240,7 @@ export class Parser {
 			//if options are suggested, then we are limited to the options
 			parser._addRule({
 				name: spec.name,
-				symbols: ['value:' + spec.basicType],
+				symbols: [spec.basicType],
 				source: spec.name + '$basic',
 				postprocess: takeFirst
 			})

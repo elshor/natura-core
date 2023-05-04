@@ -71,8 +71,7 @@ function addScannableToTree(grammer, text, prolog='', tree, dictionary){
 			continue;
 		}
 		//check if rule has noSuggest property
-		const spec = dictionary.getTypeSpec(state.rule.source);
-		if(spec.noSuggest){
+		if(state.rule.noSuggest){
 			continue;
 		}
 		const pathText = tree.add(

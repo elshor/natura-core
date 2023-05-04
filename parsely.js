@@ -3,7 +3,7 @@
  * @argument preprocess - an optional preprocess function . If returns false then the rule cannot be used. This rule can add or change context
  */
 
-function Rule(name, symbols, postprocess, description, source, preprocess) {
+function Rule(name, symbols, postprocess, description, source, preprocess, noSuggest=false) {
 		this.id = ++Rule.highestId;
 		this.name = name;
 		this.symbols = symbols;        // a list of literal | regex class | nonterminal
@@ -11,6 +11,7 @@ function Rule(name, symbols, postprocess, description, source, preprocess) {
 		this.description = description;
 		this.source = source;
 		this.preprocess = preprocess;
+		this.noSuggest = noSuggest;
 		return this;
 }
 Rule.highestId = 0;
@@ -190,7 +191,8 @@ Grammar.fromCompiled = function(rules, start) {
 			r.postprocess, 
 			r.description,
 			r.source,
-			r.preprocess
+			r.preprocess,
+			r.noSuggest
 		)); });
 		var g = new Grammar(rules, start);
 		g.lexer = lexer; // nb. storing lexer on Grammar is iffy, but unavoidable
