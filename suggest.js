@@ -86,6 +86,9 @@ function addScannableToTree(grammer, text, prolog='', tree, dictionary){
 	}
 }
 function labelFromPath(path){
+	if(path === '"^"'){
+		return '" fill-in text "';
+	}
 	return path
 		.replace(/\s*\^[ \^]*/g,' ... ');
 }
@@ -159,6 +162,7 @@ class SequenceTree{
 		const current = 
 			node.type === 'head'? '' :
 			node.type === 'text'? node.text : 
+			node.type == 'symbol' && node.symbols[0] === 'dbqt-text'? '"^"' :
 			node.type == 'symbol'? '^' : 'UNKNOWN';
 		const values = Object.values(node.next);
 		if(node.type === 'symbol'){
