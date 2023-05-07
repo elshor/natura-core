@@ -207,6 +207,16 @@ export class Parser {
 						) 
 						parser._addRule(basicRule, spec)
 					}
+					//add the type rule
+					const typeRule = patternAsGrammer(
+						'type:' + spec.name + (spec.specializedFor? '<t>' : ''), 
+						pattern, 
+						spec,
+						tokenize.bind(lexer),
+						this.dictionary,
+						pkg._id
+					) 
+					parser._addRule(typeRule, spec)
 				})
 			}
 			//add the type rule
