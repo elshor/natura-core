@@ -287,7 +287,7 @@ function generateComponentFn(component){
 }
 
 function registerValues(dictionary,pkg){
-	const values = pkg.values || [];
+	const values = Array.isArray(pkg.values)? pkg.values : [];
 	values.forEach(value=>{
 		if(!value.call){
 			value.value = value.value !== undefined? value.value : (value.label || value.title || value.name);
