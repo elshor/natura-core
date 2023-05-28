@@ -353,13 +353,17 @@ function registerTypes(dictionary,pkg){
 }
 
 function registerExpressions(dictionary,pkg){
-	if(pkg?.expressions?.members){
+	dictionary.logger.log('in registerExpressions. members is',pkg?.expressions?.members)
+	if(Array.isArray(pkg?.expressions)){
+		return registerExpressions(dictionary, pkg.expressions)
+	}
+	if(Array.isArray(pkg?.expressions?.members)){
 		return registerExpressions(dictionary, pkg.expressions.members);
 	}
-	if(pkg.expressions && !Array.isArray(pkg.expressions)){
-		throw new Error("pkg expressions is not an array - " + JSON.stringify(pkg.expressions));
+	if(!Array.isArray(pkg)){
+		throw new Error("pkg expressions is not an array - " + JSON.stringify(pkg));
 	}
-	(pkg.expressions||[]).forEach(t=>{
+	(pkg || []).forEach(t=>{
 		dictionary._registerType(t.name,t,pkg);
 		dictionary._registerFunction(t.name,{
 			library:pkg.name,
