@@ -620,12 +620,12 @@ const dictionaries = {}
 /**
  * get a dictionary from list of packages. If a dictionary with these packags already exists then return it
  */
-export async function getDictionary(packages){
+export async function getDictionary(packages, logger){
 	const id = packages.join(',');
 	if(dictionaries[id]){
 		return dictionaries[id];
 	}
-	const dictionary = new Dictionary(packages);
+	const dictionary = new Dictionary(packages, logger);
 	await dictionary.reload();
 	dictionaries[id] = dictionary;
 	return dictionary;
