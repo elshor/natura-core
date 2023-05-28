@@ -354,7 +354,7 @@ function registerTypes(dictionary,pkg){
 
 function registerExpressions(dictionary,pkg){
 	if(pkg?.expressions?.members){
-		return registerExpressions(pkg.expressions.members, pkg);
+		return registerExpressions(dictionary, pkg.expressions.members);
 	}
 	if(pkg.expressions && !Array.isArray(pkg.expressions)){
 		throw new Error("pkg expressions is not an array - " + JSON.stringify(pkg.expressions));
