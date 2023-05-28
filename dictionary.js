@@ -534,10 +534,11 @@ export default class Dictionary{
 			this.parser.addIsa(type, parent);
 		}
 	}
-	_loadPackage(pckg){
+	async _loadPackage(pckg){
 		if(typeof pckg === 'string'){
 			//need to load it
-			return loadPackage(pckg);
+			const ret = await loadPackage(pckg);
+			return ret;
 		}
 		assume(entityType(pckg) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");
 
