@@ -7,18 +7,23 @@ export default class Logger{
 		this.logger = logger;
 	}
 	error(...args){
-		if(['error', 'warn', 'log', 'debug'].includes(this.verbosity)){
+		if(['error', 'warn','info', 'log', 'debug'].includes(this.verbosity)){
 			this.logger.error(...args);
 		}
 	}
 	warn(...args){
-		if(['warn', 'log', 'debug'].includes(this.verbosity)){
+		if(['warn','info', 'log', 'debug'].includes(this.verbosity)){
 			this.logger.warn(...args);
 		}
 	}
 	log(...args){
-		if(['log', 'debug'].includes(this.verbosity)){
+		if(['log','info', 'debug'].includes(this.verbosity)){
 			this.logger.log(...args);
+		}
+	}
+	info(...args){
+		if(['log', 'debug','info'].includes(this.verbosity)){
+			this.logger.info(...args);
 		}
 	}
 	debug(...args){
