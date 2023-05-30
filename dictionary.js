@@ -537,7 +537,7 @@ export default class Dictionary{
 	async _loadPackage(pckg){
 		if(typeof pckg === 'string'){
 			//need to load it
-			const ret = await loadPackage(pckg);
+			const ret = await loadPackage(pckg, this.logger);
 			return ret;
 		}
 		assume(entityType(pckg) === 'object',LoadError,"The '"+ pckg +"' package cannot be loaded");
