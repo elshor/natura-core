@@ -3,16 +3,54 @@
  *   All rights reserved.
  */
 
-import { parsePattern } from "./pattern.js";
+import { parsePatternParts, parsePattern } from "./pattern.js";
 import { calcTemplate } from "./template.js";
 import { specComputedPattern } from "./spec.js";
 
 //turn a location into textual representation using type spec
 export default async function stringify(def, specInterface){
-	const ret = await defAsText(def, specInterface);
-	return normalizeSpaces(ret);
+	let ret = await defAsText(def, specInterface);
+	ret = normalizeSpaces(ret);
+	ret = normalizeCommas(ret);
+	return ret;
+
 }
 
+async function defAsTextFromPattern(pattern, def, specInterface){
+	const parsed = parsePatternParts(pattern);
+	const parts = [];
+	for(let i=0;i<parsed.all.length;++i){
+		const part = await processPatternPart(
+			parsed.all[i],
+			def,
+			specInterface,
+			parsed.all[i].required
+		);
+		if(part !== null){
+			parts.push(part);
+		}
+	}
+	return parts.join(', ');
+}
+
+async function processPatternPart(parsed, def, specInterface, required=true){
+	const list  = await Promise.all(
+		parsed.elements.map(async el=>{
+			if(typeof el === 'string'){
+				return el;
+			}else{
+				const out = await defAsText(def[el.name], specInterface);
+				if(out.trim() === ''){
+					return required? '' : null;
+				}
+				return out;
+			}
+	}))
+	if(!required && list.includes(null)){
+		return null;
+	}
+	return list.join('');
+}
 async function defAsText(def, specInterface){
 	if(!def){
 		//no def - return an empty string - nothing to return
@@ -32,15 +70,7 @@ async function defAsText(def, specInterface){
 	
 	const pattern = specComputedPattern(spec);
 	if(pattern){
-		const list  = await Promise.all(
-			parsePattern(pattern).elements.map(el=>{
-				if(typeof el === 'string'){
-					return el;
-				}else{
-					return defAsText(def[el.name], specInterface);
-				}
-		}))
-		return list.join('');
+		return defAsTextFromPattern(pattern, def, specInterface);
 	}
 
 	if(['string','number','boolean'].includes(typeof def)){
@@ -52,4 +82,8 @@ async function defAsText(def, specInterface){
 
 function normalizeSpaces(text){
 	return text.replace(/  */g,' ');
+}
+
+function normalizeCommas(text){
+	return text.replace(/\,(\s*\,\s*)+/g,', ')
 }

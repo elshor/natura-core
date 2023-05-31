@@ -8,6 +8,16 @@ import {specComputedPattern} from './spec.js'
 import TemplateType from "./template-type.js";
 import Type from './type.js'
 
+export function parsePatternParts(text, def){
+	const all = text
+		.split(',')
+		.map(item=>item.trim())
+		.map(item=>parsePattern(item,def))
+	all.forEach(el=>el.required = false);
+	all[0].required = true;
+	return {all}
+}
+
 export function parsePattern(text='', def){
 	assume(typeof text === 'string','pattern is a' + typeof text + ' - ' + text);
 	const numerators = {};
