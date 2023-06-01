@@ -1,6 +1,15 @@
+import stringify from "../stringify.js";
 import { getDictionary } from "../dictionary.js";
-const packages = ["interact@dev", "ga@dev", "date-time@dev","core@dev","define@dev"];
-const text = 'show a table of the top 10 web pages by number of landings displaying url, number of landings';
+import { registerLoader } from "../loader.js";
+import { readFileSync } from 'fs'
+
+registerLoader(id=>{
+	const text = readFileSync('/ml/natura-suggest/packages/' + id + '.json');
+	return JSON.parse(text);
+})
+
+const packages = ["interact","datetime","query","college_1","elshor","core"];
+const text = 'how many professors are in the "biology" department';
 const target = 'type:interact action'
 
 async function parse(text, packages){
@@ -25,5 +34,6 @@ async function parse(text, packages){
 	}else{
 		console.info(JSON.stringify(parsed[0],null, '  '));
 	}
+	console.info('STRINGIFY',await stringify(parsed, dictionary))
 }
 await parse(text, packages);

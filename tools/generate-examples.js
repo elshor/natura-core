@@ -1,26 +1,51 @@
 import { getDictionary } from "../dictionary.js";
-import {writeFileSync} from 'fs'
-const MAX_TOKENS = 100;
-const NUMBER_OF_EXAMPLES = 500;
-const ITERATIONS_FACTOR = 20
-async function main(){
-	const packages = ["interact@dev", "ga@dev", "date-time@dev","core@dev"];
-	const target = 'type:interact action';
-	const startText = ''
+import { registerLoader } from "../loader.js";
+import {readFileSync, writeFileSync} from 'fs'
+import stringify from "../stringify.js";
+const options = {
+	showErrors: false,
+	iterationsFactor: 20,
+	maxTokens: 100,
+	numberOfExamples: 100,
+	packages:  ["interact","core","datetime","query","college_1"],
+	target: 'show a table',
+	startText: '',
+	output: '/home/elshor/natura-suggest/examples.json'
+}
+
+registerLoader(id=>{
+	const text = readFileSync('/ml/natura-suggest/packages/' + id + '.json');
+	return JSON.parse(text);
+})
+
+async function main(options){
+	const {numberOfExamples, iterationsFactor, packages, target, startText} = options;
 	const examples = {};
 	const dictionary = await getDictionary(packages)
 	let count = 0;
 	let uniqueCount = 0;
-	while(Object.keys(examples).length < NUMBER_OF_EXAMPLES && count <= ITERATIONS_FACTOR * NUMBER_OF_EXAMPLES){
-		const example = generateExample(dictionary, target, startText);
+	while(Object.keys(examples).length < numberOfExamples && count <= iterationsFactor * numberOfExamples){
+		const example = generateExample(options, dictionary, target, startText);
 		count++;
 		if(typeof example === 'string' && !examples[example]){
 			uniqueCount++;
-			console.log(count,example, '(' + uniqueCount + ')')
+			console.info(count,example, '(' + uniqueCount + ')')
 		}
 		if(example){
 			examples[example] = true;
 		}
+	}
+
+	//generate examples
+	const generatedExamples = [];
+	for(let i=0;i<Object.keys(examples).length;++i){
+		const inputString = Object.keys(examples)[i].replace(/\.$/,'');
+		const parsed = dictionary.parse(inputString, target);
+		const outputString = await stringify(parsed, dictionary)
+		generatedExamples.push({
+			input: inputString,
+			output: outputString
+		})
 	}
 
 	//generate json file
@@ -29,27 +54,28 @@ async function main(){
 		packages,
 		target,
 		startText,
-		examples: Object.keys(examples).map(key=>({
-			input: key.replace(/\.$/,''),
-			output: key.replace(/\.$/,'')
-		}))
+		examples: generatedExamples
 	}
-	writeFileSync(`examples/${output.created.toISOString().replace(/\:|\./g,'_')}.json`, JSON.stringify(output, null, '  '));
+
+	const outputText = JSON.stringify(output, null, '  ');
+	writeFileSync(options.output, outputText, 'utf-8');
 }
 
-main();
+main(options);
 
-function generateExample(dictionary, target, startText = ''){
+function generateExample(options, dictionary, target, startText = ''){
 	let text = startText;
-	for(let i=0;i<MAX_TOKENS;++i){
+	for(let i=0;i<options.maxTokens;++i){
 		
 		const token = nextToken(dictionary, text, target);
 		if(token === null){
 			if(text.endsWith('.')){
 				//if text ends with . then we assume we tried to output a number instead of using example
-				return generateExample(dictionary, target, startText);
+				return generateExample(options, dictionary, target, startText);
 			}
-			console.log('ERROR no suggestions for', JSON.stringify(text));
+			if(options.showErrors){
+				console.log('ERROR no suggestions for', JSON.stringify(text));
+			}
 			return null
 		}
 		if(token === '[EOS]'){
