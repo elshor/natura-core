@@ -7,6 +7,11 @@ import Type from './type.js'
 
 export default function registerPackage(dictionary,pkg){
 	(pkg.components||[]).forEach(component=>registerComponent(component,dictionary,pkg));
+	Object.entries(pkg.assertions || {}).forEach(([assertion, types])=>{
+		types.forEach(type=>{
+			dictionary._registerAssertion(type, assertion);
+		})
+	})
 	registerValues(dictionary,pkg);
 	registerTypes(dictionary,pkg);
 	registerExpressions(dictionary,pkg);

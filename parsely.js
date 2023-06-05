@@ -27,7 +27,7 @@ Rule.prototype.toString = function(withCursorAt) {
 
 
 // a State is a rule at a position from a given starting point in the input stream (reference)
-function State(rule, dot, reference, wantedBy) {
+function State(rule, dot, reference, wantedBy, contextId) {
 		this.rule = rule;
 		this.dot = dot;
 		this.reference = reference;
@@ -35,14 +35,15 @@ function State(rule, dot, reference, wantedBy) {
 		this.wantedBy = wantedBy;
 		this.isComplete = this.dot === rule.symbols.length;
 		this.context = null;
+		this.contextId = contextId
 }
 
 State.prototype.toString = function() {
-		return "{" + this.rule.toString(this.dot) + "}, from: " + (this.reference || 0);
+	return `{${this.rule.toString(this.dot)}, from ${this.reference || 0}, context ${this.contextId || 0}`
 };
 
 State.prototype.nextState = function(child) {
-		var state = new State(this.rule, this.dot + 1, this.reference, this.wantedBy);
+		var state = new State(this.rule, this.dot + 1, this.reference, this.wantedBy, this.contextId);
 		state.left = this;
 		state.right = child;
 		if (state.isComplete) {
@@ -137,7 +138,7 @@ Column.prototype.process = function(nextColumn) {
 }
 
 Column.prototype.predict = function(exp) {
-		var rules = this.grammar.byName[exp] || [];
+		var rules = this.grammar.getRulesByName(exp);
 
 		for (var i = 0; i < rules.length; i++) {
 				var r = rules[i];
@@ -145,7 +146,7 @@ Column.prototype.predict = function(exp) {
 				//this should be based on the context of wantedBy
 				//implement as preprocess that returns true for stopping processing
 				var wantedBy = this.wants[exp];
-				var s = new State(r, 0, this.index, wantedBy);
+				var s = new State(r, 0, this.index, wantedBy, i);
 
 				//if the rule has a preprocessor and calling it returns false, skip that rule
 				if(r.preprocess && r.preprocess(s) === false){
@@ -166,8 +167,9 @@ Column.prototype.complete = function(left, right) {
 }
 
 
-function Grammar(rules, start) {
+function Grammar(rules, assertions, start) {
 		this.rules = rules;
+		this.assertions = assertions || {} ;
 		this.start = start || this.rules[0].name;
 		var byName = this.byName = {};
 		this.rules.forEach(function(rule) {
@@ -178,8 +180,46 @@ function Grammar(rules, start) {
 		});
 }
 
+Grammar.prototype.getRulesByName = function(ruleName){
+	const ret = [];
+	this.expandRule(ruleName, ret);
+	return ret;
+}
+
+Grammar.prototype.expandRule = function (name, rules,done={}){
+	if(done[name]){
+		return;
+	}
+	done[name] = true;
+	(this.byName[name] || []).forEach(rule=>{
+		//add all rules of name
+		rules.push(rule);
+	})
+
+	//if name is an assertion then expand to all types that have this assertion
+	const types = (this.assertions[name] || []);
+	types.forEach(type=>{
+		this.expandRule(type, rules, done);
+	})
+
+	//if name is in the form something<assertion> then extract assertion and expand
+	const parsed = name.match(/^([^<]+)\<(.+)\>$/);
+	if(parsed){
+		const assertion = parsed[2];
+		const types = this.assertions[assertion] || [];
+		types.forEach(type=>{
+			this.expandRule(
+				parsed[1] + '<' + type + '>', 
+				rules, 
+				done
+			);
+		})
+	
+	}
+}
+
 // So we can allow passing (rules, start) directly to Parser for backwards compatibility
-Grammar.fromCompiled = function(rules, start) {
+Grammar.fromCompiled = function(rules, assertions, start) {
 		var lexer = rules.Lexer;
 		if (rules.ParserStart) {
 			start = rules.ParserStart;
@@ -194,7 +234,7 @@ Grammar.fromCompiled = function(rules, start) {
 			r.preprocess,
 			r.noSuggest
 		)); });
-		var g = new Grammar(rules, start);
+		var g = new Grammar(rules, assertions, start);
 		g.lexer = lexer; // nb. storing lexer on Grammar is iffy, but unavoidable
 		return g;
 }
@@ -263,15 +303,17 @@ StreamLexer.prototype.formatError = function(token, message) {
 		}
 }
 
-function Parser(rules, start, options) {
+function Parser(rules, assertions, start, options) {
 		if (rules instanceof Grammar) {
 				var grammar = rules;
 				var options = start;
 		} else {
-				var grammar = Grammar.fromCompiled(rules, start);
+				var grammar = Grammar.fromCompiled(rules, assertions, start);
 		}
 		this.grammar = grammar;
 
+		//save assertions
+		this.assertions = assertions || {};
 		// Read options
 		this.options = {
 				keepHistory: false,
@@ -569,4 +611,4 @@ function getSymbolShortDisplay(symbol) {
 		}
 }
 
-export {Parser}
+export {Parser, Grammar}

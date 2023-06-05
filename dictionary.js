@@ -534,6 +534,10 @@ export default class Dictionary{
 			this.parser.addIsa(type, parent);
 		}
 	}
+	_registerAssertion(type, assertion){
+		this.parser.addAssertion(type, assertion);
+	}
+
 	async _loadPackage(pckg){
 		if(typeof pckg === 'string'){
 			//need to load it

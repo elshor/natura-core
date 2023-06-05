@@ -1,8 +1,6 @@
 import { patternAsGrammer } from "./pattern.js";
-import stringify from "./stringify.js";
 import moo from 'moo'
-import { createLocation } from "./location.js";
-import { Parser as Parsley } from "./parsely.js";
+import { Parser as Parsley, Grammar } from "./parsely.js";
 import Type from './type.js'
 import TemplateType from "./template-type.js";
 
@@ -32,16 +30,18 @@ export class Parser {
 	constructor(dictionary){
 		this.dictionary = dictionary;
 		this.specializedTypes = [];
+		this.assertions = {};
 		this.grammer = {
 			ParserRules: [],
 			ParserStart: 'type:interact action',
 			Lexer: lexer
 		}
+		this.compiledGrammer = null;
 		addBaseRules(this.grammer);
-		Object.freeze(this);
 	}
 
 	_addRule(rule, spec){
+		this.compiledGrammer = null;
 		if(!rule){
 			return;
 		}
@@ -62,6 +62,7 @@ export class Parser {
 		}
 	}
 	addInstance(spec){
+		this.compiledGrammer = null;
 		//first add the value tokenized
 		this._addRule({
 			name: spec.valueType,
@@ -148,6 +149,7 @@ export class Parser {
 		})
 	}
 	addType(spec, pkg){
+		this.compiledGrammer = null;
 		const parser = this;
 		if(!pkg){
 			//skip types without a package
@@ -303,6 +305,7 @@ export class Parser {
 	}
 
 	addIsa(type, parent){
+		this.compiledGrammer = null;
 		const isaRule = {
 			name: 'type:' + parent,
 			symbols: ['type:' + type],
@@ -311,6 +314,14 @@ export class Parser {
 		}
 		this._addRule(isaRule)
 }
+
+	addAssertion(type, assertion){
+		this.compiledGrammer = null;
+		if(!this.assertions[assertion]){
+			this.assertions[assertion] = [];
+		}
+		this.assertions[assertion].push(type);
+	}
 
 	/**
 	 * Called after adding the last type. This is when macro expansion is done
@@ -336,14 +347,17 @@ export class Parser {
 		})
 	}
 	getGrammer(){
-		return this.grammer;
+		if(!this.compiledGrammer){
+			this.compiledGrammer = Grammar.fromCompiled(this.grammer, this.assertions)
+		}
+		return this.compiledGrammer;
 	}
 
 	parse(text, target='type:interact action', logger){
 		this.grammer.ParserStart = target;
 		logger.debug('parsing text',JSON.stringify(text));
 		logger.debug('target is',target)
-		const parser = new Parsley(this.grammer);
+		const parser = new Parsley(this.getGrammer());
 		try{
 			const res = parser.feed(text);
 			if(res.results){
@@ -360,7 +374,7 @@ export class Parser {
 
 	parseWants(text, target='type:interact action'){
 		this.grammer.ParserStart = target;
-		const parser = new Parsley(this.grammer);
+		const parser = new Parsley(this.getGrammer());
 		try{
 			const res = parser.feed(text);
 			return {
@@ -575,7 +589,7 @@ function parameterizeType(type, parameter){
 	}
 	return type
 	.replace(/^(?:t|T)<(.*)>([\*\?]*)$/,parameter + '<$1>$2')
-	.replace(/^(.*)<(?:t|T)>([\*\?]*)$/,'$1<' + parameter + '>$2')
+	.replace(/(.*)<(?:t|T)>([\*\?]*)/,'$1<' + parameter + '>$2')
 	.replace(/^(?:t|T)([\*\?]*)$/,parameter + '$2')
 }
 
@@ -623,30 +637,6 @@ function noRepeatTypeListPush(data){
 }
 function takeFirst(data){
 	return data[0];
-}
-
-function dumpParser(res, dictionary, logger){
-	logger.log(markStringPos(res.lexer.buffer, res.lexer.col), '==>',res);
-	const hasResults = res.results.length > 0;
-	if(hasResults){
-		logger.log('RESULTS:');
-		res.results.forEach(result=>{
-			logger.log(stringify(createLocation(result, dictionary)), result);
-		})	
-	}
-	const column = res.table[res.current];
-	column.states.forEach(state=>{
-		if(state.wantedBy.length > 0){
-			return;
-		}
-		logger.log(
-			'  ',
-			state.dot, 
-			state.rule.postprocess? (state.rule.postprocess.typeName || '') +':': '?', 
-			ruleText(state.rule)
-		)
-		printStateDependant(state, column.states, 3, hasResults);
-	})
 }
 
 function joinText(data){
