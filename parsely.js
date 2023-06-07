@@ -3,8 +3,17 @@
  * @argument preprocess - an optional preprocess function . If returns false then the rule cannot be used. This rule can add or change context
  */
 
-function Rule(name, symbols, postprocess, description, source, preprocess, noSuggest=false) {
+function Rule(
+	name, 
+	symbols, 
+	postprocess, 
+	description, 
+	source, 
+	preprocess, 
+	pkg,
+	noSuggest=false) {
 		this.id = ++Rule.highestId;
+		this.pkg = pkg;
 		this.name = name;
 		this.symbols = symbols;        // a list of literal | regex class | nonterminal
 		this.postprocess = postprocess;
@@ -131,14 +140,14 @@ Column.prototype.process = function(nextColumn) {
 								}
 						} else {
 								wants[exp] = [state];
-								this.predict(exp);
+								this.predict(exp, state.rule.pkg);
 						}
 				}
 		}
 }
 
-Column.prototype.predict = function(exp) {
-		var rules = this.grammar.getRulesByName(exp);
+Column.prototype.predict = function(exp, pkg) {
+		var rules = this.grammar.getRulesByName(exp, pkg);
 
 		for (var i = 0; i < rules.length; i++) {
 				var r = rules[i];
@@ -171,6 +180,7 @@ function Grammar(rules, assertions, start) {
 		this.rules = rules;
 		this.assertions = assertions || {} ;
 		this.start = start || this.rules[0].name;
+		this.startPkg = 'interact'; //default start package
 		var byName = this.byName = {};
 		this.rules.forEach(function(rule) {
 				if (!byName.hasOwnProperty(rule.name)) {
@@ -180,13 +190,13 @@ function Grammar(rules, assertions, start) {
 		});
 }
 
-Grammar.prototype.getRulesByName = function(ruleName){
+Grammar.prototype.getRulesByName = function(ruleName, pkg){
 	const ret = [];
-	this.expandRule(ruleName, ret);
+	this.expandRule(ruleName, pkg, ret);
 	return ret;
 }
 
-Grammar.prototype.expandRule = function (name, rules,done={}){
+Grammar.prototype.expandRule = function (name, pkg,  rules,done={}){
 	if(done[name]){
 		return;
 	}
@@ -197,7 +207,7 @@ Grammar.prototype.expandRule = function (name, rules,done={}){
 	})
 
 	//if name is an assertion then expand to all types that have this assertion
-	const types = (this.assertions[name] || []);
+	const types = this.assertions.getByAssertion(name, pkg);
 	types.forEach(type=>{
 		rules.push( new Rule(
 			name,
@@ -263,6 +273,7 @@ Grammar.fromCompiled = function(rules, assertions, start) {
 			r.description,
 			r.source,
 			r.preprocess,
+			r.pkg,
 			r.noSuggest
 		)); });
 		var g = new Grammar(rules, assertions, start);
@@ -364,7 +375,7 @@ function Parser(rules, assertions, start, options) {
 
 		// I could be expecting anything.
 		column.wants[grammar.start] = [];
-		column.predict(grammar.start);
+		column.predict(grammar.start, grammar.startPkg);
 		// TODO what if start rule is nullable?
 		column.process();
 		this.current = 0; // token index

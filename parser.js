@@ -3,6 +3,7 @@ import moo from 'moo'
 import { Parser as Parsley, Grammar } from "./parsely.js";
 import Type from './type.js'
 import TemplateType from "./template-type.js";
+import RelStore from "./rel-store.js";
 
 const MAX_FLAT_DEPTH = 1000 //used to flatten strings
 
@@ -30,7 +31,7 @@ export class Parser {
 	constructor(dictionary){
 		this.dictionary = dictionary;
 		this.specializedTypes = [];
-		this.assertions = {};
+		this.assertions = new RelStore();
 		this.grammer = {
 			ParserRules: [],
 			ParserStart: 'interact action',
@@ -48,6 +49,7 @@ export class Parser {
 		if(Array.isArray(rule)){
 			return rule.forEach(r=>this._addRule(r, spec))
 		}
+		console.assert(rule.pkg,'Rule missing package')
 		if(spec?.noSuggest === true){
 			rule.noSuggest = true
 		}
@@ -61,11 +63,12 @@ export class Parser {
 			this.grammer.ParserRules.push(rule);
 		}
 	}
-	addInstance(spec){
+	addInstance(spec, pkg){
 		this.compiledGrammer = null;
 		//first add the value tokenized
 		this._addRule({
 			name: spec.valueType,
+			pkg: pkg.name,
 			description: spec.description,
 			postprocess(){
 				return spec.value;
@@ -80,6 +83,7 @@ export class Parser {
 			//TODO make sure pattern is text only without fields
 			parser._addRule({
 				name: spec.valueType,
+				pkg: pkg.name,
 				description: spec.description,
 				noSuggest: true,
 				postprocess(){
@@ -91,6 +95,7 @@ export class Parser {
 			})
 		//add value not tokenized - used for suggestTokens
 		this._addRule({
+			pkg: pkg.name,
 			name: spec.valueType,
 			description: spec.description,
 			postprocess(){
@@ -170,7 +175,7 @@ export class Parser {
 					parser.dictionary,
 					pkg._id
 				);
-				parser._addRule(rules, spec);
+				parser._addRule(addPackage(rules, pkg), spec);
 			}else{
 				//add the basic rule
 				const basicRule = patternAsGrammer(
@@ -180,8 +185,8 @@ export class Parser {
 					tokenize.bind(lexer),
 					this.dictionary,
 					pkg._id
-				) 
-				parser._addRule(basicRule, spec)
+				);
+				parser._addRule(addPackage(basicRule, pkg), spec)
 			}
 			
 			//add altPattern if exists
@@ -196,7 +201,7 @@ export class Parser {
 							parser.dictionary,
 							pkg._id
 						);
-						parser._addRule(rules, spec);
+						parser._addRule(addPackage(rules, pkg), spec);
 					}else{
 						//add the basic rule
 						const basicRule = patternAsGrammer(
@@ -207,7 +212,7 @@ export class Parser {
 							this.dictionary,
 							pkg._id
 						) 
-						parser._addRule(basicRule, spec)
+						parser._addRule(addPackage(basicRule, pkg), spec)
 					}
 					//add the type rule
 					const typeRule = patternAsGrammer(
@@ -217,8 +222,8 @@ export class Parser {
 						tokenize.bind(lexer),
 						this.dictionary,
 						pkg._id
-					) 
-					parser._addRule(typeRule, spec)
+					) 	
+					parser._addRule(addPackage(typeRule, pkg), spec)
 				})
 			}
 			//add the type rule
@@ -231,7 +236,7 @@ export class Parser {
 				pkg._id
 			) 
 			try{
-				parser._addRule(typeRule, spec)
+				parser._addRule(addPackage(typeRule, pkg), spec)
 			}catch(e){
 				this.dictionary.error('addRule got exception',e);
 			}
@@ -240,6 +245,7 @@ export class Parser {
 			(spec.isa || []).forEach(isa=>{
 				const isaRule = {
 					name:  isa,
+					pkg: pkg.name,
 					symbols: [ spec.name + (spec.specializedFor? '<t>' : '')],
 					source: spec.name + '$isa',
 					postprocess: takeFirst
@@ -252,6 +258,7 @@ export class Parser {
 			//if options are suggested, then we are limited to the options
 			parser._addRule({
 				name: spec.name,
+				pkg: pkg.name,
 				symbols: [spec.basicType],
 				source: spec.name + '$basic',
 				postprocess: takeFirst
@@ -266,6 +273,7 @@ export class Parser {
 					: example.toString();
 				this._addRule({
 					name: spec.name,
+					pkg: pkg.name,
 					symbols:[{example:literal}],
 					source: spec.name + '$example',
 					postprocess: takeFirst
@@ -283,6 +291,7 @@ export class Parser {
 				const ruleName = `string<${spec.name}.${key}>`;
 				this._addRule({
 					name: ruleName,
+					pkg: pkg.name,
 					description: value.description,
 					symbols:[type],
 					source: spec.name,
@@ -304,10 +313,11 @@ export class Parser {
 		}
 	}
 
-	addIsa(type, parent){
+	addIsa(type, parent, pkg){
 		this.compiledGrammer = null;
 		const isaRule = {
 			name: parent,
+			pkg: pkg.name,
 			symbols: [ type ],
 			source: 'isa',
 			postprocess: takeFirst
@@ -315,14 +325,9 @@ export class Parser {
 		this._addRule(isaRule)
 }
 
-	addAssertion(type, assertion){
+	addAssertion(type, assertion, pkg){
 		this.compiledGrammer = null;
-		if(!this.assertions[assertion]){
-			this.assertions[assertion] = [];
-		}
-		if(!this.assertions[assertion].includes(type)){
-			this.assertions[assertion].push(type);
-		}
+		this.assertions.addAssertion(type, assertion, pkg.name);
 	}
 
 	/**
@@ -337,17 +342,19 @@ export class Parser {
 		const sList = this.dictionary.getClassMembers(T);
 		sList.forEach(s=>{
 			const ruleSpec = this.dictionary.getTypeSpec(rule.source);
+			const sSpec = this.dictionary.getTypeSpec(s);
 			const assertions = ruleSpec.assertions || [];
-			console.assert(Array.isArray(assertions), 'Assertions is not an array', ruleSpec);
 			assertions.forEach(assertion=>{
 				this.addAssertion(
 					parameterizeType(rule.name, s),
-					parameterizeType(assertion,s)
+					parameterizeType(assertion,s),
+					ruleSpec.$package
 				)
 			})
 			const {symbols, mapping} = expandSymbols(rule.symbols, s, this.dictionary)
 			const sRule = {
 				name: parameterizeType(rule.name, s),
+				pkg: sSpec.$package.name,
 				postprocess: rule.postprocess
 					? generatePostprocessSpecialized(rule.postprocess,s, mapping)
 					: null,
@@ -678,3 +685,9 @@ function generatePostprocessSpecialized(fn, specializedFor, mapping){
 	return postprocessSpecialized.bind({fn, specializedFor, mapping});
 }
 
+function addPackage(ruleOrRules, pkg){
+	(Array.isArray(ruleOrRules)? ruleOrRules : [ruleOrRules]).forEach(rule=>{
+		rule.pkg = pkg.name;
+	})
+	return ruleOrRules;
+}

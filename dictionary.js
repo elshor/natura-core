@@ -303,7 +303,8 @@ export default class Dictionary{
 	 * @param {"artifact"|"value"} role the role of the instance
 	 * @returns {Reference} a reference to the instance
 	 */
-	_registerInstance(entry){
+	_registerInstance(entry, pkg){
+		console.assert(pkg, 'missing package');
 		const {valueType,name,value,label,description} = entry;
 		if(valueType){
 			this._ensureSpecializedIsRegistered(valueType);
@@ -311,7 +312,7 @@ export default class Dictionary{
 				this.instancesByType[valueType] = [];
 			}
 			this.instancesByType[valueType].push(entry);
-			this.parser.addInstance(entry);
+			this.parser.addInstance(entry, pkg);
 			this.instances[name] = value;
 			return reference(
 				label||name,
@@ -525,17 +526,17 @@ export default class Dictionary{
 	 * @param {String} parent type of the parent
 	 * @param {Booldan} notInType true if this isa relationship was defined separately and not derived from isa field. If true then need to register separaetly in grammer
 	 */
-	_registerIsa(type,parent, notInType){
+	_registerIsa(type,parent, notInType, pkg){
 		if(!Array.isArray(this.isaRepo[parent])){
 			this.isaRepo[parent] = [];
 		}
 		this.isaRepo[parent].push(type);
 		if(notInType){
-			this.parser.addIsa(type, parent);
+			this.parser.addIsa(type, parent, pkg);
 		}
 	}
-	_registerAssertion(type, assertion){
-		this.parser.addAssertion(type, assertion);
+	_registerAssertion(type, assertion, pkg){
+		this.parser.addAssertion(type, assertion, pkg);
 	}
 
 	async _loadPackage(pckg){

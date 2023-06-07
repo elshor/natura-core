@@ -9,14 +9,14 @@ export default function registerPackage(dictionary,pkg){
 	(pkg.components||[]).forEach(component=>registerComponent(component,dictionary,pkg));
 	Object.entries(pkg.assertions || {}).forEach(([assertion, types])=>{
 		types.forEach(type=>{
-			dictionary._registerAssertion(type, assertion);
+			dictionary._registerAssertion(type, assertion, pkg);
 		})
 	})
 	registerValues(dictionary,pkg);
 	registerTypes(dictionary,pkg);
 	registerExpressions(dictionary,pkg);
 	registerActions(dictionary,pkg);
-	registerCategories(dictionary,pkg.categories||{});
+	registerCategories(dictionary,pkg.categories||{}, pkg);
 }
 
 function registerComponent(component,dictionary,pkg){
@@ -145,10 +145,10 @@ function generateProps(component,props,slots){
 	}
 }
 
-function registerCategories(dictionary,categories){
+function registerCategories(dictionary,categories, pkg){
 	Object.entries(categories).forEach(([category,members])=>{
 		(members||[]).forEach(member=>{
-			dictionary._registerIsa(member, category, true);
+			dictionary._registerIsa(member, category, true, pkg);
 		});
 	})
 }
@@ -298,7 +298,7 @@ function registerValues(dictionary,pkg){
 			value.value = value.value !== undefined? value.value : (value.label || value.title || value.name);
 			value.label = value.label || value.title || value.name;
 			value.valueType = value.valueType || value.type;
-			dictionary._registerInstance(value);
+			dictionary._registerInstance(value, pkg);
 		}else if(value.call){
 			dictionary._registerType(value.name,{
 				name:value.name,
@@ -358,16 +358,12 @@ function registerTypes(dictionary,pkg){
 }
 
 function registerExpressions(dictionary,pkg){
-	if(Array.isArray(pkg?.expressions)){
-		return registerExpressions(dictionary, pkg.expressions)
-	}
-	if(Array.isArray(pkg?.expressions?.members)){
-		return registerExpressions(dictionary, pkg.expressions.members);
-	}
-	if(!Array.isArray(pkg)){
-		throw new Error("ok this is sad - " + JSON.stringify(pkg));
-	}
-	(pkg || []).forEach(t=>{
+	const expressions = Array.isArray(pkg?.expressions)
+		? pkg.expressions
+		: Array.isArray(pkg?.expressions?.members)
+		? pkg.expressions.members
+		: []
+	expressions.forEach(t=>{
 		dictionary._registerType(t.name,t,pkg);
 		dictionary._registerFunction(t.name,{
 			library:pkg.name,
