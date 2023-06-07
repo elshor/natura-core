@@ -199,7 +199,25 @@ Grammar.prototype.expandRule = function (name, rules,done={}){
 	//if name is an assertion then expand to all types that have this assertion
 	const types = (this.assertions[name] || []);
 	types.forEach(type=>{
-		this.expandRule(type, rules, done);
+		rules.push( new Rule(
+			name,
+			[type],
+			data => data[0],
+			"generated rule",
+			"generated-rule"
+		))
+	})
+
+	//adding maybe
+	const maybeTypes = (this.assertions['maybe-' + name] || []);
+	maybeTypes.forEach(type=>{
+		rules.push( new Rule(
+			name,
+			[type,... tokenize(` (assuming ${type} ${name.replace(/-|\<|\>/g,' ').trim()})`)],
+			data => data[0],
+			"maybe generated rule",
+			"maybe generated-rule"
+		))
 	})
 
 	//if name is in the form something<assertion> then extract assertion and expand
@@ -208,13 +226,26 @@ Grammar.prototype.expandRule = function (name, rules,done={}){
 		const assertion = parsed[2];
 		const types = this.assertions[assertion] || [];
 		types.forEach(type=>{
-			this.expandRule(
-				parsed[1] + '<' + type + '>', 
-				rules, 
-				done
-			);
+			rules.push( new Rule(
+				name,
+				[parsed[1] + '<' + type + '>'],
+				data => data[0],
+				"generated rule",
+				"generated-rule"
+			))
 		})
-	
+
+		//add maybe rules
+		const maybeTypes = this.assertions['maybe-' + assertion] || [];
+		maybeTypes.forEach(type=>{
+			rules.push( new Rule(
+				name,
+				[parsed[1] + '<' + type + '>',... tokenize(` (assuming ${type} ${assertion.replace(/-|\<|\>/g,' ').trim()})`)],
+				data => data[0],
+				"maybe generated rule",
+				"maybe generated-rule"
+			))
+		})
 	}
 }
 
@@ -610,5 +641,11 @@ function getSymbolShortDisplay(symbol) {
 				}
 		}
 }
-
+function tokenize(text){
+	const parsed = text
+		.match(/\w+|\W/gm)
+		.map(token=>token === ' '? '_': {literal:token})
+	return parsed;
+	//return [{literal:text}];
+}
 export {Parser, Grammar}

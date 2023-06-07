@@ -266,6 +266,7 @@ export function suggestTokens(
 	const eosToken = options.eosToken || EOS_TOKEN;
 	const grammer = dictionary.getGrammer();
 	grammer.ParserStart = target;
+	grammer.start = target;
 	let parser;
 	//When last token was a part of a token, we need to identify the first part of the token. We assume the feed function will throw the partial token
 	let prolog = ''
@@ -277,16 +278,17 @@ export function suggestTokens(
 		}
 		parser = e.parser;
 	}
-	const ret =  unique(parser.table[parser.current].scannable
+	const scannables = parser.table[parser.current].scannable;
+	const ret = parser? unique(scannables
 		.map(state=>state.rule.symbols[state.dot])
 		.map(item=> {
-			if(item.example){
+			if(item?.example){
 				if(!item.example.startsWith(prolog)){
 					return null;
 				}
 				return item.example.substr(prolog.length);
 			}
-			if(item.literal){
+			if(item?.literal){
 				if(!item.literal.startsWith(prolog)){
 					return null;
 				}
@@ -313,7 +315,7 @@ export function suggestTokens(
 			}
 		})
 		.flat()
-	)
+	) : [];
 	const sp = ret.indexOf('[SP]')
 	if(sp >= 0 && !text.endsWith(' ')){
 		//need to add the tokens following the space
@@ -327,7 +329,7 @@ export function suggestTokens(
 		);
 		ret.push(...additional.map(token=> precedingSpace + token));
 	}
-	if(parser.results && parser.results.length > 0){
+	if(parser?.results && parser.results.length > 0){
 		ret.push(eosToken)
 	}
 	return ret;
@@ -339,6 +341,9 @@ export function suggestTokens(
  * @returns 
  */
 function unique(items){
+	if(!Array.isArray(items)){
+		return [];
+	}
 	const obj = {};
 	items.forEach(key=>{
 		if(key === null || key === undefined){

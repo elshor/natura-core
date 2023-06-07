@@ -33,7 +33,7 @@ export class Parser {
 		this.assertions = {};
 		this.grammer = {
 			ParserRules: [],
-			ParserStart: 'type:interact action',
+			ParserStart: 'interact action',
 			Lexer: lexer
 		}
 		this.compiledGrammer = null;
@@ -211,7 +211,7 @@ export class Parser {
 					}
 					//add the type rule
 					const typeRule = patternAsGrammer(
-						'type:' + spec.name + (spec.specializedFor? '<t>' : ''), 
+						spec.name + (spec.specializedFor? '<t>' : ''), 
 						pattern, 
 						spec,
 						tokenize.bind(lexer),
@@ -223,7 +223,7 @@ export class Parser {
 			}
 			//add the type rule
 			const typeRule = patternAsGrammer(
-				'type:' + spec.name + (spec.specializedFor? '<t>' : ''), 
+				spec.name + (spec.specializedFor? '<t>' : ''), 
 				pattern, 
 				spec,
 				tokenize.bind(lexer),
@@ -239,8 +239,8 @@ export class Parser {
 			//add isa rules
 			(spec.isa || []).forEach(isa=>{
 				const isaRule = {
-					name: 'type:' + isa,
-					symbols: ['type:' + spec.name + (spec.specializedFor? '<t>' : '')],
+					name:  isa,
+					symbols: [ spec.name + (spec.specializedFor? '<t>' : '')],
 					source: spec.name + '$isa',
 					postprocess: takeFirst
 				}
@@ -307,8 +307,8 @@ export class Parser {
 	addIsa(type, parent){
 		this.compiledGrammer = null;
 		const isaRule = {
-			name: 'type:' + parent,
-			symbols: ['type:' + type],
+			name: parent,
+			symbols: [ type ],
 			source: 'isa',
 			postprocess: takeFirst
 		}
@@ -320,7 +320,9 @@ export class Parser {
 		if(!this.assertions[assertion]){
 			this.assertions[assertion] = [];
 		}
-		this.assertions[assertion].push(type);
+		if(!this.assertions[assertion].includes(type)){
+			this.assertions[assertion].push(type);
+		}
 	}
 
 	/**
@@ -334,6 +336,15 @@ export class Parser {
 	expandTemplateRule({rule, T}){
 		const sList = this.dictionary.getClassMembers(T);
 		sList.forEach(s=>{
+			const ruleSpec = this.dictionary.getTypeSpec(rule.source);
+			const assertions = ruleSpec.assertions || [];
+			console.assert(Array.isArray(assertions), 'Assertions is not an array', ruleSpec);
+			assertions.forEach(assertion=>{
+				this.addAssertion(
+					parameterizeType(rule.name, s),
+					parameterizeType(assertion,s)
+				)
+			})
 			const {symbols, mapping} = expandSymbols(rule.symbols, s, this.dictionary)
 			const sRule = {
 				name: parameterizeType(rule.name, s),
@@ -353,7 +364,7 @@ export class Parser {
 		return this.compiledGrammer;
 	}
 
-	parse(text, target='type:interact action', logger){
+	parse(text, target='interact action', logger){
 		this.grammer.ParserStart = target;
 		logger.debug('parsing text',JSON.stringify(text));
 		logger.debug('target is',target)
@@ -372,7 +383,7 @@ export class Parser {
 		}
 	}
 
-	parseWants(text, target='type:interact action'){
+	parseWants(text, target='interact action'){
 		this.grammer.ParserStart = target;
 		const parser = new Parsley(this.getGrammer());
 		try{
@@ -650,18 +661,6 @@ function typeAsString(type){
 	}
 	const ret = typeObject.toString();
 	return ret;
-}
-
-function traceContext(contextName, state, path = []){
-	if(!state){
-		return;
-	}
-	const newPath = path.concat(state)
-	if(state.context){//db} && state.context[contextName]){
-	}else{
-		state.wantedBy.forEach(state=>traceContext(contextName, state, newPath));
-		traceContext(contextName, state.left, newPath)
-	}
 }
 
 /** postprocess function that calls wrap function and ads $specializedFor property to output object */

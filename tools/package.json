@@ -5,6 +5,14 @@
   "type": "module",
   "license": "MIT",
   "dependencies": {
-    "commander": "^10.0.0"
+    "colors": "^1.4.0",
+    "commander": "^10.0.0",
+    "inquirer": "^9.1.5",
+    "inquirer-autocomplete-prompt": "^3.0.0",
+    "inquirer-command-prompt": "^0.1.0",
+    "inquirer-prompt-suggest": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.3"
   }
 }

@@ -7,12 +7,13 @@ registerLoader(id=>{
 	const text = readFileSync('/ml/natura-suggest/packages/' + id + '.json');
 	return JSON.parse(text);
 })
+const options = {
+	packages: ["interact","datetime","query","college_1","elshor","core"],
+	text: 'what are the first name, last name of all professors', //that teach biology
+	target: 'type:interact action'
+}
 
-const packages = ["interact","datetime","query","college_1","elshor","core"];
-const text = 'how many professors are in the "biology" department';
-const target = 'type:interact action'
-
-async function parse(text, packages){
+async function parse({text, packages, target}){
 	const dictionary = await getDictionary(packages);
 	const parsed = dictionary.parse(text, target);
 	if(parsed.length === 0){
@@ -36,4 +37,4 @@ async function parse(text, packages){
 	}
 	console.info('STRINGIFY',await stringify(parsed, dictionary))
 }
-await parse(text, packages);
+await parse(options);
