@@ -49,7 +49,6 @@ export class Parser {
 		if(Array.isArray(rule)){
 			return rule.forEach(r=>this._addRule(r, spec))
 		}
-		console.assert(rule.pkg,'Rule missing package')
 		if(spec?.noSuggest === true){
 			rule.noSuggest = true
 		}
@@ -85,11 +84,10 @@ export class Parser {
 				name: spec.valueType,
 				pkg: pkg.name,
 				description: spec.description,
-				noSuggest: true,
 				postprocess(){
 					return spec.value;
 				},
-				noSuggest: true,//altPatterns should not be suggested
+				noSuggest: false,//altPatterns should not be suggested
 				symbols: tokenize.bind(lexer)(pattern).map(token=>({literal: token}))
 			}, spec)
 			})

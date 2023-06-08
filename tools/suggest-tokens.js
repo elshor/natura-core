@@ -26,13 +26,13 @@ async function suggest({text, dictionary, target}){
 	const wants = dictionary.parseWants(text, target);
 	console.info(parsed.length >0? '[complete]'.bgBlue:'[incomplete]'.bgBlue,tokens.join(', '));
 	console.info(
-		'WANTS',
+		'WANTS\n',
 		Object.entries(wants.wants).map(([key,value])=>{
 			return key 
 				+ ':\n  ' 
 				+ unique(
 					value
-					.map(item=>item.toString().replace(/context \d+$/,''))
+					.map(item=>item.toString().replace(/context \d+$/,'') + (item.rule?.source || ''))
 					).join('\n  ')
 		}).join('\n')
 	)
@@ -69,10 +69,14 @@ async function topLoop(options){
 	const stack = [text];
 	while(true){
 		//loop until no tokens
+		console.clear();
 		console.info(text.brightBlue)
 		const tokens = await suggest({text, dictionary, target});
 		if(tokens.length === 1){
-			const token = tokens[0].replace('_',' ');
+			const token = tokens[0]
+				.replace(/_/g,' ') //spaces as underscore
+				.replace("[SP]",' ')
+				.replace(/  +/g,' ')//normalize spaces
 			if(token === '</s>'){
 				const parsed = dictionary.parse(text, target);
 				if(parsed.length > 0){
@@ -115,7 +119,13 @@ async function topLoop(options){
 				
 			}
 		});
-		if(value.token === 'END' || value.token === '</s>'){
+		if(value.token.endsWith(':') && value.token.length > 1){
+			//this is a request to chane target
+			target = value.token.substr(0, value.token.length - 1);
+			console.info(('changed target to ' + target.bgBlue).bgBlue)
+			continue;
+		}
+		if(value.token === 'END' || value.token.trim() === '</s>'){
 			const parsed = dictionary.parse(text, target);
 			if(parsed.length > 0){
 				console.info('Completed'.bgBlue)
@@ -136,14 +146,14 @@ async function topLoop(options){
 
 	//show rules
 	const names = uniqueNames(dictionary.parser.grammer.ParserRules)
-		.concat(... Object.keys(dictionary.parser.assertions).map(a=>"=>" + a))
+		.concat(... dictionary.parser.assertions.getAssertions().map(a=>"=>" + a))
 	while(true){
 		try{
 		const value = await inquirer.prompt({
 			type: 'autocomplete',
 			name: 'answer',
 			loop: false,
-			message: "Which rules do you want to show? Enter to exit",
+			message: "Which rules do you want to show? Enter to restart",
 			source(_, input=''){
 				const ret = names.filter(name=>{
 					return name.toLowerCase().startsWith(input.toLowerCase()) ||
@@ -151,7 +161,7 @@ async function topLoop(options){
 					name.toLowerCase().startsWith('=>' + input.toLowerCase())
 				});
 				if(input === ''){
-					ret.unshift('EXIT');
+					ret.unshift('RESTART');
 				}
 				if(input !== '' && !names.includes(input)){
 					ret.unshift(input);
@@ -159,14 +169,14 @@ async function topLoop(options){
 				return ret;
 			}
 		})
-		if(value.answer === 'EXIT'){
-			console.info('Bye');
-			exit(0)
+		if(value.answer === 'RESTART'){
+			setImmediate(()=>topLoop(options));
+			break;
 		}
 		console.info(value.answer.green);
 		if(value.answer.startsWith('=>')){
-			(dictionary.parser.assertions[value.answer.substr(2)] || []).forEach(type=>{
-				console.info('  ',type)
+			dictionary.parser.assertions.getByAssertionAll(value.answer.substr(2)).forEach(type=>{
+				console.info('  ',type.toString(), type.assumptions? JSON.stringify(type.assumptions) : '')
 			})
 		}else{
 			dictionary.parser
@@ -176,7 +186,7 @@ async function topLoop(options){
 				console.info('  ',ruleToString(rule));
 		})
 		}
-	}catch(e){console.log('got exceptino',e)}
+	}catch(e){console.log('got exception',e)}
 	}
 }
 

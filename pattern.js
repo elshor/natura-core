@@ -216,7 +216,7 @@ function typeAsString(type){
 		console.error('Template types are not supported', type);
 	}
 	const ret = typeObject.toString();
-	return ret;
+	return ret.replace(/^type\:/,'');
 }
 
 function generateConverter(converterData, typeName, dictionary, spec){

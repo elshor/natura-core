@@ -1,0 +1,8 @@
+# rules to load to rel-store. This should really not be here but integrated into packages
+- result: [X, with-property-of, Y]
+  from:
+  - [X, property-of, Y]
+- result: [X, contained-by, Y]
+  from:
+  - [Z, extends-concept, Y]
+  - [X, contained-by, Z]

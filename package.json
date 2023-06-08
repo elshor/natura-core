@@ -26,7 +26,8 @@
     "moo": "^0.5.2",
     "nearley": "^2.20.1",
     "no-case": "^3.0.4",
-    "pluralize": "^8.0.0"
+    "pluralize": "^8.0.0",
+    "yaml": "^2.2.1"
   },
   "devDependencies": {
     "@babel/cli": "7.20.7",

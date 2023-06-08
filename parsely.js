@@ -178,7 +178,7 @@ Column.prototype.complete = function(left, right) {
 
 function Grammar(rules, assertions, start) {
 		this.rules = rules;
-		this.assertions = assertions || {} ;
+		this.assertions = assertions ;
 		this.start = start || this.rules[0].name;
 		this.startPkg = 'interact'; //default start package
 		var byName = this.byName = {};
@@ -214,19 +214,19 @@ Grammar.prototype.expandRule = function (name, pkg,  rules,done={}){
 			[type],
 			data => data[0],
 			"generated rule",
-			"generated-rule"
+			`generated: ${name}=>${type}`
 		))
 	})
 
 	//adding maybe
-	const maybeTypes = (this.assertions['maybe-' + name] || []);
+	const maybeTypes = this.assertions.getByAssertionFuzzy( name, pkg);
 	maybeTypes.forEach(type=>{
 		rules.push( new Rule(
 			name,
-			[type,... tokenize(` (assuming ${type} ${name.replace(/-|\<|\>/g,' ').trim()})`)],
+			[type.toString(),'_',... assumeTokens(type.assumptions)],
 			data => data[0],
 			"maybe generated rule",
-			"maybe generated-rule"
+			`generated maybe: ${name}=>${type.toString()}`
 		))
 	})
 
@@ -234,23 +234,27 @@ Grammar.prototype.expandRule = function (name, pkg,  rules,done={}){
 	const parsed = name.match(/^([^<]+)\<(.+)\>$/);
 	if(parsed){
 		const assertion = parsed[2];
-		const types = this.assertions[assertion] || [];
+		const types = this.assertions.getByAssertion(assertion, pkg);
 		types.forEach(type=>{
 			rules.push( new Rule(
 				name,
 				[parsed[1] + '<' + type + '>'],
 				data => data[0],
-				"generated rule",
+				`generated: ${assertion}=>${type}`,
 				"generated-rule"
 			))
 		})
 
 		//add maybe rules
-		const maybeTypes = this.assertions['maybe-' + assertion] || [];
+		const maybeTypes = this.assertions.getByAssertionFuzzy(assertion, pkg);
 		maybeTypes.forEach(type=>{
 			rules.push( new Rule(
 				name,
-				[parsed[1] + '<' + type + '>',... tokenize(` (assuming ${type} ${assertion.replace(/-|\<|\>/g,' ').trim()})`)],
+				[
+					parsed[1] + '<' + type.toString() + '>',
+					'_',
+					... assumeTokens(type.assumptions)
+				],
 				data => data[0],
 				"maybe generated rule",
 				"maybe generated-rule"
@@ -355,7 +359,7 @@ function Parser(rules, assertions, start, options) {
 		this.grammar = grammar;
 
 		//save assertions
-		this.assertions = assertions || {};
+		this.assertions = assertions;
 		// Read options
 		this.options = {
 				keepHistory: false,
@@ -659,4 +663,18 @@ function tokenize(text){
 	return parsed;
 	//return [{literal:text}];
 }
+function assumeTokens(assumptions){
+	console.assert(assumptions)
+	let text = '(assuming ';
+	text += assumptions.map(assumption=>{
+		return [
+			assumption[0].toString(),
+			assumption[1].toString().replace(/-|\<|\>/g,' ').trim(),
+			assumption[2].toString()
+		].join(' ')
+	}).join('; ')
+	text += ')';
+	return tokenize(text);
+}
+
 export {Parser, Grammar}
