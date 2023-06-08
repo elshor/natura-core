@@ -3,6 +3,8 @@
  * @argument preprocess - an optional preprocess function . If returns false then the rule cannot be used. This rule can add or change context
  */
 
+import expandRule from "./expand-rule.js";
+
 function Rule(
 	name, 
 	symbols, 
@@ -201,66 +203,49 @@ Grammar.prototype.expandRule = function (name, pkg,  rules,done={}){
 		return;
 	}
 	done[name] = true;
-	(this.byName[name] || []).forEach(rule=>{
-		//add all rules of name
-		rules.push(rule);
+	const parsed1 = name.match(/^(.*?)(?:<(.+)\>)?$/);
+	const ruleName = parsed1[1];
+	const t = parsed1[2];
+	//check if t is a term or an assertion
+	const isAssertion = t.match(/^(.*?)(?:<(.+)\>)$/);
+
+	(this.byName[ruleName] || []).forEach(rule=>{
+		//if not specialized - just add rule
+		if(!t){
+			rules.push(rule);
+			return;
+		}
+
+		if(!isAssertion){
+			//this is a simple term.  - expand the rule using this term
+			rules.push(expandRule(rule, t));
+			return;
+		}
 	})
 
 	//if name is an assertion then expand to all types that have this assertion
-	const types = this.assertions.getByAssertion(name, pkg);
-	types.forEach(type=>{
+	const terms = this.assertions.getByAssertion(t, pkg);
+	terms.forEach(term=>{
 		rules.push( new Rule(
 			name,
-			[type],
+			[ruleName + '<' + term + '>'],
 			data => data[0],
 			"generated rule",
-			`generated: ${name}=>${type}`
+			`generated: ${name}=>${term}`
 		))
 	})
-
+	
 	//adding maybe
-	const maybeTypes = this.assertions.getByAssertionFuzzy( name, pkg);
-	maybeTypes.forEach(type=>{
+	const maybeTerms = this.assertions.getByAssertionFuzzy( t, pkg);
+	maybeTerms.forEach(term=>{
 		rules.push( new Rule(
 			name,
-			[type.toString(),'_',... assumeTokens(type.assumptions)],
+			[term.toString(),'_',... assumeTokens(term.assumptions)],
 			data => data[0],
 			"maybe generated rule",
-			`generated maybe: ${name}=>${type.toString()}`
+			`generated maybe: ${name}=>${term.toString()}`
 		))
 	})
-
-	//if name is in the form something<assertion> then extract assertion and expand
-	const parsed = name.match(/^([^<]+)\<(.+)\>$/);
-	if(parsed){
-		const assertion = parsed[2];
-		const types = this.assertions.getByAssertion(assertion, pkg);
-		types.forEach(type=>{
-			rules.push( new Rule(
-				name,
-				[parsed[1] + '<' + type + '>'],
-				data => data[0],
-				`generated: ${assertion}=>${type}`,
-				"generated-rule"
-			))
-		})
-
-		//add maybe rules
-		const maybeTypes = this.assertions.getByAssertionFuzzy(assertion, pkg);
-		maybeTypes.forEach(type=>{
-			rules.push( new Rule(
-				name,
-				[
-					parsed[1] + '<' + type.toString() + '>',
-					'_',
-					... assumeTokens(type.assumptions)
-				],
-				data => data[0],
-				"maybe generated rule",
-				"maybe generated-rule"
-			))
-		})
-	}
 }
 
 // So we can allow passing (rules, start) directly to Parser for backwards compatibility
@@ -677,4 +662,4 @@ function assumeTokens(assumptions){
 	return tokenize(text);
 }
 
-export {Parser, Grammar}
+export {Parser, Grammar, Rule}

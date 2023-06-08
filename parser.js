@@ -30,7 +30,6 @@ function tokenize(text){
 export class Parser {
 	constructor(dictionary){
 		this.dictionary = dictionary;
-		this.specializedTypes = [];
 		this.assertions = new RelStore();
 		this.grammer = {
 			ParserRules: [],
@@ -52,16 +51,10 @@ export class Parser {
 		if(spec?.noSuggest === true){
 			rule.noSuggest = true
 		}
-		if(spec && spec.specializedFor){
-			//add for deferred expansion
-			this.specializedTypes.push({
-				rule, 
-				T: spec.specializedFor
-			});
-		}else{
-			this.grammer.ParserRules.push(rule);
-		}
+		console.assert(!rule.name.includes('-'),'Rule name cannot include - : ' + rule.name);
+		this.grammer.ParserRules.push(rule);
 	}
+
 	addInstance(spec, pkg){
 		this.compiledGrammer = null;
 		//first add the value tokenized
@@ -154,104 +147,33 @@ export class Parser {
 	addType(spec, pkg){
 		this.compiledGrammer = null;
 		const parser = this;
-		if(!pkg){
+		if(!pkg || pkg.name === 'base'){
 			//skip types without a package
 			return;
 		}
-		if(pkg.name === 'base'){
-			//skip base pkg
-			return;
-		}
-		const pattern = spec.pattern;
-		if(pattern){
-			if(spec.valueType){
-				const rules = patternAsGrammer(
-					spec.valueType,
-					pattern, 
-					spec, 
-					tokenize.bind(lexer),
-					parser.dictionary,
-					pkg._id
-				);
-				parser._addRule(addPackage(rules, pkg), spec);
-			}else{
-				//add the basic rule
-				const basicRule = patternAsGrammer(
-					spec.name + (spec.specializedFor? '<t>' : ''), 
-					pattern, 
-					spec,
-					tokenize.bind(lexer),
-					this.dictionary,
-					pkg._id
-				);
-				parser._addRule(addPackage(basicRule, pkg), spec)
-			}
-			
-			//add altPattern if exists
-			if(spec.altPatterns){
-				spec.altPatterns.forEach(pattern=>{
-					if(spec.valueType){
-						const rules = patternAsGrammer(
-							spec.valueType,
-							pattern, 
-							spec, 
-							tokenize.bind(lexer),
-							parser.dictionary,
-							pkg._id
-						);
-						parser._addRule(addPackage(rules, pkg), spec);
-					}else{
-						//add the basic rule
-						const basicRule = patternAsGrammer(
-							spec.name + (spec.specializedFor? '<t>' : ''), 
-							pattern, 
-							spec,
-							tokenize.bind(lexer),
-							this.dictionary,
-							pkg._id
-						) 
-						parser._addRule(addPackage(basicRule, pkg), spec)
-					}
-					//add the type rule
-					const typeRule = patternAsGrammer(
-						spec.name + (spec.specializedFor? '<t>' : ''), 
-						pattern, 
-						spec,
-						tokenize.bind(lexer),
-						this.dictionary,
-						pkg._id
-					) 	
-					parser._addRule(addPackage(typeRule, pkg), spec)
-				})
-			}
-			//add the type rule
-			const typeRule = patternAsGrammer(
-				spec.name + (spec.specializedFor? '<t>' : ''), 
+		console.assert(pattern, 'rules must have patterns: ' + spec.name);
+
+		const names = [spec.name, ... (spec.isa || [])];
+		const patterns = [spec.pattern, ...(spec.altPatterns || [])];
+		patterns.forEach(pattern=>{
+			const rules = patternAsGrammer(
+				spec.name, 
 				pattern, 
 				spec,
 				tokenize.bind(lexer),
 				this.dictionary,
 				pkg._id
-			) 
-			try{
-				parser._addRule(addPackage(typeRule, pkg), spec)
-			}catch(e){
-				this.dictionary.error('addRule got exception',e);
-			}
-
-			//add isa rules
-			(spec.isa || []).forEach(isa=>{
-				const isaRule = {
-					name:  isa,
-					pkg: pkg.name,
-					symbols: [ spec.name + (spec.specializedFor? '<t>' : '')],
-					source: spec.name + '$isa',
-					postprocess: takeFirst
-				}
-				parser._addRule(isaRule, spec)
+			);
+			rules.forEach(rule=>{
+				names.forEach(name=>{
+					const copy = Object.assign({}, rule);
+					copy.name = name;
+					copy.pkg = pkg.name;
+					parser._addRule(copy, spec)
+				})
 			})
-		}else{
-		}
+		})
+			
 		if(spec.basicType && !spec.optionsOnly){
 			//if options are suggested, then we are limited to the options
 			parser._addRule({
@@ -278,50 +200,7 @@ export class Parser {
 				})
 			})
 		}
-
-		if(spec.isa.includes('data item')){
-			//generate types for all the properties
-			Object.entries(spec.properties || {}).forEach(([key,value])=>{
-				let type = typeAsString(value.type);
-				if(['string','number'].includes(type)){
-					type = 'value:' + type;
-				}
-				const ruleName = `string<${spec.name}.${key}>`;
-				this._addRule({
-					name: ruleName,
-					pkg: pkg.name,
-					description: value.description,
-					symbols:[type],
-					source: spec.name,
-					postprocess: takeFirst
-				})
-				//if there are examples then generate them
-				if(value.examples){
-					value.examples.forEach(example=>{
-						const rule = {
-							name: ruleName,
-							symbols:[{example:JSON.stringify(example)}],
-							source: spec.name,
-							postprocess: takeFirst
-						}
-						this._addRule(rule)
-					})
-				}
-			})
-		}
 	}
-
-	addIsa(type, parent, pkg){
-		this.compiledGrammer = null;
-		const isaRule = {
-			name: parent,
-			pkg: pkg.name,
-			symbols: [ type ],
-			source: 'isa',
-			postprocess: takeFirst
-		}
-		this._addRule(isaRule)
-}
 
 	addAssertion(type, assertion, pkg){
 		this.compiledGrammer = null;
@@ -332,36 +211,9 @@ export class Parser {
 	 * Called after adding the last type. This is when macro expansion is done
 	 */
 	endTypes(){
-		this.specializedTypes.forEach(st=>this.expandTemplateRule(st))
 		this._ensurePlurals()
 	}
 
-	expandTemplateRule({rule, T}){
-		const sList = this.dictionary.getClassMembers(T);
-		sList.forEach(s=>{
-			const ruleSpec = this.dictionary.getTypeSpec(rule.source);
-			const sSpec = this.dictionary.getTypeSpec(s);
-			const assertions = ruleSpec.assertions || [];
-			assertions.forEach(assertion=>{
-				this.addAssertion(
-					parameterizeType(rule.name, s),
-					parameterizeType(assertion,s),
-					ruleSpec.$package
-				)
-			})
-			const {symbols, mapping} = expandSymbols(rule.symbols, s, this.dictionary)
-			const sRule = {
-				name: parameterizeType(rule.name, s),
-				pkg: sSpec.$package.name,
-				postprocess: rule.postprocess
-					? generatePostprocessSpecialized(rule.postprocess,s, mapping)
-					: null,
-				symbols,
-				specializedFor: s
-			}
-			this.grammer.ParserRules.push(sRule);
-		})
-	}
 	getGrammer(){
 		if(!this.compiledGrammer){
 			this.compiledGrammer = Grammar.fromCompiled(this.grammer, this.assertions)
@@ -371,19 +223,15 @@ export class Parser {
 
 	parse(text, target='interact action', logger){
 		this.grammer.ParserStart = target;
-		logger.debug('parsing text',JSON.stringify(text));
-		logger.debug('target is',target)
 		const parser = new Parsley(this.getGrammer());
 		try{
 			const res = parser.feed(text);
 			if(res.results){
 				return res.results;
 			}else{
-				logger.debug('... no results found.')
 				return [];
 			}
 		}catch(e){
-			logger.debug('parse failed at pos',e.offset,'unexpected token',JSON.stringify(e.token));
 			return [];
 		}
 	}
@@ -421,21 +269,6 @@ export class Parser {
 			}
 		})
 	}
-}
-
-function printStateDependant(state, states, indent=1, includeCompleted=false, logger){
-	states
-		.filter(state1=>state1.wantedBy.includes(state))
-		.forEach(s=>{
-			if(s.isComplete && !includeCompleted){
-				return;
-			}
-			logger.log(
-				''.padStart(indent*2,' '),
-				state.dot,
-				ruleText(s.rule)
-			)
-		})
 }
 
 function ruleText(rule){
@@ -594,54 +427,6 @@ function addBaseRules(grammer){
 	)
 }
 
-function markStringPos(text, pos){
-	return text.slice(0, pos) + '^' + text.slice(pos);
-}
-
-function parameterizeType(type, parameter){
-	const match1 = type.match(/^((?:type|value)\:)?(t|T)$/)
-	if(match1){
-		return (match1[1]||'') + parameter;
-	}
-	return type
-	.replace(/^(?:t|T)<(.*)>([\*\?]*)$/,parameter + '<$1>$2')
-	.replace(/(.*)<(?:t|T)>([\*\?]*)/,'$1<' + parameter + '>$2')
-	.replace(/^(?:t|T)([\*\?]*)$/,parameter + '$2')
-}
-
-/**
- * Expand template expansion items. Provide the new symbols list and the mapping from current symbol list to previous symbol list so we can pass to the postprocess function the data array it expects
- * @param {*} source 
- * @param {*} s 
- * @param {*} dictionary 
- * @returns 
- */
-function expandSymbols(source, s, dictionary){
-	const symbols = [];
-	const mapping = [];
-	source.forEach(item=>{
-		if(typeof item !== 'string'){
-			mapping.push(symbols.length);
-			symbols.push(item)
-		}else{
-			const matched = item.match(/^\s*T\s*\|(.+)$/);
-			if(matched){
-				//this is an expansion item. Replace with literal and tokenize
-				const spec = dictionary.getTypeSpec(s)
-				const text = spec[matched[1]];
-				const tokens = tokenize.call(lexer, text);
-				mapping.push(symbols.length);
-				symbols.push(...tokens.map(token=>({literal:token})));
-			}else{
-				mapping.push(symbols.length);
-				symbols.push(parameterizeType(item, s));
-			}
-		}
-	})
-	return {symbols, mapping};
-}
-//first check if the value can be translated
-
 function listPush(data){
 	const ret = [...data[0], data[2]];
 	return ret;
@@ -666,21 +451,6 @@ function typeAsString(type){
 	}
 	const ret = typeObject.toString();
 	return ret;
-}
-
-/** postprocess function that calls wrap function and ads $specializedFor property to output object */
-function postprocessSpecialized(data, reference, fail){
-	const {fn, specializedFor, mapping} = this;
-	const mappedData = mapping.map(pos=>data[pos]);
-	const ret = fn(mappedData, reference, fail);
-	if(ret && typeof ret === 'object'){
-		ret.$specializedFor = specializedFor;
-	}
-	return ret;
-}
-
-function generatePostprocessSpecialized(fn, specializedFor, mapping){
-	return postprocessSpecialized.bind({fn, specializedFor, mapping});
 }
 
 function addPackage(ruleOrRules, pkg){

@@ -22,6 +22,7 @@ export default class RelStore {
 	}
 
 	addRel(subject, rel, object){
+		console.assert(rel.includes('-'), 'rel name must includes a -. Rel is ' + rel)
 		this.facts.push(new Fact(subject, rel, object));
 	}
 
