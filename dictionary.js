@@ -520,20 +520,8 @@ export default class Dictionary{
 		this.valueTypeRepo[valueType].push({type,role});
 }
 
-	/**
-	 * Register an isa relationship
-	 * @param {String} type
-	 * @param {String} parent type of the parent
-	 * @param {Booldan} notInType true if this isa relationship was defined separately and not derived from isa field. If true then need to register separaetly in grammer
-	 */
-	_registerIsa(type,parent, notInType, pkg){
-		if(!Array.isArray(this.isaRepo[parent])){
-			this.isaRepo[parent] = [];
-		}
-		this.isaRepo[parent].push(type);
-		if(notInType){
-			this.parser.addIsa(type, parent, pkg);
-		}
+	_registerIsa(){
+		//cancelled - do nothing
 	}
 	_registerAssertion(type, assertion, pkg){
 		this.parser.addAssertion(type, assertion, pkg);

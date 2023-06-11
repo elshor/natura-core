@@ -11,31 +11,31 @@ inquirer.registerPrompt('command',inquirerCommand)
 inquirer.registerPrompt('autocomplete', inquirerPrompt);
 
 const options = {
-	packages: ["interact","datetime","query","college_1","elshor","core"],
-	target: 'interact action',
-	text: ''
+	packages: [/*"interact","datetime","core",*/"query","college_1","elshor"],
+	target: 'query',
+	text: '',
+	noSkip: true
 }
 registerLoader(id=>{
 	const text = readFileSync('/ml/natura-suggest/packages/' + id + '.json');
 	return JSON.parse(text);
 })
 
-async function suggest({text, dictionary, target}){
+async function suggest({text, dictionary, target, stateIds}){
 	const tokens = dictionary.suggestTokens(text, target,{precedingSpace:'_'});
 	const parsed = dictionary.parse(text, target)
 	const wants = dictionary.parseWants(text, target);
+	let lastId = 0;
 	console.info(parsed.length >0? '[complete]'.bgBlue:'[incomplete]'.bgBlue,tokens.join(', '));
-	console.info(
-		'WANTS\n',
-		Object.entries(wants.wants).map(([key,value])=>{
-			return key 
-				+ ':\n  ' 
-				+ unique(
-					value
-					.map(item=>item.toString().replace(/context \d+$/,'') + (item.rule?.source || ''))
-					).join('\n  ')
-		}).join('\n')
-	)
+	console.info('WANTS');
+	Object.entries(wants.wants).forEach(([key,value])=>{
+		console.info(key);
+		value.forEach(item=>{
+			lastId++;
+			stateIds[lastId] = item;
+			console.info('    ', lastId + '.',item.toString())
+		})
+	})
 	return tokens;
 }
 await topLoop(options);
@@ -64,15 +64,16 @@ function getSymbolShortDisplay(symbol) {
 }
 
 async function topLoop(options){
-	let {target, packages, text} = options;
+	let {target, packages, text, noSkip} = options;
+	const stateIds = [];
 	const dictionary = await getDictionary(packages);
 	const stack = [text];
+	console.clear();
 	while(true){
 		//loop until no tokens
-		console.clear();
 		console.info(text.brightBlue)
-		const tokens = await suggest({text, dictionary, target});
-		if(tokens.length === 1){
+		const tokens = await suggest({text, dictionary, target, stateIds});
+		if(tokens.length === 1 && !noSkip){
 			const token = tokens[0]
 				.replace(/_/g,' ') //spaces as underscore
 				.replace("[SP]",' ')
@@ -90,6 +91,7 @@ async function topLoop(options){
 				break;
 			}
 			text += token;
+			console.clear();
 			continue;
 		}
 		if(tokens.length === 0){
@@ -119,10 +121,19 @@ async function topLoop(options){
 				
 			}
 		});
+		if(value.token.match(/(\d*)\#$/)){
+			const state = stateIds[Number.parseInt(value.token.match(/(\d*)\#$/)[1])]
+			console.info('WANTED BY')
+			state.wantedBy.forEach(w=>{
+				console.info('    ', w.toString())
+			})
+			continue;	
+		}
 		if(value.token.endsWith(':') && value.token.length > 1){
 			//this is a request to chane target
 			target = value.token.substr(0, value.token.length - 1);
 			console.info(('changed target to ' + target.bgBlue).bgBlue)
+			console.clear();
 			continue;
 		}
 		if(value.token === 'END' || value.token.trim() === '</s>'){
@@ -138,6 +149,7 @@ async function topLoop(options){
 		if(value.token === 'BACK'){
 			stack.pop();
 			text = stack[stack.length - 1];
+			console.clear();
 			continue;
 		}
 		text += value.token.replace("_"," ");

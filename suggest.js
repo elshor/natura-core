@@ -258,7 +258,7 @@ function isExpendableState(state){
 export function suggestTokens(
 	dictionary, 
 	text, 
-	target='type:interact action', 
+	target='query', 
 	options = {},
 	logger
 ){
@@ -275,6 +275,9 @@ export function suggestTokens(
 	}catch(e){
 		if(e.token && e.token.text){
 			prolog = e.token.text;
+		}else{
+			console.error(e);
+			throw e;
 		}
 		parser = e.parser;
 	}

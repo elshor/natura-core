@@ -3,7 +3,7 @@
  * @argument preprocess - an optional preprocess function . If returns false then the rule cannot be used. This rule can add or change context
  */
 
-import expandRule from "./expand-rule.js";
+import {expandRule, isExpandable} from "./expand-rule.js";
 
 function Rule(
 	name, 
@@ -50,7 +50,7 @@ function State(rule, dot, reference, wantedBy, contextId) {
 }
 
 State.prototype.toString = function() {
-	return `{${this.rule.toString(this.dot)}, from ${this.reference || 0}, context ${this.contextId || 0}`
+	return `{${this.rule.toString(this.dot)}, from ${this.reference || 0}`;//, context ${this.contextId || 0}`
 };
 
 State.prototype.nextState = function(child) {
@@ -207,27 +207,47 @@ Grammar.prototype.expandRule = function (name, pkg,  rules,done={}){
 	const ruleName = parsed1[1];
 	const t = parsed1[2];
 	//check if t is a term or an assertion
-	const isAssertion = t.match(/^(.*?)(?:<(.+)\>)$/);
+	const isAssertion = t?.match(/^(.*?)(?:<(.+)\>)$/);
+	if(ruleName === 'literal' && t && !isAssertion){
+		const literal = jsonParse(t);
+		if(!literal){
+			throw new Error('Received a literal that is not JSON parsable: ' + t)
+		}
+		rules.push(new Rule(
+			'literal.' + t,
+			tokenize(literal),
+			null,
+			'a literal rule',
+			'literal',
+			null,
+			'generated'
+		))
+		return;
+	}
 
 	(this.byName[ruleName] || []).forEach(rule=>{
 		//if not specialized - just add rule
-		if(!t){
+		if(!t && !isExpandable(rule)){
 			rules.push(rule);
 			return;
 		}
 
-		if(!isAssertion){
+		if(!isAssertion && isExpandable(rule)){
 			//this is a simple term.  - expand the rule using this term
 			rules.push(expandRule(rule, t));
 			return;
 		}
 	})
 
+	//if !t - that is the name is not expandable - just exit - we already added the rule
+	if(!isAssertion){
+		return;
+	}
 	//if name is an assertion then expand to all types that have this assertion
 	const terms = this.assertions.getByAssertion(t, pkg);
 	terms.forEach(term=>{
 		rules.push( new Rule(
-			name,
+			name + '#' + term,
 			[ruleName + '<' + term + '>'],
 			data => data[0],
 			"generated rule",
@@ -237,9 +257,9 @@ Grammar.prototype.expandRule = function (name, pkg,  rules,done={}){
 	
 	//adding maybe
 	const maybeTerms = this.assertions.getByAssertionFuzzy( t, pkg);
-	maybeTerms.forEach(term=>{
+	maybeTerms.forEach(term=>{ 
 		rules.push( new Rule(
-			name,
+			name + '#' + term,
 			[term.toString(),'_',... assumeTokens(term.assumptions)],
 			data => data[0],
 			"maybe generated rule",
@@ -662,4 +682,11 @@ function assumeTokens(assumptions){
 	return tokenize(text);
 }
 
+function jsonParse(text){
+	try{
+		return JSON.parse(text);		
+	}catch{
+		return null;
+	}
+}
 export {Parser, Grammar, Rule}

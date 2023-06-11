@@ -101,17 +101,19 @@ export class Parser {
 		const plurals = {};
 		this.grammer.ParserRules.forEach(rule=>{
 			rule.symbols.forEach(symbol=>{
-				if(typeof symbol === 'string' && symbol.endsWith('*') && !plurals[symbol]){
+				const parsed = symbol.toString().match(/(.+)\*(\<.+\>)?$/)
+				const singular = parsed? parsed[1] : null;
+				const ending = singular? (parsed[2]? '<T>' : '') : '';
+				if(singular && !plurals[singular + ending]){
 					//need to add a rule for this list
-					plurals[symbol] = true;
-					const singular = symbol.substring(0,symbol.length - 1);
+					plurals[singular + ending] = true;
 					this.grammer.ParserRules.push({
-						name: symbol,
-						symbols: [symbol, 'LIST_SEP', singular],
+						name: singular + '*',
+						symbols: [singular + '*' + ending, 'LIST_SEP', singular + ending],
 						postprocess: listPush
 					},{
-						name: symbol,
-						symbols: [ singular ]
+						name: singular + '*',
+						symbols: [ singular + ending ]
 					})
 				}
 				if(
@@ -147,11 +149,10 @@ export class Parser {
 	addType(spec, pkg){
 		this.compiledGrammer = null;
 		const parser = this;
-		if(!pkg || pkg.name === 'base'){
-			//skip types without a package
+		if(!pkg || pkg.name === 'base' || !spec.pattern){
+			//skip types without a package or pattern
 			return;
 		}
-		console.assert(pattern, 'rules must have patterns: ' + spec.name);
 
 		const names = [spec.name, ... (spec.isa || [])];
 		const patterns = [spec.pattern, ...(spec.altPatterns || [])];

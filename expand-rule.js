@@ -1,10 +1,9 @@
 import {Rule} from './parsely.js'
 
-export default function expandRule(rule, term){
-	console.log('generating', rule.name + '<' + term + '>')
+export function expandRule(rule, term){
 	const {symbols, mapping} = expandSymbols(rule.symbols, term)
 	const postprocess = rule.postprocess
-		? generatePostprocessSpecialized(rule.postprocess,s, mapping)
+		? generatePostprocessSpecialized(rule.postprocess,term, mapping)
 		: null;
 	return new Rule(
 		rule.name + '<' + term + '>',
@@ -42,18 +41,8 @@ function expandSymbols(source, s){
 			mapping.push(symbols.length);
 			symbols.push(item)
 		}else{
-			const matched = item.match(/^\s*T\s*\|(.+)$/);
-			if(matched){
-				//this is an expansion item. Replace with literal and tokenize
-				const spec = dictionary.getTypeSpec(s)
-				const text = spec[matched[1]];
-				const tokens = tokenize.call(lexer, text);
-				mapping.push(symbols.length);
-				symbols.push(...tokens.map(token=>({literal:token})));
-			}else{
-				mapping.push(symbols.length);
-				symbols.push(parameterizeType(item, s));
-			}
+			mapping.push(symbols.length);
+			symbols.push(parameterizeType(item, s));
 		}
 	})
 	return {symbols, mapping};
@@ -64,3 +53,13 @@ function parameterizeType(type, parameter){
 	.replace(/(.*)<(?:t|T)>([\*\?]*)/,'$1<' + parameter + '>$2')
 }
 
+/** Test if the rule can be expanded i.e. it uses symbol expansions */
+export function isExpandable(rule){
+	for(let i=0;i<rule.symbols.length;++i){
+		const symbol = rule.symbols[i];
+		if(typeof symbol === 'string' && parameterizeType(symbol, 'dummy') !== symbol){
+			return true;
+		}
+	}
+	return false;
+}
