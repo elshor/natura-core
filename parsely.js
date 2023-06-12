@@ -260,7 +260,11 @@ Grammar.prototype.expandRule = function (name, pkg,  rules,done={}){
 	maybeTerms.forEach(term=>{ 
 		rules.push( new Rule(
 			name + '#' + term,
-			[term.toString(),'_',... assumeTokens(term.assumptions)],
+			[
+				ruleName + '<' + term + '>',
+				'_',
+				... assumeTokens(term.assumptions)
+			],
 			data => data[0],
 			"maybe generated rule",
 			`generated maybe: ${name}=>${term.toString()}`
