@@ -224,8 +224,11 @@ Grammar.prototype.expandRule = function (name, pkg,  rules,done={}){
 		))
 		return;
 	}
-
-	(this.byName[ruleName] || []).forEach(rule=>{
+	const rulesByName = [
+		...this.byName[name] || [],
+		...this.byName[ruleName] || []
+	]
+	rulesByName.forEach(rule=>{
 		//if not specialized - just add rule
 		if(!t && !isExpandable(rule)){
 			rules.push(rule);
@@ -236,6 +239,10 @@ Grammar.prototype.expandRule = function (name, pkg,  rules,done={}){
 			//this is a simple term.  - expand the rule using this term
 			rules.push(expandRule(rule, t));
 			return;
+		}
+		if(t && rule.name === name){
+			//this is an exact match - add it even though it is specialized
+			rules.push(rule);
 		}
 	})
 
