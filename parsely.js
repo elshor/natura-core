@@ -270,7 +270,7 @@ Grammar.prototype.expandRule = function (name, pkg,  rules,done={}){
 			[
 				ruleName + '<' + term + '>',
 				'_',
-				... assumeTokens(term.assumptions)
+				... assumeTokens(term.assumptions, this.assertions)
 			],
 			data => data[0],
 			"maybe generated rule",
@@ -679,18 +679,27 @@ function tokenize(text){
 	return parsed;
 	//return [{literal:text}];
 }
-function assumeTokens(assumptions){
+function assumeTokens(assumptions, store){
 	console.assert(assumptions)
 	let text = '(assuming ';
 	text += assumptions.map(assumption=>{
 		return [
-			assumption[0].toString(),
+			titleOf(assumption[0].toString(), store),
 			assumption[1].toString().replace(/-|\<|\>/g,' ').trim(),
-			assumption[2].toString()
+			titleOf(assumption[2].toString(), store)
 		].join(' ')
 	}).join('; ')
 	text += ')';
 	return tokenize(text);
+}
+
+function titleOf(entity, store){
+	const rels = store.query('title-of', entity)
+	if(rels.length === 0){
+		return entity;
+	}else{
+		return JSON.parse(rels[0]);
+	}
 }
 
 function jsonParse(text){
