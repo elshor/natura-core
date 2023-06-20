@@ -6,15 +6,16 @@ import inquirer from 'inquirer';
 import inquirerCommand from 'inquirer-command-prompt'
 import inquirerPrompt from 'inquirer-autocomplete-prompt';
 import 'colors'
+const MAX_DEPTH = 5;
 
 inquirer.registerPrompt('command',inquirerCommand)
 inquirer.registerPrompt('autocomplete', inquirerPrompt);
 
 const options = {
-	packages: [/*"interact","datetime","core",*/"query","college_1","elshor"],
+	packages: ["interact","datetime","core","query","college_1","elshor"],
 	target: 'query',
 	text: '',
-	noSkip: true
+	noSkip: false
 }
 registerLoader(id=>{
 	const text = readFileSync('/ml/natura-suggest/packages/' + id + '.json');
@@ -57,8 +58,10 @@ function getSymbolShortDisplay(symbol) {
 					return '%' + symbol.type;
 			} else if (symbol.test) {
 					return '<' + String(symbol.test) + '>';
+			} else if(symbol.example){
+				return 'example: ' + symbol.example;
 			} else {
-					throw new Error('Unknown symbol type: ' + symbol);
+					throw new Error('Unknown symbol type: ' + JSON.stringify(symbol));
 			}
 	}
 }
@@ -104,6 +107,7 @@ async function topLoop(options){
 			break;
 		}
 		console.info((target + ':').green, text.green);
+		console.info('  n# for state tree, target: for change target'.grey)
 		const value = await inquirer.prompt({
 			type: 'autocomplete',
 			name: 'token',
@@ -125,7 +129,7 @@ async function topLoop(options){
 			const state = stateIds[Number.parseInt(value.token.match(/(\d*)\#$/)[1])]
 			console.info('WANTED BY')
 			state.wantedBy.forEach(w=>{
-				console.info('    ', w.toString())
+				dumpState(w, 1);
 			})
 			continue;	
 		}
@@ -216,4 +220,12 @@ function unique(list){
 		items[item] = true;
 	})
 	return Object.keys(items);
+}
+
+function dumpState(state, offset=0){
+	const spaces = ' '.repeat(offset * 4);
+	console.info(spaces, state.toString());
+	if(offset < MAX_DEPTH){
+		state.wantedBy.forEach(w=>dumpState(w, offset + 1));
+	}
 }
