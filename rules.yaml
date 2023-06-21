@@ -4,5 +4,14 @@
   - [X, property-of, Y]
 - result: [X, contained-by, Y]
   from:
-  - [Z, extends-concept, Y]
+  - [Z, extends-concept, Y, fact]
   - [X, contained-by, Z]
+- result: [X, contained-by, Y]
+  from:
+  - [X, contained-by, Z, fact]
+  - [Z, contained-by, Y]
+- result: [X, contained-by, Y]
+  from:
+  - [J, sub-class-of, associative table, fact]
+  - [J, contained-by, X, fact]
+  - [J, contained-by, Y, fact]
