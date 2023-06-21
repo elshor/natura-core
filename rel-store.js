@@ -254,24 +254,37 @@ function mergeBindings(...bindings){
 function unique(arr){
 	//NOTE this function is not complete and it can miss duplicates
 	const seen = {};
-	const ret = [];
-	const ret2 = [];
 
 	arr.forEach(item=>{
 		//first pass - remove exact duplicates
-		const text = JSON.stringify(item);
+		const text = termAsCanonicalText(item);
 		if(!seen[text]){
-			seen[text] = true;
-			ret.push(item);
+			seen[text] = item;
 		}
 	})
 
-	//second pass - remove items with assumptions if they exist without assumptino
-	ret.forEach(item=>{
-		if(!item.assumptions || !seen[JSON.stringify(item.name)]){
-			ret2.push(item)
+	//second pass - remove terms where assumptions are contained in other terms
+	const sorted = Object.keys(seen).sort();
+	let last = '^';
+	for(let i=0;i<sorted.length;++i){
+		if(sorted[i].startsWith(last)){
+			//remove this item - last item requires less assumptinos
+			delete seen[sorted[i]];
+		}else{
+			last = sorted[i]
 		}
-	})
+	}
+	return Object.values(seen);
+}
 
-	return ret2;
+function termAsCanonicalText(term){
+	if(!term.assumptions){
+		//no assumptions - easiest
+		return term + ':';
+	}
+	return term.name + ': ' + 
+	term.assumptions
+		.map(item=>JSON.stringify(item))
+		.sort()
+		.join('')		
 }
