@@ -155,6 +155,9 @@ class Rule {
 	constructor(result, statements){
 		this.result = result;
 		this.statements = statements;
+		console.assert(this.result.length >= 3,'Rule missing result terms: ' + JSON.stringify(this.result));
+		console.assert(Array.isArray(this.statements,'Rule statements need to be an array'));
+		this.statements.forEach(stmt=>console.assert(stmt.length >= 3, 'Rule statement missing terms: ' + JSON.stringify(stmt)))
 	}
 	bind(subject, predicate, object, fuzzy, kb ){
 		const start = new Fact(subject, predicate,object).bind(...this.result, fuzzy);
