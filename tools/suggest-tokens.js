@@ -1,4 +1,3 @@
-import { exit } from "process";
 import { getDictionary } from "../dictionary.js";
 import { registerLoader } from "../loader.js";
 import {readFileSync} from 'fs'
