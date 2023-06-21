@@ -6,13 +6,18 @@ export default class RelStore {
 	constructor(){
 		this.facts = [];
 		this.rules = [];
+		this.matchMemory = {};
 
 		//HACK should be part of packages
 		this.loadRules('/ml/natura-core/rules.yaml')
 	}
+	clearCache(){
+		this.matchMemory = {};
+	}
 
 	addRule(predicate, statements){
 		this.rules.push(new Rule(predicate, statements));
+		this.clearCache();
 	}
 	addAssertion(type, assertion, pkg){
 		const parsed = assertion.match(/^(.*)\<(.*)\>$/)
@@ -24,9 +29,10 @@ export default class RelStore {
 	addRel(subject, rel, object){
 		console.assert(rel.includes('-'), 'rel name must includes a -. Rel is ' + rel)
 		this.facts.push(new Fact(subject, rel, object));
+		this.clearCache();
 	}
 
-	match(subject, predicate, object, fuzzy = false){
+	matchFact(subject, predicate, object, fuzzy = false){
 		const ret = [];
 		this.facts.forEach(fact=>{
 			const binding = fact.bind(subject, predicate, object, fuzzy);
@@ -34,19 +40,31 @@ export default class RelStore {
 				ret.push(binding);
 			}
 		})
-
+		return ret;
+	}
+	match(subject, predicate, object, fuzzy = false){
+		const text = JSON.stringify([subject, predicate,object,fuzzy]);
+		if(this.matchMemory[text]){
+			return this.matchMemory[text];
+		}
+		//console.log('?',subject, predicate, object, fuzzy);
+		const ret = this.matchFact(subject, predicate, object, fuzzy);
 		this.rules.forEach(rule => {
 			const bindings = rule.bind(subject, predicate, object, fuzzy, this);
 			ret.push(... bindings)
 		})
 
+		//console.log('=>',subject, predicate, object, fuzzy,'===>', ret.length);
+		this.matchMemory[text] = ret;
 		return ret;
 	}
 
 	query(predicate, object, fuzzy){
 		const bindings = this.match('T', predicate, object, fuzzy);
-		return bindings
-		.map(b=>b.assumptions?.length > 0? new FuzzyTerm(b.T, b.assumptions) : b.T)
+		return unique(
+			bindings
+			.map(b=>b.assumptions?.length > 0? new FuzzyTerm(b.T, b.assumptions) : b.T)
+		)
 	}
 
 	getByAssertion(assertion, pkg){
@@ -158,12 +176,18 @@ class Rule {
 			const newBindings = []
 			for(let j=0;j<stateBindings.length;++j){
 				const b = stateBindings[j];
-				const generatedBindings = kb.match(
+				const temp = stmt[3] === 'fact'? kb.matchFact(
 						b[stmt[0]] || stmt[0], 
 						b[stmt[1]] || stmt[1], 
 						b[stmt[2]] || stmt[2],
 						fuzzy
-				).map(o=>mergeBindings(b,o))
+				) : kb.match(
+					b[stmt[0]] || stmt[0], 
+					b[stmt[1]] || stmt[1], 
+					b[stmt[2]] || stmt[2],
+					fuzzy
+				)
+				const generatedBindings = temp.map(o=>mergeBindings(b,o))
 				newBindings.push(... generatedBindings);
 			}
 			stateBindings = newBindings;
@@ -222,4 +246,29 @@ function mergeBindings(...bindings){
 		})
 	}
 	return ret;
+}
+
+function unique(arr){
+	//NOTE this function is not complete and it can miss duplicates
+	const seen = {};
+	const ret = [];
+	const ret2 = [];
+
+	arr.forEach(item=>{
+		//first pass - remove exact duplicates
+		const text = JSON.stringify(item);
+		if(!seen[text]){
+			seen[text] = true;
+			ret.push(item);
+		}
+	})
+
+	//second pass - remove items with assumptions if they exist without assumptino
+	ret.forEach(item=>{
+		if(!item.assumptions || !seen[JSON.stringify(item.name)]){
+			ret2.push(item)
+		}
+	})
+
+	return ret2;
 }
