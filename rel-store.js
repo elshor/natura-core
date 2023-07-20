@@ -32,6 +32,9 @@ export default class RelStore {
 		this.clearCache();
 	}
 
+	/**
+	 * Match for a fact, not taking into consideration rules.
+	 */
 	matchFact(subject, predicate, object, fuzzy = false){
 		const ret = [];
 		this.facts.forEach(fact=>{
@@ -42,7 +45,12 @@ export default class RelStore {
 		})
 		return ret;
 	}
+
+	/** Match a subject, predicate and object. Pass variables where relevant. This function also considers rules */
 	match(subject, predicate, object, fuzzy = false){
+		console.assert(subject, 'Calling store match without subject');
+		console.assert(predicate, 'Calling store match without predicate');
+		console.assert(object, 'Calling store match without object');
 		const text = JSON.stringify([subject, predicate,object,fuzzy]);
 		if(this.matchMemory[text]){
 			return this.matchMemory[text];
@@ -67,6 +75,18 @@ export default class RelStore {
 		)
 	}
 
+	queryObject(predicate, subject, fuzzy){
+		const bindings = this.match(subject, predicate, 'T', fuzzy);
+		return unique(
+			bindings
+			.map(b=>b.assumptions?.length > 0? new FuzzyTerm(b.T, b.assumptions) : b.T)
+		)
+	}
+
+	queryObjectFirst(predicate, object, fuzzy){
+		const list = this.queryObject(predicate, object, fuzzy);
+		return list[0]
+	}
 	getByAssertion(assertion, pkg){
 		try{
 			const parsed = assertion.match(/^(.*)\<(.*)\>$/)
@@ -268,7 +288,7 @@ function unique(arr){
 	let last = '^';
 	for(let i=0;i<sorted.length;++i){
 		if(sorted[i].startsWith(last)){
-			//remove this item - last item requires less assumptinos
+			//remove this item - last item requires less assumptions
 			delete seen[sorted[i]];
 		}else{
 			last = sorted[i]
