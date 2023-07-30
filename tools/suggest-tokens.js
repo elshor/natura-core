@@ -9,36 +9,41 @@ const MAX_DEPTH = 5;
 
 inquirer.registerPrompt('command',inquirerCommand)
 inquirer.registerPrompt('autocomplete', inquirerPrompt);
-
 const options = {
 	packages: ["interact","datetime","core","query","college_1","elshor"],
 	target: 'query',
 	text: '',
-	noSkip: false
+	noSkip: false,
+	exitOnComplete: false,
+	/** print want based on state on parser */
+	printWant: true,
+	printParsed: true
 }
 registerLoader(id=>{
 	const text = readFileSync('/ml/natura-suggest/packages/' + id + '.json');
 	return JSON.parse(text);
 })
 
-async function suggest({text, dictionary, target, stateIds}){
+async function suggest({text, dictionary, target, stateIds,printWant}){
 	const tokens = dictionary.suggestTokens(text, target,{precedingSpace:'_'});
 	const parsed = dictionary.parse(text, target)
 	const wants = dictionary.parseWants(text, target);
 	let lastId = 0;
-	console.info(parsed.length >0? '[complete]'.bgBlue:'[incomplete]'.bgBlue,tokens.join(', '));
-	console.info('WANTS');
-	Object.entries(wants.wants).forEach(([key,value])=>{
-		console.info(key);
-		value.forEach(item=>{
-			lastId++;
-			stateIds[lastId] = item;
-			console.info('    ', lastId + '.',item.toString())
+	if(printWant){
+		console.info(parsed.length >0? '[complete]'.bgBlue:'[incomplete]'.bgBlue,tokens.join(', '));
+		console.info('WANTS');
+		Object.entries(wants.wants).forEach(([key,value])=>{
+			console.info(key);
+			value.forEach(item=>{
+				lastId++;
+				stateIds[lastId] = item;
+				console.info('    ', lastId + '.',item.toString())
+			})
 		})
-	})
+	}
 	return tokens;
 }
-await topLoop(options);
+//await textBuilder(options);
 
 function ruleToString(rule){
 	return rule.symbols.map(getSymbolShortDisplay).join(' ')
@@ -65,23 +70,27 @@ function getSymbolShortDisplay(symbol) {
 	}
 }
 
-async function topLoop(options){
-	let {target, packages, text, noSkip} = options;
+export async function textBuilder(options){
+	let {target, packages, text, noSkip, exitOnComplete, printWant, printParsed} = options;
 	const stateIds = [];
 	const dictionary = await getDictionary(packages);
 	const stack = [text];
-	console.clear();
+	let parsed
 	while(true){
 		//loop until no tokens
-		console.info(text.brightBlue)
-		const tokens = await suggest({text, dictionary, target, stateIds});
+		//console.info(text.brightBlue)
+		const tokens = await suggest({text, dictionary, target, stateIds,printWant});
 		if(tokens.length === 1 && !noSkip){
 			const token = tokens[0]
 				.replace(/_/g,' ') //spaces as underscore
 				.replace("[SP]",' ')
 				.replace(/  +/g,' ')//normalize spaces
 			if(token === '</s>'){
-				const parsed = dictionary.parse(text, target);
+				console.log('options', options)
+				if(exitOnComplete){
+					return {text};
+				}
+				parsed = dictionary.parse(text, target);
 				if(parsed.length > 0){
 					console.info('Completed'.bgBlue)
 					console.info(JSON.stringify(parsed[0], null, '  '));
@@ -93,12 +102,14 @@ async function topLoop(options){
 				break;
 			}
 			text += token;
-			console.clear();
+			if(printWant){
+				console.clear();
+			}
 			continue;
 		}
 		if(tokens.length === 0){
 			console.info('No Suggestions'.bgBlue)
-			const parsed = dictionary.parse(text, target);
+			parsed = dictionary.parse(text, target);
 			if(parsed.length > 0){
 				console.info('Completed'.bgBlue)
 				console.info(JSON.stringify(parsed[0], null, '  '));	
@@ -140,10 +151,17 @@ async function topLoop(options){
 			continue;
 		}
 		if(value.token === 'END' || value.token.trim() === '</s>'){
+			console.log('options', options)
 			const parsed = dictionary.parse(text, target);
+			if(exitOnComplete){
+				return {text};
+			}
+
 			if(parsed.length > 0){
 				console.info('Completed'.bgBlue)
-				console.info(JSON.stringify(parsed[0], null, '  '));
+				if(printParsed){
+					console.info(JSON.stringify(parsed[0], null, '  '));
+				}
 			}else{
 				console.info('Parse Failed'.bgBlue)
 			}
@@ -152,11 +170,16 @@ async function topLoop(options){
 		if(value.token === 'BACK'){
 			stack.pop();
 			text = stack[stack.length - 1];
-			console.clear();
+			if(printWant){
+				console.clear();
+			}
 			continue;
 		}
 		text += value.token.replace("_"," ");
 		stack.push(text);
+	}
+	if(exitOnComplete){
+		return {text}
 	}
 
 	//show rules
@@ -185,7 +208,7 @@ async function topLoop(options){
 			}
 		})
 		if(value.answer === 'RESTART'){
-			setImmediate(()=>topLoop(options));
+			setImmediate(()=>textBuilder(options));
 			break;
 		}
 		console.info(value.answer.green);
