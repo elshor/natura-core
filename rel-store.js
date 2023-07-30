@@ -1,6 +1,10 @@
 import YAML from 'yaml';
 import {readFileSync} from 'fs';
 
+/**
+ * @typedef {string} Entity
+ */
+
 const PACKAGES_URI = 'https://natura.dev/packages/'
 export default class RelStore {
 	constructor(){
@@ -27,7 +31,6 @@ export default class RelStore {
 	}
 
 	addRel(subject, rel, object){
-		console.assert(rel.includes('-'), 'rel name must includes a -. Rel is ' + rel)
 		this.facts.push(new Fact(subject, rel, object));
 		this.clearCache();
 	}
@@ -83,10 +86,18 @@ export default class RelStore {
 		)
 	}
 
-	queryObjectFirst(predicate, object, fuzzy){
-		const list = this.queryObject(predicate, object, fuzzy);
+	/**
+	 * Return the object of the first triple returned by the query
+	 * @param {Entity} predicate 
+	 * @param {Entity} subject
+	 * @param {boolean} fuzzy 
+	 * @returns Entity
+	 */
+	queryObjectFirst(predicate, subject, fuzzy){
+		const list = this.queryObject(predicate, subject, fuzzy);
 		return list[0]
 	}
+
 	getByAssertion(assertion, pkg){
 		try{
 			const parsed = assertion.match(/^(.*)\<(.*)\>$/)
@@ -145,6 +156,12 @@ export default class RelStore {
 		const text = readFileSync(path, 'utf-8');
 		const json = YAML.parse(text);
 		json.forEach(rule=>this.addRule(rule.result, rule.from))
+	}
+
+	dump(){
+		this.matchFact('S','P','O',true).forEach(({S,P,O})=>{
+			console.info(S,'  ',P,'  ',O,);
+		})
 	}
 }
 
